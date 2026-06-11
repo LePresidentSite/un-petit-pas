@@ -8,7 +8,8 @@
     zones: "Les zones",
     routines: "Mes routines",
     history: "Mes progrès",
-    settings: "Réglages"
+    settings: "Réglages",
+    about: "À propos"
   };
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {

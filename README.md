@@ -16,6 +16,7 @@ PWA locale et hors ligne pour avancer doucement dans le ménage et l'organisatio
 - Stockage IndexedDB, cache hors ligne et installation PWA
 - Mise en page adaptative pour téléphone, tablette et ordinateur
 - Identité scandinave premium avec navigation inférieure fixe
+- Page À propos de Caroline avec photo, histoire, confidentialité et conditions
 
 ## Lancer localement
 

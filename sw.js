@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v4";
+const CACHE_VERSION = "un-petit-pas-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./data.js",
   "./db.js",
   "./app.js",
+  "./assets/caroline.jpg",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",

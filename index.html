@@ -39,6 +39,10 @@
     <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
     <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M4 4v6h6M5.5 9A8 8 0 1 1 4 14"/></symbol>
     <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15.4A8.5 8.5 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4Z"/></symbol>
+    <symbol id="icon-about" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
   </svg>
 
   <div class="ambient ambient-one"></div>
@@ -61,6 +65,7 @@
         <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
         <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Historique</span></button>
         <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
+        <button class="nav-item" data-route="about"><svg><use href="#icon-about"></use></svg><span>À propos</span></button>
       </nav>
       <blockquote class="sidebar-quote">« Un petit pas suffit. »</blockquote>
     </aside>
@@ -252,8 +257,76 @@
           <div><p class="card-kicker">Toujours près de toi</p><h3>Installer Un Petit Pas</h3><p>Accède à l'application même hors ligne.</p></div>
           <button id="installSettingsButton" class="secondary-button"><svg><use href="#icon-download"></use></svg>Installer</button>
         </article>
+        <button class="about-settings-link" type="button" data-route="about">
+          <span class="about-settings-avatar"><img src="./assets/caroline.jpg" alt="" width="54" height="54"></span>
+          <span><small>Découvrir l'histoire</small><strong>À propos de Caroline</strong></span>
+          <svg><use href="#icon-chevron"></use></svg>
+        </button>
         <button id="resetDataButton" class="danger-link">Réinitialiser mes données locales</button>
         <p class="privacy-note">Tes données restent sur cet appareil. Aucun compte, aucun suivi.</p>
+      </section>
+
+      <section id="page-about" class="page about-page" data-page="about">
+        <article class="about-hero">
+          <div class="about-photo-wrap">
+            <span class="about-photo-accent" aria-hidden="true"></span>
+            <img class="about-photo" src="./assets/caroline.jpg" alt="Portrait en noir et blanc de Caroline, créatrice de Un Petit Pas" width="370" height="370">
+          </div>
+          <div class="about-intro">
+            <p class="eyebrow">À propos de moi</p>
+            <h2>Bonjour <span aria-hidden="true">🌿</span></h2>
+            <p class="about-lead">Je suis Caroline, la créatrice de <strong>Un Petit Pas</strong>.</p>
+          </div>
+        </article>
+
+        <article class="card about-story">
+          <p>J'ai découvert mon TDAH à l'âge adulte, après avoir passé des années à chercher des façons plus simples de m'organiser au quotidien.</p>
+          <p>Comme beaucoup de personnes, j'ai souvent eu l'impression que les tâches de la maison s'accumulaient plus vite que je pouvais les accomplir. Entre les responsabilités, les imprévus et la fatigue, il n'est pas toujours évident de savoir par où commencer.</p>
+          <p>J'ai créé <strong>Un Petit Pas</strong> pour rendre l'organisation plus simple et plus accessible au quotidien.</p>
+          <div class="about-highlight">
+            <span class="about-highlight-icon"><svg><use href="#icon-spark"></use></svg></span>
+            <p>L'idée n'est pas de tout faire d'un coup, mais de savoir par où commencer et d'avancer une tâche à la fois.</p>
+          </div>
+          <p>Parce qu'au final, ce sont les petites actions répétées qui font une différence.</p>
+          <p>C'est l'application que j'aurais aimé avoir il y a plusieurs années : simple, visuelle et conçue pour aider à passer à l'action sans se sentir dépassée.</p>
+          <p>J'espère qu'elle vous accompagnera, un petit pas à la fois.</p>
+        </article>
+
+        <div class="about-signature">
+          <span aria-hidden="true">🌿</span>
+          <div><strong>Caroline</strong><small>Créatrice de Un Petit Pas</small></div>
+        </div>
+
+        <footer class="about-footer">
+          <div class="about-version">
+            <span>Version de l'application</span>
+            <strong>1.1.0</strong>
+          </div>
+
+          <details class="about-disclosure">
+            <summary><span class="about-footer-icon"><svg><use href="#icon-shield"></use></svg></span><span>Politique de confidentialité</span><svg class="about-chevron"><use href="#icon-chevron"></use></svg></summary>
+            <div class="about-disclosure-content">
+              <p><strong>Un Petit Pas respecte votre vie privée.</strong> Les routines, progressions, réglages et historiques sont enregistrés localement sur votre appareil avec IndexedDB.</p>
+              <p>Aucun compte n'est requis et aucune donnée personnelle n'est envoyée à Caroline. Les notifications sont utilisées uniquement si vous les autorisez. Vous pouvez supprimer vos données locales à tout moment depuis Réglages.</p>
+            </div>
+          </details>
+
+          <details class="about-disclosure">
+            <summary><span class="about-footer-icon sage"><svg><use href="#icon-file"></use></svg></span><span>Conditions d'utilisation</span><svg class="about-chevron"><use href="#icon-chevron"></use></svg></summary>
+            <div class="about-disclosure-content">
+              <p>Un Petit Pas est un outil de soutien à l'organisation personnelle. Il ne remplace pas un avis médical, psychologique ou professionnel.</p>
+              <p>L'application est proposée pour vous accompagner sans obligation de résultat. Vous restez libre d'adapter ou d'interrompre chaque mission, routine ou minuterie selon votre énergie et vos besoins.</p>
+            </div>
+          </details>
+
+          <details class="about-disclosure">
+            <summary><span class="about-footer-icon warm"><svg><use href="#icon-mail"></use></svg></span><span>Contact</span><svg class="about-chevron"><use href="#icon-chevron"></use></svg></summary>
+            <div class="about-disclosure-content">
+              <p>Une question, une suggestion ou simplement envie de partager votre expérience? Caroline sera heureuse de vous lire.</p>
+              <p>Utilisez le moyen de contact indiqué sur la page où vous avez obtenu l'application Un Petit Pas.</p>
+            </div>
+          </details>
+        </footer>
       </section>
     </main>
 
@@ -263,6 +336,7 @@
       <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
       <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
       <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
+      <button class="nav-item" data-route="about"><svg><use href="#icon-about"></use></svg><span>À propos</span></button>
     </nav>
 
     <button id="timerFab" class="timer-fab" type="button" aria-label="Ouvrir la minuterie" aria-expanded="false" aria-controls="timerPanel">
