@@ -34,6 +34,10 @@
     <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></symbol>
     <symbol id="icon-spark" viewBox="0 0 24 24"><path d="m12 2 1.4 5.6L19 9l-5.6 1.4L12 16l-1.4-5.6L5 9l5.6-1.4L12 2Zm7 13 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></symbol>
     <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></symbol>
+    <symbol id="icon-timer" viewBox="0 0 24 24"><path d="M9 2h6M12 6a8 8 0 1 1-8 8 8 8 0 0 1 8-8Zm0 4v4l2.5 1.5M17.7 7.3 19 6"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M4 4v6h6M5.5 9A8 8 0 1 1 4 14"/></symbol>
   </svg>
 
   <div class="ambient ambient-one"></div>
@@ -247,6 +251,69 @@
       <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
       <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
     </nav>
+
+    <button id="timerFab" class="timer-fab" type="button" aria-label="Ouvrir la minuterie" aria-expanded="false" aria-controls="timerPanel">
+      <span class="timer-fab-ring" id="timerFabRing">
+        <svg><use href="#icon-timer"></use></svg>
+      </span>
+      <span class="timer-fab-copy">
+        <small id="timerFabLabel">Minuterie</small>
+        <strong id="timerFabTime">05:00</strong>
+      </span>
+    </button>
+
+    <section id="timerPanel" class="timer-panel" aria-labelledby="timerPanelTitle" hidden>
+      <div class="timer-panel-header">
+        <div>
+          <p class="card-kicker">Un moment pour avancer</p>
+          <h2 id="timerPanelTitle">Minuterie douce</h2>
+        </div>
+        <button id="closeTimerButton" class="dialog-close timer-close" type="button" aria-label="Fermer la minuterie">×</button>
+      </div>
+
+      <div id="timerMainView">
+        <div class="timer-display">
+          <svg class="timer-progress" viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="timer-progress-track" cx="80" cy="80" r="69"></circle>
+            <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
+          </svg>
+          <div class="timer-time-copy">
+            <strong id="timerTimeRemaining">05:00</strong>
+            <span id="timerStatusText">Prête quand tu l'es</span>
+          </div>
+        </div>
+
+        <div class="timer-presets" aria-label="Durées rapides">
+          <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
+          <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
+        </div>
+
+        <div class="timer-controls">
+          <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">
+            <svg><use href="#icon-reset"></use></svg>
+          </button>
+          <button id="timerPrimaryButton" class="timer-control primary" type="button">
+            <svg><use id="timerPrimaryIcon" href="#icon-play"></use></svg>
+            <span id="timerPrimaryLabel">Démarrer</span>
+          </button>
+        </div>
+        <p class="timer-gentle-note">Tu peux t'arrêter quand tu veux. Ce temps t'appartient.</p>
+      </div>
+
+      <div id="timerCompleteView" class="timer-complete-view" hidden>
+        <div class="timer-celebration" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <svg><use href="#icon-check"></use></svg>
+        </div>
+        <p class="card-kicker">C'est terminé</p>
+        <h2>Bravo. Tu as fait un petit pas.</h2>
+        <p>Tu peux savourer ce moment et t'arrêter ici.</p>
+        <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
+      </div>
+    </section>
   </div>
 
   <dialog id="routineTaskDialog" class="task-dialog">

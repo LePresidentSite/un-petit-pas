@@ -10,6 +10,16 @@
     history: "Mes progrès",
     settings: "Réglages"
   };
+  const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
+  const DEFAULT_TIMER_STATE = {
+    selectedMinutes: 5,
+    durationMs: 5 * 60 * 1000,
+    remainingMs: 5 * 60 * 1000,
+    status: "idle",
+    endAt: null,
+    startedAt: null,
+    completedAt: null
+  };
   const DEFAULT_SETTINGS = {
     firstName: "",
     reduceMotion: false,
@@ -21,7 +31,8 @@
     zoneTime: "18:00",
     lastMissionNotification: "",
     lastTipNotification: "",
-    lastZoneNotification: ""
+    lastZoneNotification: "",
+    timerState: Object.assign({}, DEFAULT_TIMER_STATE)
   };
 
   const state = {
@@ -38,7 +49,10 @@
     deferredInstallPrompt: null,
     serviceWorkerRegistration: null,
     notificationTimer: null,
-    toastTimer: null
+    toastTimer: null,
+    timer: Object.assign({}, DEFAULT_TIMER_STATE),
+    timerInterval: null,
+    audioContext: null
   };
 
   const elements = {};
@@ -54,6 +68,7 @@
       await loadState();
       applyPreferences();
       renderAll();
+      await restoreTimer();
       setupInstallPrompt();
       setupServiceWorker();
       startNotificationWatcher();
@@ -80,7 +95,11 @@
       "installSettingsButton", "resetDataButton", "routineTaskDialog",
       "routineTaskForm", "routineDialogTitle", "routineTaskId", "routineTaskName",
       "routineTaskPeriod", "routineTaskDuration", "toast", "updateBanner",
-      "reloadAppButton"
+      "reloadAppButton", "timerFab", "timerFabRing", "timerFabLabel",
+      "timerFabTime", "timerPanel", "closeTimerButton", "timerMainView",
+      "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
+      "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
+      "timerPrimaryLabel", "timerCompleteView", "timerDoneButton"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -91,6 +110,8 @@
     state.selectedHistoryDate = todayKey;
     state.calendarCursor = new Date(state.today.getFullYear(), state.today.getMonth(), 1);
     state.settings = await DB.getSettings(DEFAULT_SETTINGS);
+    state.timer = normalizeTimerState(state.settings.timerState);
+    state.settings.timerState = Object.assign({}, state.timer);
     state.routineTasks = await DB.seedRoutines(DATA.defaultRoutines);
 
     const results = await Promise.all([
@@ -126,6 +147,16 @@
     elements.installSettingsButton.addEventListener("click", installApp);
     elements.resetDataButton.addEventListener("click", resetData);
     elements.reloadAppButton.addEventListener("click", activateUpdate);
+    elements.timerFab.addEventListener("click", toggleTimerPanel);
+    elements.closeTimerButton.addEventListener("click", closeTimerPanel);
+    elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
+    elements.timerResetButton.addEventListener("click", resetTimer);
+    elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
+    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
+      button.addEventListener("click", selectTimerPreset);
+    });
+    document.addEventListener("visibilitychange", updateTimer);
+    window.addEventListener("pageshow", updateTimer);
     window.addEventListener("hashchange", navigateFromHash);
   }
 
@@ -186,6 +217,7 @@
     renderRoutines();
     renderHistory();
     renderSettings();
+    renderTimer();
     navigate(state.route, false);
   }
 
@@ -559,7 +591,8 @@
       mission: "Mission du jour",
       tip: "Conseil lu",
       zone: "Mini-tâche",
-      routine: "Routine"
+      routine: "Routine",
+      timer: "Minuterie"
     };
     elements.historyList.innerHTML = dayActivities.map(function (activity) {
       const time = new Intl.DateTimeFormat("fr-CA", { hour: "2-digit", minute: "2-digit" }).format(new Date(activity.completedAt));
@@ -598,6 +631,297 @@
     elements.reduceMotionSetting.checked = Boolean(state.settings.reduceMotion);
     elements.firstNameSetting.value = state.settings.firstName || "";
     renderNotificationStatus();
+  }
+
+  function normalizeTimerState(savedState) {
+    const saved = savedState && typeof savedState === "object" ? savedState : {};
+    const selectedMinutes = [2, 5, 10, 15, 30].includes(Number(saved.selectedMinutes))
+      ? Number(saved.selectedMinutes)
+      : DEFAULT_TIMER_STATE.selectedMinutes;
+    const durationMs = Number(saved.durationMs) > 0
+      ? Number(saved.durationMs)
+      : selectedMinutes * 60 * 1000;
+    const statuses = ["idle", "running", "paused", "complete"];
+    const status = statuses.includes(saved.status) ? saved.status : "idle";
+    const remainingMs = Math.max(0, Math.min(
+      Number.isFinite(Number(saved.remainingMs)) ? Number(saved.remainingMs) : durationMs,
+      durationMs
+    ));
+
+    return {
+      selectedMinutes: selectedMinutes,
+      durationMs: durationMs,
+      remainingMs: remainingMs,
+      status: status,
+      endAt: status === "running" && Number(saved.endAt) > 0 ? Number(saved.endAt) : null,
+      startedAt: typeof saved.startedAt === "string" ? saved.startedAt : null,
+      completedAt: typeof saved.completedAt === "string" ? saved.completedAt : null
+    };
+  }
+
+  async function restoreTimer() {
+    if (state.timer.status === "running") {
+      const remainingMs = getTimerRemaining();
+      if (remainingMs <= 0) {
+        await completeTimer(false);
+        openTimerPanel();
+        return;
+      }
+      state.timer.remainingMs = remainingMs;
+      startTimerTicker();
+    }
+    renderTimer();
+  }
+
+  function toggleTimerPanel() {
+    if (elements.timerPanel.hidden) openTimerPanel();
+    else closeTimerPanel();
+  }
+
+  function openTimerPanel() {
+    elements.timerPanel.hidden = false;
+    elements.timerFab.setAttribute("aria-expanded", "true");
+  }
+
+  function closeTimerPanel() {
+    elements.timerPanel.hidden = true;
+    elements.timerFab.setAttribute("aria-expanded", "false");
+  }
+
+  function selectTimerPreset(event) {
+    if (state.timer.status === "running" || state.timer.status === "paused") return;
+    const selectedMinutes = Number(event.currentTarget.dataset.timerMinutes);
+    state.timer = {
+      selectedMinutes: selectedMinutes,
+      durationMs: selectedMinutes * 60 * 1000,
+      remainingMs: selectedMinutes * 60 * 1000,
+      status: "idle",
+      endAt: null,
+      startedAt: null,
+      completedAt: null
+    };
+    persistTimer();
+    renderTimer();
+  }
+
+  async function handleTimerPrimaryAction() {
+    await primeTimerAudio();
+    if (state.timer.status === "running") {
+      await pauseTimer();
+      return;
+    }
+    await startTimer();
+  }
+
+  async function startTimer() {
+    const isResuming = state.timer.status === "paused";
+    const remainingMs = isResuming && state.timer.remainingMs > 0
+      ? state.timer.remainingMs
+      : state.timer.durationMs;
+
+    state.timer.remainingMs = remainingMs;
+    state.timer.endAt = Date.now() + remainingMs;
+    state.timer.status = "running";
+    state.timer.completedAt = null;
+    if (!isResuming || !state.timer.startedAt) {
+      state.timer.startedAt = new Date().toISOString();
+    }
+
+    await persistTimer();
+    startTimerTicker();
+    renderTimer();
+  }
+
+  async function pauseTimer() {
+    state.timer.remainingMs = getTimerRemaining();
+    state.timer.endAt = null;
+    state.timer.status = "paused";
+    stopTimerTicker();
+    await persistTimer();
+    renderTimer();
+  }
+
+  async function resetTimer() {
+    stopTimerTicker();
+    state.timer = {
+      selectedMinutes: state.timer.selectedMinutes,
+      durationMs: state.timer.durationMs,
+      remainingMs: state.timer.durationMs,
+      status: "idle",
+      endAt: null,
+      startedAt: null,
+      completedAt: null
+    };
+    await persistTimer();
+    renderTimer();
+  }
+
+  async function acknowledgeTimerCompletion() {
+    await resetTimer();
+    closeTimerPanel();
+  }
+
+  function startTimerTicker() {
+    stopTimerTicker();
+    state.timerInterval = window.setInterval(updateTimer, 250);
+  }
+
+  function stopTimerTicker() {
+    if (!state.timerInterval) return;
+    window.clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+
+  async function updateTimer() {
+    if (state.timer.status !== "running") return;
+    const remainingMs = getTimerRemaining();
+    state.timer.remainingMs = remainingMs;
+    if (remainingMs <= 0) {
+      await completeTimer(true);
+      return;
+    }
+    renderTimer();
+  }
+
+  function getTimerRemaining() {
+    if (state.timer.status === "running" && state.timer.endAt) {
+      return Math.max(0, state.timer.endAt - Date.now());
+    }
+    return Math.max(0, state.timer.remainingMs);
+  }
+
+  async function completeTimer(playSound) {
+    if (state.timer.status === "complete") return;
+    stopTimerTicker();
+    state.timer.remainingMs = 0;
+    state.timer.endAt = null;
+    state.timer.status = "complete";
+    state.timer.completedAt = new Date().toISOString();
+    await persistTimer();
+
+    const completionDate = formatDateKey(new Date());
+    const timerReference = state.timer.startedAt || state.timer.completedAt;
+    await addActivity(
+      "timer",
+      completionDate,
+      timerReference,
+      "Minuterie de " + state.timer.selectedMinutes + " minutes"
+    );
+
+    if (playSound) playTimerChime();
+    if (document.hidden) showTimerNotification();
+    openTimerPanel();
+    renderTimer();
+    renderHome();
+    renderHistory();
+  }
+
+  async function persistTimer() {
+    const savedTimer = Object.assign({}, state.timer);
+    state.settings.timerState = savedTimer;
+    await DB.saveSettings({ timerState: savedTimer });
+  }
+
+  function renderTimer() {
+    const remainingMs = getTimerRemaining();
+    const ratio = state.timer.durationMs > 0
+      ? Math.max(0, Math.min(1, remainingMs / state.timer.durationMs))
+      : 0;
+    const status = state.timer.status;
+    const isActive = status === "running" || status === "paused";
+    const displayTime = formatTimerTime(remainingMs);
+
+    elements.timerTimeRemaining.textContent = displayTime;
+    elements.timerFabTime.textContent = displayTime;
+    elements.timerProgressCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - ratio));
+    elements.timerFabRing.style.setProperty("--timer-fab-progress", (ratio * 360) + "deg");
+    elements.timerFab.classList.toggle("running", status === "running");
+    elements.timerFab.classList.toggle("complete", status === "complete");
+    elements.timerMainView.hidden = status === "complete";
+    elements.timerCompleteView.hidden = status !== "complete";
+
+    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
+      button.classList.toggle("active", Number(button.dataset.timerMinutes) === state.timer.selectedMinutes);
+      button.disabled = isActive;
+    });
+
+    const statusCopy = {
+      idle: "Prête quand tu l'es",
+      running: "Un petit pas est en cours",
+      paused: "En pause, sans culpabilité",
+      complete: "Petit pas terminé"
+    };
+    const fabCopy = {
+      idle: "Minuterie",
+      running: "En cours",
+      paused: "En pause",
+      complete: "Bravo"
+    };
+    elements.timerStatusText.textContent = statusCopy[status];
+    elements.timerFabLabel.textContent = fabCopy[status];
+
+    if (status === "running") {
+      elements.timerPrimaryIcon.setAttribute("href", "#icon-pause");
+      elements.timerPrimaryLabel.textContent = "Pause";
+    } else if (status === "paused") {
+      elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
+      elements.timerPrimaryLabel.textContent = "Reprendre";
+    } else {
+      elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
+      elements.timerPrimaryLabel.textContent = "Démarrer";
+    }
+    elements.timerResetButton.disabled = status === "idle";
+  }
+
+  function formatTimerTime(milliseconds) {
+    const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+  }
+
+  async function primeTimerAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!state.audioContext) state.audioContext = new AudioContextClass();
+    if (state.audioContext.state === "suspended") {
+      try {
+        await state.audioContext.resume();
+      } catch (error) {
+        console.warn("Le son de la minuterie n'a pas pu être préparé.", error);
+      }
+    }
+  }
+
+  function playTimerChime() {
+    if (!state.audioContext || state.audioContext.state !== "running") return;
+    const context = state.audioContext;
+    const startAt = context.currentTime;
+    [
+      { frequency: 523.25, offset: 0, duration: 0.65 },
+      { frequency: 659.25, offset: 0.22, duration: 0.85 }
+    ].forEach(function (tone) {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(tone.frequency, startAt + tone.offset);
+      gain.gain.setValueAtTime(0.0001, startAt + tone.offset);
+      gain.gain.exponentialRampToValueAtTime(0.12, startAt + tone.offset + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + tone.offset + tone.duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(startAt + tone.offset);
+      oscillator.stop(startAt + tone.offset + tone.duration + 0.05);
+    });
+  }
+
+  function showTimerNotification() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    showNotification(
+      "Bravo. Tu as fait un petit pas.",
+      "Ta minuterie de " + state.timer.selectedMinutes + " minutes est terminée.",
+      "timer-" + (state.timer.completedAt || Date.now())
+    );
   }
 
   async function saveSettings() {
