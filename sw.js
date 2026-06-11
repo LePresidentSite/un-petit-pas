@@ -8,7 +8,7 @@ const APP_SHELL = [
   "./data.js",
   "./db.js",
   "./app.js",
-  "./caroline.jpg",
+  "./assets/caroline.jpg?v=20260611",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",
