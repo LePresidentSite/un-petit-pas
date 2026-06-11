@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="Un Petit Pas aide à avancer doucement dans le ménage et l'organisation, une petite action à la fois.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Un Petit Pas">
+  <title>Un Petit Pas</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./data.js" defer></script>
+  <script src="./db.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="icon-zones" viewBox="0 0 24 24"><path d="M4 3h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM4 13h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></symbol>
+    <symbol id="icon-routines" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6.1l1.2 1.2L7.7 4.8M4 12.1l1.2 1.2 2.5-2.5M4 18.1l1.2 1.2 2.5-2.5"/></symbol>
+    <symbol id="icon-history" viewBox="0 0 24 24"><path d="M5 3v3M19 3v3M3 9h18M5 5h14a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a2 2 0 0 1 2-2Z"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="m19.4 15 .1.1 1.2 2.1-2.5 2.5-2.1-1.2-.1-.1a8 8 0 0 1-2.1.9V22h-3.8v-2.7a8 8 0 0 1-2.1-.9l-.1.1-2.1 1.2-2.5-2.5 1.2-2.1.1-.1a8 8 0 0 1-.9-2.1H2V9.1h2.7A8 8 0 0 1 5.6 7l-.1-.1-1.2-2.1 2.5-2.5 2.1 1.2.1.1a8 8 0 0 1 2.1-.9V0h3.8v2.7a8 8 0 0 1 2.1.9l.1-.1 2.1-1.2 2.5 2.5-1.2 2.1-.1.1a8 8 0 0 1 .9 2.1H24v3.8h-2.7a8 8 0 0 1-.9 2.1Z"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7Zm4 11h4"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 5v14"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11-4-4L4 16ZM13.5 6.5l4 4"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="m12 2 1.4 5.6L19 9l-5.6 1.4L12 16l-1.4-5.6L5 9l5.6-1.4L12 2Zm7 13 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></symbol>
+  </svg>
+
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <div id="splash" class="splash" role="status">
+    <div class="brand-mark large"><span></span><span></span><span></span></div>
+    <p>Un Petit Pas</p>
+  </div>
+
+  <div id="app" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#accueil" data-route="home" aria-label="Un Petit Pas, accueil">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span><strong>Un Petit Pas</strong><small>Doucement, mais sûrement.</small></span>
+      </a>
+      <nav class="side-nav" aria-label="Navigation principale">
+        <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
+        <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
+        <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+        <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Historique</span></button>
+        <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
+      </nav>
+      <blockquote class="sidebar-quote">« Un petit pas suffit. »</blockquote>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="todayLabel"></p>
+          <h1 id="pageTitle">Bonjour</h1>
+        </div>
+        <button id="installButton" class="icon-button install-button" hidden aria-label="Installer l'application">
+          <svg><use href="#icon-download"></use></svg>
+        </button>
+      </header>
+
+      <section id="page-home" class="page active" data-page="home" aria-labelledby="pageTitle">
+        <div class="home-grid">
+          <article class="card quote-card">
+            <div class="quote-icon"><svg><use href="#icon-spark"></use></svg></div>
+            <p class="card-kicker">Pour aujourd'hui</p>
+            <blockquote id="dailyQuote"></blockquote>
+          </article>
+
+          <article class="card progress-card">
+            <div class="progress-ring" id="dailyProgressRing" style="--progress: 0">
+              <div><strong id="dailyProgressValue">0%</strong><span>aujourd'hui</span></div>
+            </div>
+            <div>
+              <p class="card-kicker">Ton rythme</p>
+              <h2 id="progressTitle">Un pas à la fois</h2>
+              <p id="progressCaption" class="muted">Rien ne presse.</p>
+            </div>
+          </article>
+
+          <article class="card mission-card">
+            <div class="card-heading">
+              <div>
+                <p class="card-kicker">Mission du jour</p>
+                <h2 id="missionTitle"></h2>
+              </div>
+              <span class="time-pill"><svg><use href="#icon-clock"></use></svg><span id="missionTime"></span></span>
+            </div>
+            <p id="missionDescription" class="mission-description"></p>
+            <button id="completeMissionButton" class="primary-button">
+              <svg><use href="#icon-check"></use></svg>
+              <span>J'ai terminé</span>
+            </button>
+          </article>
+
+          <article class="card tip-card">
+            <div class="card-heading compact">
+              <div>
+                <p class="card-kicker">Conseil du jour</p>
+                <h2>À garder en tête</h2>
+              </div>
+              <span class="tip-number" id="tipNumber"></span>
+            </div>
+            <p id="dailyTip" class="tip-text"></p>
+            <button id="markTipButton" class="text-button">Marquer comme lu <svg><use href="#icon-chevron"></use></svg></button>
+          </article>
+
+          <article class="card weekly-card">
+            <div class="zone-visual" id="weeklyZoneVisual">
+              <span class="zone-shape zone-shape-one"></span>
+              <span class="zone-shape zone-shape-two"></span>
+              <svg id="weeklyZoneIcon"><use href="#icon-home"></use></svg>
+            </div>
+            <div class="weekly-content">
+              <p class="card-kicker">Zone de la semaine</p>
+              <h2 id="weeklyZoneTitle"></h2>
+              <p id="weeklyZoneDescription" class="muted"></p>
+              <button class="text-button" data-route="zones">Voir les mini-tâches <svg><use href="#icon-chevron"></use></svg></button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-zones" class="page" data-page="zones">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Pièce par pièce</p>
+            <h2>Choisis un endroit léger</h2>
+          </div>
+          <p>Une seule mini-tâche compte déjà.</p>
+        </div>
+        <div id="zonesList" class="zones-list"></div>
+      </section>
+
+      <section id="page-routines" class="page" data-page="routines">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">À ton rythme</p>
+            <h2>Mes routines</h2>
+          </div>
+          <button id="addRoutineTaskButton" class="secondary-button"><svg><use href="#icon-plus"></use></svg>Ajouter</button>
+        </div>
+        <div class="routine-tabs" role="tablist" aria-label="Choisir une routine">
+          <button class="routine-tab active" data-routine="morning" role="tab">Matin</button>
+          <button class="routine-tab" data-routine="afternoon" role="tab">Après-midi</button>
+          <button class="routine-tab" data-routine="evening" role="tab">Soir</button>
+        </div>
+        <div id="routineSummary" class="routine-summary"></div>
+        <div id="routineTaskList" class="routine-list"></div>
+      </section>
+
+      <section id="page-history" class="page" data-page="history">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Regarde le chemin</p>
+            <h2>Tes petits pas</h2>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><strong id="totalSteps">0</strong><span>petits pas</span></article>
+          <article class="stat-card"><strong id="missionCount">0</strong><span>missions</span></article>
+          <article class="stat-card"><strong id="tipCount">0</strong><span>conseils lus</span></article>
+        </div>
+        <article class="card calendar-card">
+          <div class="calendar-header">
+            <button id="previousMonth" class="icon-button" aria-label="Mois précédent"><svg class="flip"><use href="#icon-chevron"></use></svg></button>
+            <h2 id="calendarMonth"></h2>
+            <button id="nextMonth" class="icon-button" aria-label="Mois suivant"><svg><use href="#icon-chevron"></use></svg></button>
+          </div>
+          <div class="calendar-weekdays" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </article>
+        <div class="history-heading">
+          <h3 id="historyDayTitle">Aujourd'hui</h3>
+          <span id="historyDayCount"></span>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <section id="page-settings" class="page" data-page="settings">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Sans pression</p>
+            <h2>Rappels et préférences</h2>
+          </div>
+        </div>
+        <article class="card settings-card">
+          <div class="settings-title">
+            <span class="settings-icon"><svg><use href="#icon-bell"></use></svg></span>
+            <div><h3>Rappels doux</h3><p>Choisis seulement ce qui t'aide.</p></div>
+          </div>
+          <div class="setting-row">
+            <label for="missionReminder">Mission du jour</label>
+            <div class="setting-control"><input id="missionTimeSetting" type="time" value="09:00"><label class="switch"><input id="missionReminder" type="checkbox"><span></span></label></div>
+          </div>
+          <div class="setting-row">
+            <label for="tipReminder">Conseil du jour</label>
+            <div class="setting-control"><input id="tipTimeSetting" type="time" value="12:30"><label class="switch"><input id="tipReminder" type="checkbox"><span></span></label></div>
+          </div>
+          <div class="setting-row">
+            <label for="zoneReminder">Zone de la semaine</label>
+            <div class="setting-control"><input id="zoneTimeSetting" type="time" value="18:00"><label class="switch"><input id="zoneReminder" type="checkbox"><span></span></label></div>
+          </div>
+          <button id="enableNotificationsButton" class="secondary-button full-width"><svg><use href="#icon-bell"></use></svg>Autoriser les notifications</button>
+          <p id="notificationStatus" class="setting-note"></p>
+        </article>
+        <article class="card settings-card">
+          <div class="settings-title">
+            <span class="settings-icon warm"><svg><use href="#icon-spark"></use></svg></span>
+            <div><h3>Mon expérience</h3><p>Quelques réglages simples.</p></div>
+          </div>
+          <div class="setting-row">
+            <label for="reduceMotionSetting">Réduire les animations</label>
+            <label class="switch"><input id="reduceMotionSetting" type="checkbox"><span></span></label>
+          </div>
+          <div class="setting-row">
+            <label for="firstNameSetting">Mon prénom</label>
+            <input id="firstNameSetting" class="text-input small-input" type="text" maxlength="30" placeholder="Optionnel">
+          </div>
+          <button id="saveSettingsButton" class="primary-button full-width">Enregistrer</button>
+        </article>
+        <article class="install-card">
+          <div><p class="card-kicker">Toujours près de toi</p><h3>Installer Un Petit Pas</h3><p>Accède à l'application même hors ligne.</p></div>
+          <button id="installSettingsButton" class="secondary-button"><svg><use href="#icon-download"></use></svg>Installer</button>
+        </article>
+        <button id="resetDataButton" class="danger-link">Réinitialiser mes données locales</button>
+        <p class="privacy-note">Tes données restent sur cet appareil. Aucun compte, aucun suivi.</p>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navigation mobile">
+      <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
+      <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
+      <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+      <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
+      <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
+    </nav>
+  </div>
+
+  <dialog id="routineTaskDialog" class="task-dialog">
+    <form id="routineTaskForm" method="dialog">
+      <div class="dialog-header">
+        <div><p class="card-kicker">Routine</p><h2 id="routineDialogTitle">Ajouter une tâche</h2></div>
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Fermer">×</button>
+      </div>
+      <input id="routineTaskId" type="hidden">
+      <label class="form-field">Nom de la tâche<input id="routineTaskName" class="text-input" type="text" maxlength="70" required placeholder="Ex. Préparer un verre d'eau"></label>
+      <label class="form-field">Moment<select id="routineTaskPeriod" class="text-input"><option value="morning">Matin</option><option value="afternoon">Après-midi</option><option value="evening">Soir</option></select></label>
+      <label class="form-field">Durée approximative<input id="routineTaskDuration" class="text-input" type="text" maxlength="20" placeholder="Ex. 2 min"></label>
+      <button class="primary-button full-width" type="submit">Enregistrer</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="updateBanner" class="update-banner" hidden>
+    <span>Une nouvelle version est prête.</span>
+    <button id="reloadAppButton">Actualiser</button>
+  </div>
+</body>
+</html>
