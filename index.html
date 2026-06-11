@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f1e9">
+  <meta name="theme-color" content="#f7f6f3">
   <meta name="description" content="Un Petit Pas aide à avancer doucement dans le ménage et l'organisation, une petite action à la fois.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -38,6 +38,7 @@
     <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
     <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
     <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M4 4v6h6M5.5 9A8 8 0 1 1 4 14"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15.4A8.5 8.5 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4Z"/></symbol>
   </svg>
 
   <div class="ambient ambient-one"></div>
@@ -83,17 +84,6 @@
             <blockquote id="dailyQuote"></blockquote>
           </article>
 
-          <article class="card progress-card">
-            <div class="progress-ring" id="dailyProgressRing" style="--progress: 0">
-              <div><strong id="dailyProgressValue">0%</strong><span>aujourd'hui</span></div>
-            </div>
-            <div>
-              <p class="card-kicker">Ton rythme</p>
-              <h2 id="progressTitle">Un pas à la fois</h2>
-              <p id="progressCaption" class="muted">Rien ne presse.</p>
-            </div>
-          </article>
-
           <article class="card mission-card">
             <div class="card-heading">
               <div>
@@ -103,11 +93,23 @@
               <span class="time-pill"><svg><use href="#icon-clock"></use></svg><span id="missionTime"></span></span>
             </div>
             <p id="missionDescription" class="mission-description"></p>
-            <button id="completeMissionButton" class="primary-button">
-              <svg><use href="#icon-check"></use></svg>
-              <span>J'ai terminé</span>
-            </button>
+            <div class="mission-actions">
+              <button id="completeMissionButton" class="primary-button">
+                <svg><use href="#icon-check"></use></svg>
+                <span>J'ai terminé</span>
+              </button>
+              <button id="missionTimerButton" class="secondary-button">
+                <svg><use href="#icon-timer"></use></svg>
+                <span>Démarrer la minuterie</span>
+              </button>
+            </div>
           </article>
+
+          <button id="homeTimerButton" class="home-timer-cta" type="button">
+            <span class="home-timer-icon"><svg><use href="#icon-timer"></use></svg></span>
+            <span><small>Besoin d'un point de départ ?</small><strong>Je fais un petit pas</strong></span>
+            <svg class="home-timer-arrow"><use href="#icon-chevron"></use></svg>
+          </button>
 
           <article class="card tip-card">
             <div class="card-heading compact">
@@ -119,6 +121,17 @@
             </div>
             <p id="dailyTip" class="tip-text"></p>
             <button id="markTipButton" class="text-button">Marquer comme lu <svg><use href="#icon-chevron"></use></svg></button>
+          </article>
+
+          <article class="card progress-card">
+            <div class="progress-ring" id="dailyProgressRing" style="--progress: 0">
+              <div><strong id="dailyProgressValue">0%</strong><span>aujourd'hui</span></div>
+            </div>
+            <div>
+              <p class="card-kicker">Ton rythme</p>
+              <h2 id="progressTitle">Un pas à la fois</h2>
+              <p id="progressCaption" class="muted">Rien ne presse.</p>
+            </div>
           </article>
 
           <article class="card weekly-card">
@@ -258,11 +271,11 @@
       </span>
       <span class="timer-fab-copy">
         <small id="timerFabLabel">Minuterie</small>
-        <strong id="timerFabTime">05:00</strong>
+        <strong id="timerFabTime">Je fais un petit pas</strong>
       </span>
     </button>
 
-    <section id="timerPanel" class="timer-panel" aria-labelledby="timerPanelTitle" hidden>
+    <section id="timerPanel" class="timer-panel" role="dialog" aria-modal="false" aria-labelledby="timerPanelTitle" hidden>
       <div class="timer-panel-header">
         <div>
           <p class="card-kicker">Un moment pour avancer</p>
@@ -309,7 +322,7 @@
           <svg><use href="#icon-check"></use></svg>
         </div>
         <p class="card-kicker">C'est terminé</p>
-        <h2>Bravo. Tu as fait un petit pas.</h2>
+        <h2>Bravo. Tu as fait un petit pas aujourd'hui.</h2>
         <p>Tu peux savourer ce moment et t'arrêter ici.</p>
         <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
       </div>

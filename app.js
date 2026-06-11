@@ -99,7 +99,8 @@
       "timerFabTime", "timerPanel", "closeTimerButton", "timerMainView",
       "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
       "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
-      "timerPrimaryLabel", "timerCompleteView", "timerDoneButton"
+      "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
+      "homeTimerButton", "missionTimerButton"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -152,6 +153,8 @@
     elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
     elements.timerResetButton.addEventListener("click", resetTimer);
     elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
+    elements.homeTimerButton.addEventListener("click", openTimerPanel);
+    elements.missionTimerButton.addEventListener("click", openMissionTimer);
     document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
       button.addEventListener("click", selectTimerPreset);
     });
@@ -393,6 +396,11 @@
     }).length;
     const names = { morning: "du matin", afternoon: "de l'après-midi", evening: "du soir" };
     const percent = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
+    const routineIcons = {
+      morning: "#icon-spark",
+      afternoon: "#icon-clock",
+      evening: "#icon-moon"
+    };
 
     elements.routineSummary.innerHTML = [
       '<div class="routine-summary-card">',
@@ -414,6 +422,7 @@
         '<button class="routine-check" data-routine-action="toggle" aria-label="', done ? "Marquer comme non terminée" : "Marquer comme terminée", '">',
         '<span class="custom-check"><svg><use href="#icon-check"></use></svg></span>',
         "</button>",
+        '<span class="routine-item-icon"><svg><use href="', routineIcons[task.routine], '"></use></svg></span>',
         "<div><p class=\"routine-name\">", escapeHtml(task.title), '</p><span class="routine-duration">', escapeHtml(task.duration || "Quelques minutes"), "</span></div>",
         '<div class="routine-actions">',
         '<button class="small-action" data-routine-action="up" aria-label="Monter la tâche"', index === 0 ? " disabled" : "", '><svg><use href="#icon-arrow"></use></svg></button>',
@@ -690,7 +699,10 @@
 
   function selectTimerPreset(event) {
     if (state.timer.status === "running" || state.timer.status === "paused") return;
-    const selectedMinutes = Number(event.currentTarget.dataset.timerMinutes);
+    setTimerPreset(Number(event.currentTarget.dataset.timerMinutes));
+  }
+
+  function setTimerPreset(selectedMinutes) {
     state.timer = {
       selectedMinutes: selectedMinutes,
       durationMs: selectedMinutes * 60 * 1000,
@@ -704,8 +716,21 @@
     renderTimer();
   }
 
+  function openMissionTimer() {
+    const missionMinutes = getDailyContent().mission.minutes;
+    const presets = [2, 5, 10, 15, 30];
+    const nearestPreset = presets.reduce(function (closest, value) {
+      return Math.abs(value - missionMinutes) < Math.abs(closest - missionMinutes) ? value : closest;
+    }, presets[0]);
+
+    if (state.timer.status !== "running" && state.timer.status !== "paused") {
+      setTimerPreset(nearestPreset);
+    }
+    openTimerPanel();
+  }
+
   async function handleTimerPrimaryAction() {
-    await primeTimerAudio();
+    primeTimerAudio();
     if (state.timer.status === "running") {
       await pauseTimer();
       return;
@@ -832,7 +857,9 @@
     const displayTime = formatTimerTime(remainingMs);
 
     elements.timerTimeRemaining.textContent = displayTime;
-    elements.timerFabTime.textContent = displayTime;
+    elements.timerFabTime.textContent = status === "idle"
+      ? "Je fais un petit pas"
+      : status === "complete" ? "C'est fait" : displayTime;
     elements.timerProgressCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - ratio));
     elements.timerFabRing.style.setProperty("--timer-fab-progress", (ratio * 360) + "deg");
     elements.timerFab.classList.toggle("running", status === "running");
@@ -1111,7 +1138,11 @@
 
   function activateUpdate() {
     if (state.serviceWorkerRegistration && state.serviceWorkerRegistration.waiting) {
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        window.location.reload();
+      }, { once: true });
       state.serviceWorkerRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
+      return;
     }
     window.location.reload();
   }
