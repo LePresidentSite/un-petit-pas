@@ -690,6 +690,66 @@ svg {
   gap: 0.25rem;
 }
 
+.zone-subsections {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.zone-subsection {
+  overflow: hidden;
+  border: 1px solid rgba(47, 58, 63, 0.07);
+  border-radius: 18px;
+  background: rgba(247, 246, 243, 0.58);
+}
+
+.zone-subsection summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  min-height: 54px;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.8rem;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 720;
+  list-style: none;
+  cursor: pointer;
+}
+
+.zone-subsection summary::-webkit-details-marker {
+  display: none;
+}
+
+.zone-subsection summary > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--muted);
+  transition: transform 180ms ease;
+}
+
+.zone-subsection[open] summary > svg {
+  transform: rotate(90deg);
+}
+
+.zone-section-count {
+  min-width: 38px;
+  padding: 0.28rem 0.45rem;
+  border-radius: 9px;
+  color: #526972;
+  background: var(--sky);
+  font-family: var(--font-body);
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.zone-subsection .mini-task-list {
+  padding: 0 0.65rem 0.55rem;
+  border-top: 1px solid rgba(47, 58, 63, 0.055);
+  background: rgba(252, 251, 248, 0.78);
+}
+
 .check-row {
   display: flex;
   min-height: 44px;
@@ -700,6 +760,49 @@ svg {
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.zone-task-row {
+  align-items: flex-start;
+  padding-top: 0.72rem;
+  padding-bottom: 0.72rem;
+}
+
+.zone-task-copy {
+  display: grid;
+  flex: 1;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.zone-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.zone-task-meta > span {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  padding: 0.2rem 0.45rem;
+  border-radius: 8px;
+  background: var(--mint);
+}
+
+.zone-task-meta .zone-duration {
+  gap: 0.25rem;
+  color: #526972;
+  background: var(--sky-soft);
+  font-weight: 760;
+}
+
+.zone-duration svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .custom-check {

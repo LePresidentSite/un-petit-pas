@@ -125,6 +125,7 @@
     state.activities = new Map(results[0].map(function (item) { return [item.id, item]; }));
     state.routineChecks = new Map(results[1].map(function (item) { return [item.id, item]; }));
     state.zoneStates = new Map(results[2].map(function (item) { return [item.id, item]; }));
+    await migrateLegacyZoneData();
 
     const hashRoute = window.location.hash.replace("#", "");
     if (Object.prototype.hasOwnProperty.call(ROUTE_TITLES, hashRoute)) {
@@ -316,18 +317,32 @@
   function renderZones() {
     const currentWeeklyZone = getDailyContent().weeklyZone;
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
-      const doneCount = zone.tasks.filter(function (_, index) {
-        return isZoneTaskDone(zone.id, index);
+      const doneCount = zone.tasks.filter(function (task) {
+        return isZoneTaskDone(task.id);
       }).length;
       const percent = Math.round((doneCount / zone.tasks.length) * 100);
-      const tasks = zone.tasks.map(function (task, index) {
-        const done = isZoneTaskDone(zone.id, index);
+      const sections = zone.sections.map(function (section, sectionIndex) {
+        const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
+        const sectionDone = sectionTasks.filter(function (task) { return isZoneTaskDone(task.id); }).length;
+        const tasks = sectionTasks.map(function (task) {
+          const done = isZoneTaskDone(task.id);
+          return [
+            '<button class="check-row zone-task-row', done ? " done" : "",
+            '" data-zone-id="', zone.id, '" data-zone-task-id="', task.id,
+            '" aria-pressed="', String(done), '">',
+            '<span class="custom-check"><svg><use href="#icon-check"></use></svg></span>',
+            '<span class="zone-task-copy"><span class="task-label">', escapeHtml(task.titre), "</span>",
+            '<span class="zone-task-meta"><span>', escapeHtml(task.categorie), '</span><span class="zone-duration"><svg><use href="#icon-clock"></use></svg>', task.duree, " min</span></span></span>",
+            "</button>"
+          ].join("");
+        }).join("");
+
         return [
-          '<button class="check-row', done ? " done" : "", '" data-zone-id="', zone.id,
-          '" data-zone-task="', index, '" aria-pressed="', String(done), '">',
-          '<span class="custom-check"><svg><use href="#icon-check"></use></svg></span>',
-          '<span class="task-label">', escapeHtml(task), "</span>",
-          "</button>"
+          '<details class="zone-subsection"', currentWeeklyZone.id === zone.id && sectionIndex === 0 ? " open" : "", ">",
+          '<summary><span>', escapeHtml(section), '</span><span class="zone-section-count">', sectionDone, "/", sectionTasks.length,
+          '</span><svg><use href="#icon-chevron"></use></svg></summary>',
+          '<div class="mini-task-list">', tasks, "</div>",
+          "</details>"
         ].join("");
       }).join("");
 
@@ -340,47 +355,86 @@
         "</div>",
         '<div class="zone-progress-track"><span style="--width:', percent, '%"></span></div>',
         '<p class="zone-description">', escapeHtml(zone.description), "</p>",
-        '<div class="mini-task-list">', tasks, "</div>",
+        '<div class="zone-subsections">', sections, "</div>",
         "</article>"
       ].join("");
     }).join("");
   }
 
-  function isZoneTaskDone(zoneId, taskIndex) {
-    const row = state.zoneStates.get(zoneId + ":" + taskIndex);
+  function isZoneTaskDone(taskId) {
+    const row = state.zoneStates.get(taskId);
     return Boolean(row && row.completed);
   }
 
   async function handleZoneClick(event) {
-    const taskButton = event.target.closest("[data-zone-task]");
+    const taskButton = event.target.closest("[data-zone-task-id]");
     if (!taskButton) return;
 
     const zoneId = taskButton.dataset.zoneId;
-    const taskIndex = Number(taskButton.dataset.zoneTask);
+    const taskId = taskButton.dataset.zoneTaskId;
     const zone = DATA.zones.find(function (item) { return item.id === zoneId; });
-    if (!zone || !zone.tasks[taskIndex]) return;
+    const task = zone && zone.tasks.find(function (item) { return item.id === taskId; });
+    if (!zone || !task) return;
 
-    const id = zoneId + ":" + taskIndex;
-    const current = state.zoneStates.get(id);
+    const current = state.zoneStates.get(task.id);
     const completed = !(current && current.completed);
 
     if (completed) {
       const completedDate = formatDateKey(new Date());
-      const row = { id: id, completed: true, completedDate: completedDate };
+      const row = { id: task.id, completed: true, completedDate: completedDate };
       await DB.put("zoneTaskStates", row);
-      state.zoneStates.set(id, row);
-      await addActivity("zone", completedDate, id, zone.name + " · " + zone.tasks[taskIndex]);
+      state.zoneStates.set(task.id, row);
+      await addActivity("zone", completedDate, task.id, task.categorie + " · " + task.titre);
       showToast("Un petit pas de plus.");
     } else {
       const completedDate = current.completedDate || formatDateKey(new Date());
-      await DB.remove("zoneTaskStates", id);
-      state.zoneStates.delete(id);
-      await removeActivity("zone", completedDate, id);
+      await DB.remove("zoneTaskStates", task.id);
+      state.zoneStates.delete(task.id);
+      await removeActivity("zone", completedDate, task.id);
     }
 
     renderZones();
     renderHome();
     renderHistory();
+  }
+
+  async function migrateLegacyZoneData() {
+    for (const zone of DATA.zones) {
+      for (let index = 0; index < zone.tasks.length; index += 1) {
+        const task = zone.tasks[index];
+        const legacyId = zone.id + ":" + index;
+        const legacyState = state.zoneStates.get(legacyId);
+
+        if (legacyState) {
+          if (!state.zoneStates.has(task.id)) {
+            const migratedState = Object.assign({}, legacyState, { id: task.id });
+            await DB.put("zoneTaskStates", migratedState);
+            state.zoneStates.set(task.id, migratedState);
+          }
+          await DB.remove("zoneTaskStates", legacyId);
+          state.zoneStates.delete(legacyId);
+        }
+
+        const legacyActivities = Array.from(state.activities.values()).filter(function (activity) {
+          return activity.type === "zone" && activity.refId === legacyId;
+        });
+
+        for (const activity of legacyActivities) {
+          const migratedId = activityId("zone", activity.date, task.id);
+          if (!state.activities.has(migratedId)) {
+            const migratedActivity = Object.assign({}, activity, {
+              id: migratedId,
+              refId: task.id,
+              title: task.categorie + " · " + task.titre
+            });
+            await DB.put("activities", migratedActivity);
+            state.activities.set(migratedId, migratedActivity);
+          }
+          await DB.remove("activities", activity.id);
+          state.activities.delete(activity.id);
+        }
+      }
+    }
   }
 
   function renderRoutines() {
