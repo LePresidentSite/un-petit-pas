@@ -1506,9 +1506,10 @@ input[type="time"] {
 .timer-fab {
   position: fixed;
   right: 1rem;
-  bottom: calc(5.9rem + var(--safe-bottom));
-  z-index: 52;
+  bottom: calc(6.2rem + var(--safe-bottom));
+  z-index: 60;
   display: flex;
+  max-width: calc(100vw - 2rem);
   min-width: 126px;
   min-height: 58px;
   align-items: center;
@@ -1597,7 +1598,7 @@ input[type="time"] {
   right: 1rem;
   bottom: calc(10.1rem + var(--safe-bottom));
   left: 1rem;
-  z-index: 51;
+  z-index: 59;
   width: auto;
   max-width: 410px;
   max-height: calc(100vh - 12rem - var(--safe-bottom));
@@ -2694,7 +2695,7 @@ a:focus-visible {
 .about-page::before {
   inset: -8px;
   z-index: 0;
-  background: url("./assets/foret-about.jpg?v=20260611") top center / 100% auto repeat-y;
+  background: url("./assets/foret-about.jpg?v=20260611") top center / auto 520px repeat-y;
   filter: blur(2px) saturate(1.08) contrast(1.16);
   transform: scale(1.015);
 }
@@ -2702,7 +2703,7 @@ a:focus-visible {
 .about-page::after {
   inset: 0;
   z-index: 0;
-  background: rgba(247, 246, 243, 0.4);
+  background: rgba(247, 246, 243, 0.34);
 }
 
 .about-page > * {
@@ -2714,9 +2715,9 @@ a:focus-visible {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 1.4rem;
-  margin-bottom: 1.15rem;
-  padding: 2rem 1.35rem;
+  gap: 1.75rem;
+  margin-bottom: 1.35rem;
+  padding: 2.35rem 1.45rem;
   overflow: hidden;
   border: 1px solid rgba(47, 58, 63, 0.06);
   border-radius: 28px;
@@ -2764,19 +2765,37 @@ a:focus-visible {
 .about-intro {
   position: relative;
   z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.78rem;
+}
+
+.about-intro .eyebrow {
+  margin: 0;
 }
 
 .about-intro h2 {
-  margin: 0.45rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.68rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(2rem, 9vw, 3rem);
   font-weight: 680;
   letter-spacing: -0.055em;
 }
 
+.about-intro h2 span {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72em;
+  line-height: 1;
+}
+
 .about-lead {
   max-width: 30rem;
-  margin: 0.55rem auto 0;
+  margin: 0 auto;
   color: var(--muted);
   font-size: 1rem;
   line-height: 1.55;
@@ -2985,12 +3004,17 @@ a:focus-visible {
 }
 
 @media (min-width: 680px) {
+  .about-page::before {
+    background-size: 100% auto;
+  }
+
   .about-hero {
     grid-template-columns: auto minmax(0, 1fr);
-    min-height: 270px;
+    min-height: 290px;
     align-items: center;
     justify-items: start;
-    padding: 2.2rem 2.5rem;
+    column-gap: 2.5rem;
+    padding: 2.5rem 2.75rem;
     text-align: left;
   }
 
@@ -3002,6 +3026,15 @@ a:focus-visible {
   .about-lead {
     margin-right: 0;
     margin-left: 0;
+  }
+
+  .about-intro {
+    justify-items: start;
+    gap: 0.9rem;
+  }
+
+  .about-intro h2 {
+    justify-content: flex-start;
   }
 
   .about-story {
