@@ -3686,3 +3686,69 @@ body {
     left: auto;
   }
 }
+
+/* Soft sunlight glows */
+
+.brand-logo {
+  filter:
+    drop-shadow(0 5px 13px rgba(239, 203, 104, 0.14))
+    drop-shadow(0 8px 22px rgba(95, 143, 196, 0.12));
+  transition: filter 220ms ease;
+}
+
+.primary-button:not(.completed),
+.timer-control.primary {
+  box-shadow:
+    0 12px 28px rgba(183, 143, 42, 0.2),
+    0 0 22px rgba(239, 203, 104, 0.26),
+    0 0 40px rgba(95, 143, 196, 0.1);
+}
+
+.primary-button:not(.completed):hover,
+.timer-control.primary:hover {
+  box-shadow:
+    0 15px 34px rgba(183, 143, 42, 0.24),
+    0 0 28px rgba(239, 203, 104, 0.35),
+    0 0 46px rgba(95, 143, 196, 0.14);
+}
+
+.home-timer-cta {
+  box-shadow:
+    0 17px 38px rgba(180, 143, 43, 0.18),
+    0 0 30px rgba(239, 203, 104, 0.3),
+    0 0 54px rgba(95, 143, 196, 0.12);
+}
+
+.home-timer-cta:hover {
+  box-shadow:
+    0 21px 44px rgba(180, 143, 43, 0.22),
+    0 0 36px rgba(239, 203, 104, 0.35),
+    0 0 60px rgba(95, 143, 196, 0.16);
+}
+
+.timer-fab {
+  box-shadow:
+    0 17px 42px rgba(170, 132, 35, 0.24),
+    0 0 30px rgba(239, 203, 104, 0.35),
+    0 0 54px rgba(95, 143, 196, 0.25);
+}
+
+.timer-fab:hover {
+  box-shadow:
+    0 20px 46px rgba(170, 132, 35, 0.28),
+    0 0 36px rgba(239, 203, 104, 0.38),
+    0 0 62px rgba(95, 143, 196, 0.28);
+}
+
+#enableNotificationsButton,
+#installSettingsButton {
+  box-shadow:
+    0 10px 26px rgba(66, 76, 80, 0.07),
+    0 0 28px rgba(95, 143, 196, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo {
+    transition: none;
+  }
+}
