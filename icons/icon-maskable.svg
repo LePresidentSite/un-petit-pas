@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Icône adaptative Un Petit Pas</title>
+  <desc id="description">Soleil levant jaune, colline verte et branche à trois feuilles sur fond bleu profond.</desc>
+  <defs>
+    <radialGradient id="blue" cx=".5" cy=".42" r=".72"><stop stop-color="#0B386B"/><stop offset="1" stop-color="#031F42"/></radialGradient>
+    <linearGradient id="sun" x1="210" y1="90" x2="480" y2="285" gradientUnits="userSpaceOnUse"><stop stop-color="#FFD36A"/><stop offset="1" stop-color="#F3B438"/></linearGradient>
+    <linearGradient id="green" x1="70" y1="390" x2="820" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#AABB59"/><stop offset="1" stop-color="#7F9144"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#blue)"/>
+  <g transform="translate(62 151) scale(.46)">
+    <g fill="none" stroke="url(#sun)" stroke-linecap="round" stroke-width="11">
+      <path d="M330 18v58"/><path d="m208 56 32 54"/><path d="m452 56-32 54"/><path d="m101 142 65 40"/><path d="m559 142-65 40"/><path d="M61 259h76"/>
+    </g>
+    <path d="M190 288A140 140 0 0 1 470 288Q330 246 190 288Z" fill="url(#sun)"/>
+    <path d="M8 401C188 254 377 250 550 337c34 17 58 17 82-2 24-19 39-49 55-80-11 48-30 84-61 106 47 24 104 40 166 44-91 3-158-17-218-46-184-89-366-67-566 42Z" fill="url(#green)"/>
+    <path d="M621 360c52-31 89-82 123-151" fill="none" stroke="#849747" stroke-linecap="round" stroke-width="15"/>
+    <path d="M711 274c-3-86 47-151 133-160-1 82-47 142-133 160Z" fill="url(#green)"/>
+    <path d="M714 266c40-38 73-76 101-119" fill="none" stroke="#667A38" stroke-linecap="round" stroke-width="4"/>
+    <path d="M657 315c-38-38-40-90-16-133 41 26 56 84 16 133Z" fill="url(#green)"/>
+    <path d="M657 305c-2-38-8-67-15-91" fill="none" stroke="#667A38" stroke-linecap="round" stroke-width="4"/>
+    <path d="M682 348c45-42 105-42 151-12-40 44-101 47-151 12Z" fill="url(#green)"/>
+    <path d="M695 345c43-8 77-9 105-6" fill="none" stroke="#667A38" stroke-linecap="round" stroke-width="4"/>
+  </g>
+</svg>
