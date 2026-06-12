@@ -87,7 +87,10 @@ Deno.serve(async (request) => {
     };
 
     if (mode === "subscription") {
-      common.subscription_data = { metadata };
+      common.subscription_data = {
+        metadata,
+        ...(customerId ? {} : { trial_period_days: 45 })
+      };
     } else {
       common.customer_creation = customerId ? undefined : "always";
       common.expires_at = Math.floor(Date.now() / 1000) + 30 * 60;
