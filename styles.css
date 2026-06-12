@@ -2097,6 +2097,12 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .brand-emblem {
   display: grid;
   width: 68px;
@@ -2143,6 +2149,10 @@ a:focus-visible {
   text-align: center;
 }
 
+.splash-logo {
+  width: min(78vw, 380px);
+}
+
 .splash-brand .brand-emblem {
   width: 108px;
   height: 82px;
@@ -2168,7 +2178,11 @@ a:focus-visible {
 }
 
 .topbar-brand {
-  width: fit-content;
+  width: min(88vw, 360px);
+}
+
+.sidebar-logo {
+  width: 100%;
 }
 
 .topbar-main {
@@ -2550,6 +2564,10 @@ a:focus-visible {
 }
 
 @media (min-width: 680px) {
+  .topbar-brand {
+    width: 390px;
+  }
+
   .topbar-brand .brand-emblem {
     width: 82px;
     height: 62px;
@@ -2674,17 +2692,17 @@ a:focus-visible {
 }
 
 .about-page::before {
-  inset: -20px;
+  inset: -8px;
   z-index: 0;
   background: url("./assets/foret-about.jpg?v=20260611") top center / 100% auto repeat-y;
-  filter: blur(5px) saturate(1.12) contrast(1.28);
-  transform: scale(1.04);
+  filter: blur(2px) saturate(1.08) contrast(1.16);
+  transform: scale(1.015);
 }
 
 .about-page::after {
   inset: 0;
   z-index: 0;
-  background: rgba(247, 246, 243, 0.63);
+  background: rgba(247, 246, 243, 0.4);
 }
 
 .about-page > * {
@@ -2703,10 +2721,10 @@ a:focus-visible {
   border: 1px solid rgba(47, 58, 63, 0.06);
   border-radius: 28px;
   background:
-    radial-gradient(circle at 8% 18%, rgba(217, 230, 216, 0.38), transparent 12rem),
-    radial-gradient(circle at 92% 84%, rgba(207, 227, 238, 0.34), transparent 14rem),
-    rgba(252, 251, 248, 0.6);
-  backdrop-filter: blur(3px);
+    radial-gradient(circle at 8% 18%, rgba(217, 230, 216, 0.28), transparent 12rem),
+    radial-gradient(circle at 92% 84%, rgba(207, 227, 238, 0.26), transparent 14rem),
+    rgba(252, 251, 248, 0.78);
+  backdrop-filter: blur(1.5px);
   box-shadow: var(--shadow);
   text-align: center;
 }
@@ -2770,8 +2788,8 @@ a:focus-visible {
 
 .about-page .about-story {
   padding: 1.55rem;
-  background: rgba(252, 251, 248, 0.78);
-  backdrop-filter: blur(4px);
+  background: rgba(252, 251, 248, 0.88);
+  backdrop-filter: blur(1.5px);
 }
 
 .about-story > p {
@@ -2885,8 +2903,8 @@ a:focus-visible {
   overflow: hidden;
   border: 1px solid rgba(47, 58, 63, 0.06);
   border-radius: 20px;
-  background: rgba(252, 251, 248, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(252, 251, 248, 0.88);
+  backdrop-filter: blur(1.5px);
   box-shadow: 0 9px 28px rgba(66, 76, 80, 0.045);
 }
 
