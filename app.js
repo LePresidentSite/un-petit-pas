@@ -3,12 +3,14 @@
 
   const DATA = window.APP_DATA;
   const DB = window.AppDB;
+  const ACCOUNT = window.UnPetitPasAccount;
   const ROUTE_TITLES = {
     home: "Bonjour",
     zones: "Les zones",
     routines: "Mes routines",
     history: "Mes progrès",
     settings: "Réglages",
+    pro: "Découvrir PRO",
     about: "À propos"
   };
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
@@ -45,6 +47,7 @@
     routineTasks: [],
     routineChecks: new Map(),
     zoneStates: new Map(),
+    favorites: new Map(),
     selectedHistoryDate: "",
     calendarCursor: null,
     deferredInstallPrompt: null,
@@ -53,7 +56,17 @@
     toastTimer: null,
     timer: Object.assign({}, DEFAULT_TIMER_STATE),
     timerInterval: null,
-    audioContext: null
+    audioContext: null,
+    accountMode: "signup",
+    account: {
+      ready: false,
+      cloudEnabled: false,
+      user: null,
+      subscription: null,
+      isPro: false,
+      pricing: { founderActive: true, founderRemaining: 100, founderLimit: 100 },
+      limits: { customRoutineTasks: 3, favorites: 3, historyDays: 7, zoneTasksPerSection: 6 }
+    }
   };
 
   const elements = {};
@@ -74,6 +87,8 @@
       setupServiceWorker();
       startNotificationWatcher();
       showApp();
+      initializeAccount();
+      handlePaymentReturn();
     } catch (error) {
       console.error(error);
       showFatalError();
@@ -101,7 +116,21 @@
       "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
       "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
       "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
-      "homeTimerButton", "missionTimerButton"
+      "homeTimerButton", "missionTimerButton", "accountButton",
+      "favoriteMissionButton", "favoritesList", "favoriteCount",
+      "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
+      "signOutButton", "accountPlanLabel", "accountSettingsStatus",
+      "accountSettingsEmail", "createAccountButton", "loginAccountButton",
+      "upgradeMonthlyButton", "upgradeYearlyButton", "upgradePrimaryButton",
+      "upgradeLifetimeButton", "founderOfferPanel", "founderCounter",
+      "founderOfferBadge", "lifetimePricingCard", "lifetimeRegularPrice",
+      "lifetimePrice", "lifetimeDescription",
+      "proPaymentNotice", "advancedStatsPanel", "advancedStatsContent",
+      "historyAccessNote", "accountDialog", "accountForm", "accountDialogTitle",
+      "accountDialogCopy", "accountError", "accountSuccess",
+      "accountFirstNameField", "accountFirstName", "accountEmail",
+      "accountPassword", "accountSubmitButton", "accountModeSwitch",
+      "accountResetPassword", "accountCloudNotice", "closeAccountDialog"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -119,12 +148,14 @@
     const results = await Promise.all([
       DB.getAll("activities"),
       DB.getAll("routineChecks"),
-      DB.getAll("zoneTaskStates")
+      DB.getAll("zoneTaskStates"),
+      DB.getAll("favorites")
     ]);
 
     state.activities = new Map(results[0].map(function (item) { return [item.id, item]; }));
     state.routineChecks = new Map(results[1].map(function (item) { return [item.id, item]; }));
     state.zoneStates = new Map(results[2].map(function (item) { return [item.id, item]; }));
+    state.favorites = new Map(results[3].map(function (item) { return [item.id, item]; }));
     await migrateLegacyZoneData();
 
     const hashRoute = window.location.hash.replace("#", "");
@@ -157,6 +188,23 @@
     elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
     elements.homeTimerButton.addEventListener("click", openTimerPanel);
     elements.missionTimerButton.addEventListener("click", openMissionTimer);
+    elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
+    elements.favoritesList.addEventListener("click", handleFavoriteClick);
+    elements.accountButton.addEventListener("click", handleAccountButton);
+    elements.accountSettingsButton.addEventListener("click", handleAccountSettingsButton);
+    elements.manageSubscriptionButton.addEventListener("click", manageSubscription);
+    elements.signOutButton.addEventListener("click", signOutAccount);
+    elements.createAccountButton.addEventListener("click", function () { openAccountDialog("signup"); });
+    elements.loginAccountButton.addEventListener("click", function () { openAccountDialog("login"); });
+    elements.upgradeMonthlyButton.addEventListener("click", function () { startUpgrade("monthly"); });
+    elements.upgradeYearlyButton.addEventListener("click", function () { startUpgrade("yearly"); });
+    elements.upgradeLifetimeButton.addEventListener("click", function () { startUpgrade("lifetime"); });
+    elements.upgradePrimaryButton.addEventListener("click", function () { startUpgrade("yearly"); });
+    elements.accountForm.addEventListener("submit", submitAccountForm);
+    elements.accountModeSwitch.addEventListener("click", toggleAccountMode);
+    elements.accountResetPassword.addEventListener("click", resetAccountPassword);
+    elements.closeAccountDialog.addEventListener("click", function () { elements.accountDialog.close(); });
+    window.addEventListener("unpetitpas:account-change", handleAccountChange);
     document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
       button.addEventListener("click", selectTimerPreset);
     });
@@ -188,6 +236,7 @@
   function navigate(route, updateHash) {
     if (!ROUTE_TITLES[route]) route = "home";
     state.route = route;
+    document.body.dataset.activeRoute = route;
 
     document.querySelectorAll("[data-page]").forEach(function (page) {
       page.classList.toggle("active", page.dataset.page === route);
@@ -208,6 +257,7 @@
     }
 
     if (route === "history") renderHistory();
+    if (route === "pro") renderAccountUi();
     window.scrollTo({ top: 0, behavior: state.settings.reduceMotion ? "auto" : "smooth" });
   }
 
@@ -222,6 +272,7 @@
     renderRoutines();
     renderHistory();
     renderSettings();
+    renderAccountUi();
     renderTimer();
     navigate(state.route, false);
   }
@@ -254,6 +305,8 @@
     const missionRef = "mission-" + daily.missionIndex;
     const missionDone = hasActivity("mission", todayKey, missionRef);
     const tipDone = hasActivity("tip", todayKey, daily.tip.id);
+    const missionFavoriteId = "mission-" + daily.missionIndex;
+    const missionFavorite = state.favorites.has(missionFavoriteId);
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && activity.type !== "mission" && activity.type !== "tip";
     });
@@ -276,6 +329,9 @@
     elements.markTipButton.classList.toggle("completed", tipDone);
     elements.markTipButton.disabled = tipDone;
     elements.markTipButton.firstChild.textContent = tipDone ? "Conseil lu " : "Marquer comme lu ";
+    elements.favoriteMissionButton.classList.toggle("completed", missionFavorite);
+    elements.favoriteMissionButton.setAttribute("aria-pressed", String(missionFavorite));
+    elements.favoriteMissionButton.querySelector("span").textContent = missionFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
 
     elements.dailyProgressRing.style.setProperty("--progress", String(progress));
     elements.dailyProgressValue.textContent = progress + "%";
@@ -314,17 +370,59 @@
     showToast("Conseil gardé pour aujourd'hui.");
   }
 
+  async function toggleDailyMissionFavorite() {
+    const daily = getDailyContent();
+    const id = "mission-" + daily.missionIndex;
+    if (state.favorites.has(id)) {
+      await DB.remove("favorites", id);
+      state.favorites.delete(id);
+      renderHome();
+      renderFavorites();
+      showToast("Mission retirée des favoris.");
+      return;
+    }
+
+    if (!canUse("unlimitedFavorites") && state.favorites.size >= state.account.limits.favorites) {
+      navigate("pro");
+      showToast("La version gratuite permet de garder trois missions favorites.");
+      return;
+    }
+
+    const favorite = {
+      id: id,
+      type: "mission",
+      title: daily.mission.title,
+      description: daily.mission.description,
+      minutes: daily.mission.minutes,
+      savedAt: new Date().toISOString()
+    };
+    await DB.put("favorites", favorite);
+    state.favorites.set(id, favorite);
+    renderHome();
+    renderFavorites();
+    showToast("Mission ajoutée aux favoris.");
+  }
+
   function renderZones() {
     const currentWeeklyZone = getDailyContent().weeklyZone;
+    const hasCompleteZones = canUse("completeZones");
+    const freeTaskLimit = state.account.limits.zoneTasksPerSection;
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
-      const doneCount = zone.tasks.filter(function (task) {
+      const availableTasks = zone.tasks.filter(function (task) {
+        if (hasCompleteZones) return true;
+        const sectionTasks = zone.tasks.filter(function (row) { return row.categorie === task.categorie; });
+        return sectionTasks.indexOf(task) < freeTaskLimit;
+      });
+      const doneCount = availableTasks.filter(function (task) {
         return isZoneTaskDone(task.id);
       }).length;
-      const percent = Math.round((doneCount / zone.tasks.length) * 100);
+      const percent = Math.round((doneCount / availableTasks.length) * 100);
       const sections = zone.sections.map(function (section, sectionIndex) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
-        const sectionDone = sectionTasks.filter(function (task) { return isZoneTaskDone(task.id); }).length;
-        const tasks = sectionTasks.map(function (task) {
+        const visibleTasks = hasCompleteZones ? sectionTasks : sectionTasks.slice(0, freeTaskLimit);
+        const hiddenTaskCount = Math.max(0, sectionTasks.length - visibleTasks.length);
+        const sectionDone = visibleTasks.filter(function (task) { return isZoneTaskDone(task.id); }).length;
+        const tasks = visibleTasks.map(function (task) {
           const done = isZoneTaskDone(task.id);
           return [
             '<button class="check-row zone-task-row', done ? " done" : "",
@@ -339,9 +437,11 @@
 
         return [
           '<details class="zone-subsection"', currentWeeklyZone.id === zone.id && sectionIndex === 0 ? " open" : "", ">",
-          '<summary><span>', escapeHtml(section), '</span><span class="zone-section-count">', sectionDone, "/", sectionTasks.length,
+          '<summary><span>', escapeHtml(section), '</span><span class="zone-section-count">', sectionDone, "/", visibleTasks.length,
           '</span><svg><use href="#icon-chevron"></use></svg></summary>',
-          '<div class="mini-task-list">', tasks, "</div>",
+          '<div class="mini-task-list">', tasks,
+          hiddenTaskCount ? '<button class="zone-pro-teaser" type="button" data-route="pro"><svg><use href="#icon-lock"></use></svg><span>' + hiddenTaskCount + ' autres mini-tâches avec PRO</span><svg><use href="#icon-chevron"></use></svg></button>' : "",
+          "</div>",
           "</details>"
         ].join("");
       }).join("");
@@ -350,7 +450,7 @@
         '<article class="card zone-card', currentWeeklyZone.id === zone.id ? " current-zone" : "", '">',
         '<div class="zone-card-header">',
         '<span class="zone-icon">', zone.short, "</span>",
-        "<div><h3>", escapeHtml(zone.name), "</h3><p>", doneCount, " sur ", zone.tasks.length, " terminées</p></div>",
+        "<div><h3>", escapeHtml(zone.name), "</h3><p>", doneCount, " sur ", availableTasks.length, " terminées", hasCompleteZones ? "" : " · essentiel gratuit", "</p></div>",
         '<span class="zone-percent">', percent, "%</span>",
         "</div>",
         '<div class="zone-progress-track"><span style="--width:', percent, '%"></span></div>',
@@ -462,6 +562,9 @@
       "<strong>", completed, " sur ", tasks.length, " aujourd'hui</strong>",
       "<p>Routine ", names[state.activeRoutine], " · avance à ton rythme</p>",
       '<div class="routine-progress-track"><span style="--width:', percent, '%"></span></div>',
+      !canUse("unlimitedRoutines")
+        ? '<p class="routine-plan-note"><svg><use href="#icon-lock"></use></svg>' + getCustomRoutineCount() + " sur " + state.account.limits.customRoutineTasks + ' tâches personnalisées gratuites</p>'
+        : "",
       "</div>"
     ].join("");
 
@@ -493,6 +596,21 @@
     return state.routineTasks
       .filter(function (task) { return task.routine === routine; })
       .sort(function (a, b) { return a.order - b.order; });
+  }
+
+  function getCustomRoutineCount() {
+    return state.routineTasks.filter(function (task) {
+      return !String(task.id).startsWith("default-");
+    }).length;
+  }
+
+  function canAddCustomRoutineTask() {
+    return canUse("unlimitedRoutines") ||
+      getCustomRoutineCount() < state.account.limits.customRoutineTasks;
+  }
+
+  function canUse(feature) {
+    return ACCOUNT ? ACCOUNT.can(feature) : false;
   }
 
   async function handleRoutineListClick(event) {
@@ -533,6 +651,11 @@
 
   function openRoutineDialog(task) {
     const editing = Boolean(task);
+    if (!editing && !canAddCustomRoutineTask()) {
+      navigate("pro");
+      showToast("PRO permet d'ajouter des tâches de routine sans limite.");
+      return;
+    }
     elements.routineDialogTitle.textContent = editing ? "Modifier la tâche" : "Ajouter une tâche";
     elements.routineTaskId.value = editing ? task.id : "";
     elements.routineTaskName.value = editing ? task.title : "";
@@ -548,6 +671,12 @@
 
     const id = elements.routineTaskId.value || createId();
     const existing = state.routineTasks.find(function (task) { return task.id === id; });
+    if (!existing && !canAddCustomRoutineTask()) {
+      elements.routineTaskDialog.close();
+      navigate("pro");
+      showToast("La limite gratuite de trois tâches personnalisées est atteinte.");
+      return;
+    }
     const routine = elements.routineTaskPeriod.value;
     const order = existing && existing.routine === routine
       ? existing.order
@@ -601,6 +730,40 @@
     elements.tipCount.textContent = String(activities.filter(function (item) { return item.type === "tip"; }).length);
     renderCalendar(activities);
     renderHistoryDay(activities);
+    renderFavorites();
+    renderAdvancedStats(activities);
+  }
+
+  function renderFavorites() {
+    const favorites = Array.from(state.favorites.values()).sort(function (a, b) {
+      return b.savedAt.localeCompare(a.savedAt);
+    });
+    elements.favoriteCount.textContent = favorites.length + " favori" + (favorites.length > 1 ? "s" : "");
+    if (!favorites.length) {
+      elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucune mission favorite</h3><p>Ajoute une mission depuis l\'accueil pour la retrouver ici.</p></div>';
+      return;
+    }
+
+    elements.favoritesList.innerHTML = favorites.map(function (favorite) {
+      return [
+        '<article class="favorite-item" data-favorite-id="', favorite.id, '">',
+        '<span class="favorite-item-icon"><svg><use href="#icon-heart"></use></svg></span>',
+        '<div><strong>', escapeHtml(favorite.title), '</strong><p>', escapeHtml(favorite.description), '</p><small><svg><use href="#icon-clock"></use></svg>', favorite.minutes, ' min</small></div>',
+        '<button class="small-action favorite-remove" type="button" data-favorite-action="remove" aria-label="Retirer ', escapeHtml(favorite.title), ' des favoris"><svg><use href="#icon-trash"></use></svg></button>',
+        "</article>"
+      ].join("");
+    }).join("");
+  }
+
+  async function handleFavoriteClick(event) {
+    const button = event.target.closest("[data-favorite-action]");
+    const item = event.target.closest("[data-favorite-id]");
+    if (!button || !item) return;
+    await DB.remove("favorites", item.dataset.favoriteId);
+    state.favorites.delete(item.dataset.favoriteId);
+    renderFavorites();
+    renderHome();
+    showToast("Mission retirée des favoris.");
   }
 
   function renderCalendar(activities) {
@@ -623,13 +786,15 @@
     }
     for (let day = 1; day <= daysInMonth; day += 1) {
       const dateKey = formatDateKey(new Date(year, month, day));
+      const allowed = isHistoryDateAllowed(dateKey);
       const classes = [
         "calendar-day",
         dateKey === todayKey ? "today" : "",
         dateKey === state.selectedHistoryDate ? "selected" : "",
-        activityDates.has(dateKey) ? "has-steps" : ""
+        activityDates.has(dateKey) ? "has-steps" : "",
+        allowed ? "" : "pro-locked"
       ].filter(Boolean).join(" ");
-      cells.push('<button class="' + classes + '" data-date="' + dateKey + '" aria-label="' + dateKey + '">' + day + "</button>");
+      cells.push('<button class="' + classes + '"' + (allowed ? ' data-date="' + dateKey + '"' : ' disabled title="Historique complet avec PRO"') + ' aria-label="' + dateKey + '">' + day + "</button>");
     }
     elements.calendarGrid.innerHTML = cells.join("");
   }
@@ -645,6 +810,15 @@
       ? "Aujourd'hui"
       : capitalize(new Intl.DateTimeFormat("fr-CA", { weekday: "long", day: "numeric", month: "long" }).format(selectedDate));
     elements.historyDayCount.textContent = dayActivities.length + (dayActivities.length > 1 ? " petits pas" : " petit pas");
+    elements.historyAccessNote.hidden = true;
+
+    if (!isHistoryDateAllowed(state.selectedHistoryDate)) {
+      elements.historyDayCount.textContent = "PRO";
+      elements.historyList.innerHTML = "";
+      elements.historyAccessNote.hidden = false;
+      elements.historyAccessNote.innerHTML = '<svg><use href="#icon-lock"></use></svg><div><strong>Ton historique détaillé gratuit couvre les 7 derniers jours.</strong><p>PRO conserve l\'accès à tout ton parcours.</p></div><button class="secondary-button" type="button" data-route="pro">Découvrir PRO</button>';
+      return;
+    }
 
     if (!dayActivities.length) {
       elements.historyList.innerHTML = '<div class="empty-state"><h3>Aucun pas enregistré</h3><p>Cette journée peut rester douce et vide.</p></div>';
@@ -667,6 +841,47 @@
         "</article>"
       ].join("");
     }).join("");
+  }
+
+  function isHistoryDateAllowed(dateKey) {
+    if (canUse("fullHistory")) return true;
+    const selected = parseDateKey(dateKey);
+    const today = new Date(state.today.getFullYear(), state.today.getMonth(), state.today.getDate());
+    const difference = Math.floor((today.getTime() - selected.getTime()) / 86400000);
+    return difference >= 0 && difference < state.account.limits.historyDays;
+  }
+
+  function renderAdvancedStats(activities) {
+    if (!canUse("advancedStats")) {
+      elements.advancedStatsContent.innerHTML = '<div class="advanced-stats-locked"><span><svg><use href="#icon-lock"></use></svg></span><div><strong>Une vue plus complète avec PRO</strong><p>Découvre tes journées actives, ta série actuelle et le temps consacré à la minuterie.</p></div><button class="secondary-button" type="button" data-route="pro">Voir les avantages</button></div>';
+      return;
+    }
+
+    const activeDates = new Set(activities.map(function (activity) { return activity.date; }));
+    const timerMinutes = activities
+      .filter(function (activity) { return activity.type === "timer"; })
+      .reduce(function (total, activity) {
+        const match = activity.title.match(/(\d+)\s+minutes?/i);
+        return total + (match ? Number(match[1]) : 0);
+      }, 0);
+    const streak = getCurrentStreak(activeDates);
+    elements.advancedStatsContent.innerHTML = [
+      '<div class="advanced-stats-grid">',
+      '<article><span><svg><use href="#icon-spark"></use></svg></span><strong>', streak, '</strong><p>jours dans ta série actuelle</p></article>',
+      '<article><span><svg><use href="#icon-timer"></use></svg></span><strong>', timerMinutes, '</strong><p>minutes de petits pas</p></article>',
+      '<article><span><svg><use href="#icon-history"></use></svg></span><strong>', activeDates.size, '</strong><p>journées actives</p></article>',
+      "</div>"
+    ].join("");
+  }
+
+  function getCurrentStreak(activeDates) {
+    let cursor = new Date(state.today.getFullYear(), state.today.getMonth(), state.today.getDate());
+    let streak = 0;
+    while (activeDates.has(formatDateKey(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
   }
 
   function changeMonth(offset) {
@@ -694,7 +909,265 @@
     elements.zoneTimeSetting.value = state.settings.zoneTime;
     elements.reduceMotionSetting.checked = Boolean(state.settings.reduceMotion);
     elements.firstNameSetting.value = state.settings.firstName || "";
+    const customTimesEnabled = canUse("customReminderTimes");
+    [elements.missionTimeSetting, elements.tipTimeSetting, elements.zoneTimeSetting].forEach(function (input) {
+      input.disabled = !customTimesEnabled;
+      input.title = customTimesEnabled ? "" : "Les heures personnalisées sont incluses avec PRO.";
+    });
+    document.querySelectorAll(".pro-mini").forEach(function (badge) {
+      badge.hidden = customTimesEnabled;
+    });
     renderNotificationStatus();
+  }
+
+  async function initializeAccount() {
+    if (!ACCOUNT) {
+      renderAccountUi();
+      return;
+    }
+
+    try {
+      const snapshot = await ACCOUNT.init();
+      applyAccountSnapshot(snapshot);
+    } catch (error) {
+      console.warn("Initialisation du compte impossible :", error);
+      renderAccountUi();
+    }
+  }
+
+  function handleAccountChange(event) {
+    applyAccountSnapshot(event.detail);
+  }
+
+  function applyAccountSnapshot(snapshot) {
+    if (!snapshot) return;
+    state.account = Object.assign({}, state.account, snapshot, {
+      limits: Object.assign({}, state.account.limits, snapshot.limits || {})
+    });
+    renderAccountUi();
+    renderZones();
+    renderRoutines();
+    renderHistory();
+    renderSettings();
+  }
+
+  function renderAccountUi() {
+    const user = state.account.user;
+    const isPro = Boolean(state.account.isPro);
+    const cloudEnabled = Boolean(state.account.cloudEnabled);
+    const hasLifetimeAccess = state.account.subscription && state.account.subscription.plan === "lifetime";
+    elements.accountButton.classList.toggle("pro", isPro);
+    elements.accountButtonLabel.textContent = isPro ? "PRO" : user ? "Mon compte" : "Connexion";
+    elements.accountPlanLabel.textContent = hasLifetimeAccess ? "Accès PRO à vie" : isPro ? "Abonnement PRO actif" : user ? "Forfait gratuit" : "Mode local gratuit";
+    elements.accountSettingsStatus.textContent = user ? (isPro ? "Un Petit Pas PRO" : "Mon compte gratuit") : "Mon compte";
+    elements.accountSettingsEmail.textContent = user
+      ? user.email
+      : cloudEnabled ? "Crée un compte gratuitement pour préparer ton accès PRO." : "Tes données restent sur cet appareil.";
+    elements.accountSettingsButton.textContent = user ? (isPro ? "Voir les avantages PRO" : "Découvrir PRO") : "Créer un compte";
+    elements.manageSubscriptionButton.hidden = !isPro || hasLifetimeAccess;
+    elements.signOutButton.hidden = !user;
+    elements.createAccountButton.hidden = Boolean(user);
+    elements.loginAccountButton.hidden = Boolean(user);
+
+    [elements.upgradeMonthlyButton, elements.upgradeYearlyButton, elements.upgradeLifetimeButton, elements.upgradePrimaryButton].forEach(function (button) {
+      button.disabled = isPro;
+    });
+    elements.upgradeMonthlyButton.textContent = isPro ? "PRO est actif" : "Passer PRO mensuel";
+    elements.upgradeYearlyButton.textContent = isPro ? "PRO est actif" : "Passer PRO annuel";
+    elements.upgradeLifetimeButton.textContent = isPro ? "PRO est actif" : "Obtenir l'accès à vie";
+    elements.upgradePrimaryButton.textContent = isPro ? "Ton accès PRO est actif" : "Choisir l'annuel recommandé";
+    renderFounderOffer();
+
+    if (elements.accountDialog.open) renderAccountDialog();
+  }
+
+  function renderFounderOffer() {
+    const pricing = state.account.pricing || {};
+    const active = Boolean(pricing.founderActive) && Number(pricing.founderRemaining) > 0;
+    const remaining = Math.max(0, Number(pricing.founderRemaining) || 0);
+    const limit = Math.max(1, Number(pricing.founderLimit) || 100);
+    elements.founderOfferPanel.hidden = !active;
+    elements.founderOfferBadge.hidden = !active;
+    elements.lifetimePricingCard.classList.toggle("founder-active", active);
+    elements.lifetimeRegularPrice.hidden = !active;
+    elements.lifetimePrice.textContent = active ? "39,99 $" : "99,00 $";
+    elements.lifetimeDescription.textContent = active
+      ? "Un seul paiement. Réservé aux " + limit + " premiers membres."
+      : "Un seul paiement pour conserver PRO sans renouvellement.";
+    elements.founderCounter.textContent = remaining + " place" + (remaining === 1 ? "" : "s") + " restante" + (remaining === 1 ? "" : "s") + " sur " + limit;
+  }
+
+  function handleAccountButton() {
+    if (state.account.user) {
+      navigate("settings");
+      return;
+    }
+    openAccountDialog("login");
+  }
+
+  function handleAccountSettingsButton() {
+    if (state.account.user) {
+      navigate("pro");
+      return;
+    }
+    openAccountDialog("signup");
+  }
+
+  function openAccountDialog(mode) {
+    state.accountMode = mode === "login" ? "login" : "signup";
+    elements.accountForm.reset();
+    elements.accountError.hidden = true;
+    elements.accountSuccess.hidden = true;
+    renderAccountDialog();
+    elements.accountDialog.showModal();
+    window.setTimeout(function () {
+      (state.accountMode === "signup" ? elements.accountFirstName : elements.accountEmail).focus();
+    }, 50);
+  }
+
+  function renderAccountDialog() {
+    const isLogin = state.accountMode === "login";
+    elements.accountDialogTitle.textContent = isLogin ? "Heureuse de te revoir" : "Créer mon compte";
+    elements.accountDialogCopy.textContent = isLogin
+      ? "Connecte-toi pour retrouver ton statut et gérer ton abonnement."
+      : "Le compte gratuit permet de préparer ton accès PRO sans retirer le mode local.";
+    elements.accountFirstNameField.hidden = isLogin;
+    elements.accountPassword.autocomplete = isLogin ? "current-password" : "new-password";
+    elements.accountSubmitButton.textContent = isLogin ? "Me connecter" : "Créer mon compte";
+    elements.accountModeSwitch.textContent = isLogin ? "Je veux créer un compte" : "J'ai déjà un compte";
+    elements.accountResetPassword.hidden = !isLogin;
+    elements.accountCloudNotice.hidden = Boolean(state.account.cloudEnabled);
+    elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
+  }
+
+  function toggleAccountMode() {
+    state.accountMode = state.accountMode === "login" ? "signup" : "login";
+    elements.accountError.hidden = true;
+    elements.accountSuccess.hidden = true;
+    renderAccountDialog();
+  }
+
+  async function submitAccountForm(event) {
+    event.preventDefault();
+    if (!ACCOUNT || !state.account.cloudEnabled) return;
+    elements.accountError.hidden = true;
+    elements.accountSuccess.hidden = true;
+    elements.accountSubmitButton.disabled = true;
+
+    try {
+      if (state.accountMode === "login") {
+        await ACCOUNT.signIn(elements.accountEmail.value, elements.accountPassword.value);
+        elements.accountDialog.close();
+        showToast("Connexion réussie. Bon retour.");
+      } else {
+        const result = await ACCOUNT.signUp(
+          elements.accountEmail.value,
+          elements.accountPassword.value,
+          elements.accountFirstName.value
+        );
+        if (result.session) {
+          elements.accountDialog.close();
+          showToast("Ton compte gratuit est prêt.");
+        } else {
+          elements.accountSuccess.textContent = "Compte créé. Vérifie ton courriel pour confirmer ton adresse.";
+          elements.accountSuccess.hidden = false;
+        }
+      }
+    } catch (error) {
+      elements.accountError.textContent = friendlyAccountError(error);
+      elements.accountError.hidden = false;
+    } finally {
+      elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
+    }
+  }
+
+  async function resetAccountPassword() {
+    if (!ACCOUNT || !state.account.cloudEnabled) return;
+    elements.accountError.hidden = true;
+    elements.accountSuccess.hidden = true;
+    try {
+      await ACCOUNT.resetPassword(elements.accountEmail.value);
+      elements.accountSuccess.textContent = "Le courriel de réinitialisation a été envoyé.";
+      elements.accountSuccess.hidden = false;
+    } catch (error) {
+      elements.accountError.textContent = friendlyAccountError(error);
+      elements.accountError.hidden = false;
+    }
+  }
+
+  async function signOutAccount() {
+    if (!ACCOUNT) return;
+    try {
+      await ACCOUNT.signOut();
+      showToast("Tu es maintenant déconnectée ou déconnecté.");
+    } catch (error) {
+      showToast(friendlyAccountError(error));
+    }
+  }
+
+  async function startUpgrade(plan) {
+    if (!ACCOUNT || !state.account.cloudEnabled) {
+      openAccountDialog("signup");
+      showToast("La connexion sécurisée doit d'abord être configurée.");
+      return;
+    }
+    if (!state.account.user) {
+      openAccountDialog("signup");
+      showToast("Crée ton compte gratuit avant de passer à PRO.");
+      return;
+    }
+    if (state.account.isPro) {
+      manageSubscription();
+      return;
+    }
+
+    const buttons = [elements.upgradeMonthlyButton, elements.upgradeYearlyButton, elements.upgradeLifetimeButton, elements.upgradePrimaryButton];
+    buttons.forEach(function (button) { button.disabled = true; });
+    try {
+      await ACCOUNT.startCheckout(plan);
+    } catch (error) {
+      showToast(friendlyAccountError(error));
+      renderAccountUi();
+    }
+  }
+
+  async function manageSubscription() {
+    if (!ACCOUNT || !state.account.cloudEnabled) return;
+    try {
+      await ACCOUNT.openCustomerPortal();
+    } catch (error) {
+      showToast(friendlyAccountError(error));
+    }
+  }
+
+  function handlePaymentReturn() {
+    const url = new URL(window.location.href);
+    const payment = url.searchParams.get("payment");
+    if (!payment) return;
+    url.searchParams.delete("payment");
+    history.replaceState(null, "", url.pathname + (url.search ? url.search : "") + "#pro");
+    state.route = "pro";
+    navigate("pro", false);
+
+    elements.proPaymentNotice.hidden = false;
+    elements.proPaymentNotice.textContent = payment === "success"
+      ? "Merci. Stripe confirme ton abonnement; ton accès PRO va s'activer dans quelques instants."
+      : "Le paiement a été annulé. Aucun montant n'a été prélevé.";
+
+    if (payment === "success" && ACCOUNT) {
+      window.setTimeout(async function () {
+        await ACCOUNT.loadSubscription();
+        applyAccountSnapshot(ACCOUNT.getSnapshot());
+      }, 2500);
+    }
+  }
+
+  function friendlyAccountError(error) {
+    const message = error && error.message ? error.message : "Une erreur est survenue.";
+    if (/invalid login credentials/i.test(message)) return "Courriel ou mot de passe incorrect.";
+    if (/user already registered/i.test(message)) return "Un compte existe déjà avec cette adresse.";
+    if (/email not confirmed/i.test(message)) return "Confirme d'abord ton adresse courriel.";
+    return message;
   }
 
   function normalizeTimerState(savedState) {

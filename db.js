@@ -2,7 +2,7 @@
   "use strict";
 
   const DATABASE_NAME = "un-petit-pas";
-  const DATABASE_VERSION = 1;
+  const DATABASE_VERSION = 2;
   let databasePromise;
 
   function requestToPromise(request) {
@@ -44,6 +44,10 @@
         if (!db.objectStoreNames.contains("routineChecks")) {
           const checks = db.createObjectStore("routineChecks", { keyPath: "id" });
           checks.createIndex("date", "date", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("favorites")) {
+          db.createObjectStore("favorites", { keyPath: "id" });
         }
       };
 
@@ -110,7 +114,8 @@
       clear("activities"),
       clear("routineTasks"),
       clear("zoneTaskStates"),
-      clear("routineChecks")
+      clear("routineChecks"),
+      clear("favorites")
     ]);
   }
 

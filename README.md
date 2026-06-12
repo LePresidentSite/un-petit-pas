@@ -1,6 +1,6 @@
 # Un Petit Pas
 
-PWA locale et hors ligne pour avancer doucement dans le ménage et l'organisation.
+PWA gratuite et hors ligne pour avancer doucement dans le ménage et l'organisation, avec une base optionnelle de comptes et d'abonnement PRO.
 
 ## Fonctionnalités
 
@@ -17,6 +17,10 @@ PWA locale et hors ligne pour avancer doucement dans le ménage et l'organisatio
 - Mise en page adaptative pour téléphone, tablette et ordinateur
 - Identité scandinave premium avec navigation inférieure fixe
 - Page À propos de Caroline avec photo, histoire, confidentialité et conditions
+- Compte gratuit optionnel avec Supabase Auth
+- Modèle Gratuit + PRO avec droits centralisés
+- Paiements récurrents Stripe mensuels et annuels via Supabase Edge Functions
+- Portail Stripe pour gérer ou annuler l'abonnement
 
 ## Lancer localement
 
@@ -34,6 +38,21 @@ Puis ouvrir `http://localhost:4173`.
 - iPhone/iPad : dans Safari, utiliser **Partager**, puis **Sur l'écran d'accueil**.
 - En production, déployer le dossier sur un hébergement HTTPS.
 
+## Mode Gratuit + PRO
+
+Sans configuration cloud, l'application reste entièrement utilisable en mode local gratuit. Pour activer les comptes et Stripe, suivre [docs/PRO_SETUP.md](docs/PRO_SETUP.md).
+
+Pour publier le projet sans exposer de secrets, consulter [docs/GITHUB.md](docs/GITHUB.md).
+
+Le plan gratuit comprend notamment la minuterie, les missions, les zones essentielles, trois tâches de routine personnalisées, trois missions favorites et sept jours d'historique détaillé. PRO déverrouille les routines et favoris illimités, les heures de rappel personnalisées, les zones complètes, l'historique complet et les statistiques avancées.
+
+Tarifs configurés dans Stripe :
+
+- 4,99 $ CA par mois
+- 29,99 $ CA par année
+- 99,00 $ CA pour l'accès à vie
+- 39,99 $ CA pour les 100 premiers accès Fondateur
+
 ## Données et notifications
 
-Toutes les données restent dans IndexedDB sur l'appareil. Les rappels utilisent l'API Notifications du navigateur et sont vérifiés lorsque l'application est ouverte ou autorisée à rester active en arrière-plan par le système. Une planification garantie lorsque l'application est complètement fermée nécessiterait un service de notifications poussées.
+Les routines et progressions restent dans IndexedDB sur l'appareil. Lorsqu'un compte est activé, Supabase conserve l'identité et le statut d'abonnement; Stripe traite les paiements. Les rappels utilisent l'API Notifications du navigateur et sont vérifiés lorsque l'application est ouverte ou autorisée à rester active en arrière-plan par le système. Une planification garantie lorsque l'application est complètement fermée nécessiterait un service de notifications poussées.

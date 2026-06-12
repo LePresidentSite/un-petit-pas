@@ -13,6 +13,9 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" href="./assets/brand/app-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="./config.js" defer></script>
+  <script src="./account.js" defer></script>
   <script src="./data.js" defer></script>
   <script src="./db.js" defer></script>
   <script src="./app.js" defer></script>
@@ -43,6 +46,9 @@
     <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
     <symbol id="icon-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></symbol>
     <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="icon-crown" viewBox="0 0 24 24"><path d="m3 7 4 4 5-7 5 7 4-4-2 11H5L3 7Z"/><path d="M6 21h12"/></symbol>
+    <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M20.8 5.8a5.4 5.4 0 0 0-7.6 0L12 7l-1.2-1.2a5.4 5.4 0 1 0-7.6 7.6L12 22l8.8-8.6a5.4 5.4 0 0 0 0-7.6Z"/></symbol>
   </svg>
 
   <div class="ambient ambient-one"></div>
@@ -78,9 +84,15 @@
             <p class="eyebrow" id="todayLabel"></p>
             <h1 id="pageTitle">Bonjour</h1>
           </div>
-          <button id="installButton" class="icon-button install-button" hidden aria-label="Installer l'application">
-            <svg><use href="#icon-download"></use></svg>
-          </button>
+          <div class="topbar-actions">
+            <button id="accountButton" class="account-chip" type="button">
+              <svg><use href="#icon-about"></use></svg>
+              <span id="accountButtonLabel">Connexion</span>
+            </button>
+            <button id="installButton" class="icon-button install-button" hidden aria-label="Installer l'application">
+              <svg><use href="#icon-download"></use></svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -109,6 +121,10 @@
               <button id="missionTimerButton" class="secondary-button">
                 <svg><use href="#icon-timer"></use></svg>
                 <span>Démarrer la minuterie</span>
+              </button>
+              <button id="favoriteMissionButton" class="secondary-button favorite-button">
+                <svg><use href="#icon-heart"></use></svg>
+                <span>Ajouter aux favoris</span>
               </button>
             </div>
           </article>
@@ -212,6 +228,24 @@
           <span id="historyDayCount"></span>
         </div>
         <div id="historyList" class="history-list"></div>
+        <div id="historyAccessNote" class="pro-access-note" hidden></div>
+        <section class="favorites-panel" aria-labelledby="favoritesTitle">
+          <div class="history-heading">
+            <h3 id="favoritesTitle">Mes favoris</h3>
+            <span id="favoriteCount">0 favori</span>
+          </div>
+          <div id="favoritesList" class="favorites-list"></div>
+        </section>
+        <section id="advancedStatsPanel" class="advanced-stats-panel" aria-labelledby="advancedStatsTitle">
+          <div class="section-intro compact-intro">
+            <div>
+              <p class="eyebrow">Vue PRO</p>
+              <h2 id="advancedStatsTitle">Statistiques avancées</h2>
+            </div>
+            <span class="pro-badge"><svg><use href="#icon-crown"></use></svg>PRO</span>
+          </div>
+          <div id="advancedStatsContent"></div>
+        </section>
       </section>
 
       <section id="page-settings" class="page" data-page="settings">
@@ -221,6 +255,27 @@
             <h2>Rappels et préférences</h2>
           </div>
         </div>
+        <article class="card account-settings-card">
+          <div class="settings-title">
+            <span class="settings-icon account-icon"><svg><use href="#icon-about"></use></svg></span>
+            <div>
+              <p class="account-plan-label" id="accountPlanLabel">Mode local gratuit</p>
+              <h3 id="accountSettingsStatus">Mon compte</h3>
+              <p id="accountSettingsEmail">Tes données restent sur cet appareil.</p>
+            </div>
+          </div>
+          <div class="account-settings-actions">
+            <button id="accountSettingsButton" class="secondary-button" type="button">Créer un compte</button>
+            <button id="manageSubscriptionButton" class="secondary-button" type="button" hidden>Gérer l'abonnement</button>
+            <button id="signOutButton" class="text-button" type="button" hidden>Se déconnecter</button>
+          </div>
+        </article>
+        <button class="pro-settings-link" type="button" data-route="pro">
+          <span class="pro-settings-symbol"><svg><use href="#icon-crown"></use></svg></span>
+          <span><small>Plus d'outils, toujours sans pression</small><strong>Découvrir Un Petit Pas PRO</strong></span>
+          <span class="pro-price-mini">4,99 $<small>/mois</small></span>
+          <svg><use href="#icon-chevron"></use></svg>
+        </button>
         <article class="card settings-card">
           <div class="settings-title">
             <span class="settings-icon"><svg><use href="#icon-bell"></use></svg></span>
@@ -228,15 +283,15 @@
           </div>
           <div class="setting-row">
             <label for="missionReminder">Mission du jour</label>
-            <div class="setting-control"><input id="missionTimeSetting" type="time" value="09:00"><label class="switch"><input id="missionReminder" type="checkbox"><span></span></label></div>
+            <div class="setting-control"><span class="pro-control"><input id="missionTimeSetting" type="time" value="09:00"><span class="pro-mini">PRO</span></span><label class="switch"><input id="missionReminder" type="checkbox"><span></span></label></div>
           </div>
           <div class="setting-row">
             <label for="tipReminder">Conseil du jour</label>
-            <div class="setting-control"><input id="tipTimeSetting" type="time" value="12:30"><label class="switch"><input id="tipReminder" type="checkbox"><span></span></label></div>
+            <div class="setting-control"><span class="pro-control"><input id="tipTimeSetting" type="time" value="12:30"><span class="pro-mini">PRO</span></span><label class="switch"><input id="tipReminder" type="checkbox"><span></span></label></div>
           </div>
           <div class="setting-row">
             <label for="zoneReminder">Zone de la semaine</label>
-            <div class="setting-control"><input id="zoneTimeSetting" type="time" value="18:00"><label class="switch"><input id="zoneReminder" type="checkbox"><span></span></label></div>
+            <div class="setting-control"><span class="pro-control"><input id="zoneTimeSetting" type="time" value="18:00"><span class="pro-mini">PRO</span></span><label class="switch"><input id="zoneReminder" type="checkbox"><span></span></label></div>
           </div>
           <button id="enableNotificationsButton" class="secondary-button full-width"><svg><use href="#icon-bell"></use></svg>Autoriser les notifications</button>
           <p id="notificationStatus" class="setting-note"></p>
@@ -266,7 +321,86 @@
           <svg><use href="#icon-chevron"></use></svg>
         </button>
         <button id="resetDataButton" class="danger-link">Réinitialiser mes données locales</button>
-        <p class="privacy-note">Tes données restent sur cet appareil. Aucun compte, aucun suivi.</p>
+        <p class="privacy-note">Sans compte, tes données restent sur cet appareil. La connexion et PRO sont toujours facultatifs.</p>
+      </section>
+
+      <section id="page-pro" class="page pro-page" data-page="pro">
+        <article class="pro-hero">
+          <div class="pro-hero-copy">
+            <span class="pro-badge"><svg><use href="#icon-crown"></use></svg>Un Petit Pas PRO</span>
+            <h2>Plus de soutien.<br>Toujours sans pression.</h2>
+            <p>Les essentiels restent gratuits. PRO ajoute des outils personnalisés pour t'accompagner plus loin, à ton rythme.</p>
+            <div class="pro-hero-actions">
+              <button id="createAccountButton" class="primary-button" type="button">Créer un compte gratuit</button>
+              <button id="loginAccountButton" class="secondary-button" type="button">J'ai déjà un compte</button>
+            </div>
+            <p id="proPaymentNotice" class="pro-payment-notice" hidden></p>
+          </div>
+          <div class="pro-hero-symbol" aria-hidden="true">
+            <img src="./assets/brand/logo-symbol.svg" alt="">
+          </div>
+        </article>
+
+        <div id="founderOfferPanel" class="founder-offer-panel">
+          <span class="founder-confetti" aria-hidden="true">★</span>
+          <div><p class="card-kicker">Offre Fondateur</p><strong>39,99 $ à vie pour les 100 premiers membres</strong><p id="founderCounter">100 places restantes sur 100</p></div>
+        </div>
+
+        <div class="pricing-grid">
+          <article class="pricing-card">
+            <p class="card-kicker">Mensuel</p>
+            <h3>4,99 $ <span>/ mois</span></h3>
+            <p>Une formule flexible, annulable à tout moment.</p>
+            <button id="upgradeMonthlyButton" class="secondary-button full-width" type="button">Passer PRO mensuel</button>
+          </article>
+          <article class="pricing-card featured">
+            <span class="pricing-ribbon">⭐ Recommandé</span>
+            <p class="card-kicker">Annuel</p>
+            <h3>29,99 $ <span>/ année</span></h3>
+            <p>Une année complète pour avancer un petit pas à la fois.</p>
+            <button id="upgradeYearlyButton" class="primary-button full-width" type="button">Passer PRO annuel</button>
+          </article>
+          <article id="lifetimePricingCard" class="pricing-card lifetime">
+            <span id="founderOfferBadge" class="pricing-ribbon founder">🎉 Offre Fondateur</span>
+            <p class="card-kicker">Accès à vie</p>
+            <h3><span id="lifetimeRegularPrice" class="regular-price">99,00 $</span><span id="lifetimePrice" class="lifetime-price">39,99 $</span></h3>
+            <p id="lifetimeDescription">Un seul paiement. Réservé aux 100 premiers membres.</p>
+            <button id="upgradeLifetimeButton" class="primary-button full-width" type="button">Obtenir l'accès à vie</button>
+          </article>
+        </div>
+
+        <article class="card pro-benefits">
+          <div class="section-intro compact-intro">
+            <div><p class="eyebrow">Ce que PRO ajoute</p><h2>Des outils qui s'adaptent à toi</h2></div>
+          </div>
+          <div class="benefit-grid">
+            <div><span><svg><use href="#icon-routines"></use></svg></span><strong>Routines illimitées</strong><p>Crée autant de tâches personnalisées que nécessaire.</p></div>
+            <div><span><svg><use href="#icon-bell"></use></svg></span><strong>Rappels personnalisés</strong><p>Choisis les heures qui respectent réellement ton quotidien.</p></div>
+            <div><span><svg><use href="#icon-history"></use></svg></span><strong>Historique complet</strong><p>Retrouve tous tes petits pas, sans limite de temps.</p></div>
+            <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde toutes les missions que tu souhaites refaire.</p></div>
+            <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Zones complètes</strong><p>Accède à toutes les mini-tâches des programmes FlyLady.</p></div>
+            <div><span><svg><use href="#icon-spark"></use></svg></span><strong>Statistiques avancées</strong><p>Observe tes journées actives, séries et minutes consacrées.</p></div>
+            <div><span><svg><use href="#icon-crown"></use></svg></span><strong>Nouveautés prioritaires</strong><p>Profite en premier des prochains outils de l'application.</p></div>
+          </div>
+        </article>
+
+        <article class="card comparison-card">
+          <div class="section-intro compact-intro">
+            <div><p class="eyebrow">Choisir simplement</p><h2>Gratuit ou PRO</h2></div>
+          </div>
+          <div class="comparison-table" role="table" aria-label="Comparaison Gratuit et PRO">
+            <div class="comparison-row comparison-head" role="row"><span role="columnheader">Fonction</span><strong role="columnheader">Gratuit</strong><strong role="columnheader">PRO</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Minuterie et missions quotidiennes</span><strong role="cell">Inclus</strong><strong role="cell">Inclus</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Zones FlyLady</span><strong role="cell">Essentiel</strong><strong role="cell">Complet</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Tâches de routine personnalisées</span><strong role="cell">3</strong><strong role="cell">Illimitées</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Heures de rappel</span><strong role="cell">Fixes</strong><strong role="cell">Personnalisées</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Historique détaillé</span><strong role="cell">7 jours</strong><strong role="cell">Complet</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Missions favorites</span><strong role="cell">3</strong><strong role="cell">Illimitées</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Statistiques avancées</span><strong role="cell">—</strong><strong role="cell">Incluses</strong></div>
+          </div>
+          <button id="upgradePrimaryButton" class="primary-button pro-main-cta" type="button">Choisir l'annuel recommandé</button>
+          <p class="pro-fine-print">Paiement sécurisé par Stripe. Annulation possible depuis ton compte.</p>
+        </article>
       </section>
 
       <section id="page-about" class="page about-page" data-page="about">
@@ -303,14 +437,14 @@
         <footer class="about-footer">
           <div class="about-version">
             <span>Version de l'application</span>
-            <strong>1.1.0</strong>
+            <strong>1.2.0</strong>
           </div>
 
           <details class="about-disclosure">
             <summary><span class="about-footer-icon"><svg><use href="#icon-shield"></use></svg></span><span>Politique de confidentialité</span><svg class="about-chevron"><use href="#icon-chevron"></use></svg></summary>
             <div class="about-disclosure-content">
               <p><strong>Un Petit Pas respecte votre vie privée.</strong> Les routines, progressions, réglages et historiques sont enregistrés localement sur votre appareil avec IndexedDB.</p>
-              <p>Aucun compte n'est requis et aucune donnée personnelle n'est envoyée à Caroline. Les notifications sont utilisées uniquement si vous les autorisez. Vous pouvez supprimer vos données locales à tout moment depuis Réglages.</p>
+              <p>Le compte est facultatif. Si vous choisissez de vous connecter, Supabase gère l'identité et le statut d'abonnement; Stripe traite les paiements PRO. Les clés de paiement ne sont jamais enregistrées dans l'application.</p>
             </div>
           </details>
 
@@ -417,6 +551,28 @@
       <label class="form-field">Moment<select id="routineTaskPeriod" class="text-input"><option value="morning">Matin</option><option value="afternoon">Après-midi</option><option value="evening">Soir</option></select></label>
       <label class="form-field">Durée approximative<input id="routineTaskDuration" class="text-input" type="text" maxlength="20" placeholder="Ex. 2 min"></label>
       <button class="primary-button full-width" type="submit">Enregistrer</button>
+    </form>
+  </dialog>
+
+  <dialog id="accountDialog" class="account-dialog">
+    <form id="accountForm">
+      <div class="dialog-header">
+        <div>
+          <p class="card-kicker">Un espace à toi</p>
+          <h2 id="accountDialogTitle">Créer mon compte</h2>
+        </div>
+        <button id="closeAccountDialog" type="button" class="dialog-close" aria-label="Fermer">×</button>
+      </div>
+      <p id="accountDialogCopy" class="account-dialog-copy">Le compte gratuit permet de retrouver ton accès et de passer à PRO quand tu le souhaites.</p>
+      <div id="accountError" class="account-message error" hidden></div>
+      <div id="accountSuccess" class="account-message success" hidden></div>
+      <label id="accountFirstNameField" class="form-field">Prénom, optionnel<input id="accountFirstName" class="text-input" type="text" maxlength="30" autocomplete="given-name"></label>
+      <label class="form-field">Adresse courriel<input id="accountEmail" class="text-input" type="email" autocomplete="email" required></label>
+      <label class="form-field">Mot de passe<input id="accountPassword" class="text-input" type="password" minlength="8" autocomplete="new-password" required></label>
+      <button id="accountSubmitButton" class="primary-button full-width" type="submit">Créer mon compte</button>
+      <button id="accountModeSwitch" class="text-button account-mode-switch" type="button">J'ai déjà un compte</button>
+      <button id="accountResetPassword" class="text-button account-reset-link" type="button" hidden>Mot de passe oublié</button>
+      <p id="accountCloudNotice" class="account-cloud-notice" hidden>La configuration sécurisée Supabase doit être terminée avant d'activer les comptes.</p>
     </form>
   </dialog>
 

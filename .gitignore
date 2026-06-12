@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.supabase/
+node_modules/
+*.log
+.preview-server.js
+.preview-out.log
+.preview-err.log

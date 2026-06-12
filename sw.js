@@ -1,10 +1,12 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v21";
+const CACHE_VERSION = "un-petit-pas-v23";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
+  "./config.js",
+  "./account.js",
   "./data.js",
   "./db.js",
   "./app.js",
@@ -49,6 +51,7 @@ self.addEventListener("activate", function (event) {
 
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
+  if (new URL(event.request.url).origin !== self.location.origin) return;
 
   if (event.request.mode === "navigate") {
     event.respondWith(
