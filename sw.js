@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v23";
+const CACHE_VERSION = "un-petit-pas-v24";
 const APP_SHELL = [
   "./",
   "./index.html",
