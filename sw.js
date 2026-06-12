@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v26";
+const CACHE_VERSION = "un-petit-pas-v27";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -20,8 +20,16 @@ const APP_SHELL = [
   "./assets/brand/app-icon.svg",
   "./manifest.webmanifest",
   "./icons/icon.svg",
+  "./icons/favicon.ico",
+  "./icons/favicon-16.png",
+  "./icons/favicon-32.png",
+  "./icons/icon-96.png",
   "./icons/icon-192.png",
+  "./icons/icon-256.png",
+  "./icons/icon-384.png",
   "./icons/icon-512.png",
+  "./icons/icon-maskable.svg",
+  "./icons/icon-maskable-192.png",
   "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png",
   "./icons/badge-96.png"
