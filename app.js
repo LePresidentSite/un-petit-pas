@@ -972,10 +972,10 @@
     [elements.upgradeMonthlyButton, elements.upgradeYearlyButton, elements.upgradeLifetimeButton, elements.upgradePrimaryButton].forEach(function (button) {
       button.disabled = isPro;
     });
-    elements.upgradeMonthlyButton.textContent = isPro ? "PRO est actif" : "Passer PRO mensuel";
-    elements.upgradeYearlyButton.textContent = isPro ? "PRO est actif" : "Passer PRO annuel";
+    elements.upgradeMonthlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
+    elements.upgradeYearlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
     elements.upgradeLifetimeButton.textContent = isPro ? "PRO est actif" : "Obtenir l'accès à vie";
-    elements.upgradePrimaryButton.textContent = isPro ? "Ton accès PRO est actif" : "Choisir l'annuel recommandé";
+    elements.upgradePrimaryButton.textContent = isPro ? "Ton accès PRO est actif" : "Essayer l'annuel 45 jours";
     renderFounderOffer();
 
     if (elements.accountDialog.open) renderAccountDialog();

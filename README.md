@@ -44,6 +44,8 @@ Sans configuration cloud, l'application reste entièrement utilisable en mode lo
 
 Pour publier le projet sans exposer de secrets, consulter [docs/GITHUB.md](docs/GITHUB.md).
 
+Pour configurer Supabase, Stripe et Vercel pas à pas, consulter [docs/GUIDE_CONFIGURATION_PRODUCTION.md](docs/GUIDE_CONFIGURATION_PRODUCTION.md).
+
 Le plan gratuit comprend notamment la minuterie, les missions, les zones essentielles, trois tâches de routine personnalisées, trois missions favorites et sept jours d'historique détaillé. PRO déverrouille les routines et favoris illimités, les heures de rappel personnalisées, les zones complètes, l'historique complet et les statistiques avancées.
 
 Tarifs configurés dans Stripe :
@@ -52,6 +54,8 @@ Tarifs configurés dans Stripe :
 - 29,99 $ CA par année
 - 99,00 $ CA pour l'accès à vie
 - 39,99 $ CA pour les 100 premiers accès Fondateur
+
+Le premier abonnement mensuel ou annuel comprend 45 jours d'essai PRO. Les accès à vie ne comprennent pas de période d'essai.
 
 ## Données et notifications
 
