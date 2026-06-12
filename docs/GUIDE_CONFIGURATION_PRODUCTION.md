@@ -363,13 +363,13 @@ Le service worker conserve `config.js` en cache.
 2. Repérer :
 
 ```javascript
-const CACHE_VERSION = "un-petit-pas-v24";
+const CACHE_VERSION = "un-petit-pas-v26";
 ```
 
 3. Augmenter le numéro, par exemple :
 
 ```javascript
-const CACHE_VERSION = "un-petit-pas-v25";
+const CACHE_VERSION = "un-petit-pas-v27";
 ```
 
 4. Enregistrer.
@@ -556,6 +556,8 @@ Billing period : Yearly
 ```
 
 4. Enregistrer.
+
+La période d'essai de 45 jours n'est pas ajoutée au tarif dans ce formulaire Stripe. Elle est appliquée par la fonction `create-checkout-session` lors du premier abonnement mensuel ou annuel. Les accès à vie et Fondateur n'ont aucune période d'essai.
 
 ### Ajouter le prix à vie régulier
 
@@ -1029,8 +1031,8 @@ Code postal : un code postal valide
 
 1. Stripe Test > **Customers** : vérifier qu'un client a été créé.
 2. Ouvrir le client.
-3. Vérifier qu'un abonnement mensuel actif apparaît.
-4. Stripe > **Payments** : vérifier le paiement réussi.
+3. Vérifier qu'un abonnement mensuel en période d'essai apparaît.
+4. Vérifier que Stripe annonce le premier prélèvement après 45 jours.
 5. Workbench > **Webhooks** > destination : vérifier que les livraisons ont le statut `200`.
 
 ### Vérifier dans Supabase
@@ -1040,11 +1042,13 @@ Code postal : un code postal valide
 3. Vérifier :
 
 ```text
-status = active
+status = trialing
 plan = monthly
 stripe_customer_id = cus_...
 stripe_subscription_id = sub_...
 ```
+
+Le statut devient normalement `active` lorsque Stripe prélève le premier paiement après les 45 jours d'essai.
 
 ---
 
@@ -1060,7 +1064,7 @@ Utiliser une deuxième adresse de test :
 4. Vérifier dans Supabase :
 
 ```text
-status = active
+status = trialing
 plan = yearly
 ```
 
