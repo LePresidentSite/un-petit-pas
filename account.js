@@ -236,7 +236,11 @@
   }
 
   function getAppUrl(hash) {
-    return window.location.origin + window.location.pathname + (hash || "");
+    const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+    const configuredUrl = String(config.appUrl || "").replace(/\/+$/, "");
+    const currentUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, "/");
+    const baseUrl = isLocal || !configuredUrl ? currentUrl.replace(/\/+$/, "") : configuredUrl;
+    return baseUrl + "/" + String(hash || "").replace(/^\/+/, "");
   }
 
   function joinUrl(base, path) {

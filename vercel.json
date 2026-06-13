@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.unpetitpas.net"
+        }
+      ],
+      "destination": "https://unpetitpas.net/$1",
+      "permanent": true
+    }
+  ]
+}

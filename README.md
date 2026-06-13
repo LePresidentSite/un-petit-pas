@@ -2,6 +2,10 @@
 
 PWA gratuite et hors ligne pour avancer doucement dans le ménage et l'organisation, avec une base optionnelle de comptes et d'abonnement PRO.
 
+Adresse officielle : <https://unpetitpas.net>
+
+Adresse technique de secours : <https://un-petit-pas.vercel.app>
+
 ## Fonctionnalités
 
 - Mission, conseil et citation différents chaque jour
