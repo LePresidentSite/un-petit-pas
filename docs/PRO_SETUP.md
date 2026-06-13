@@ -25,7 +25,8 @@ Créer aussi deux prix uniques pour l'accès à vie :
 Configurer les secrets des Edge Functions :
 
 ```text
-APP_URL=https://votre-domaine.example/un-petit-pas/
+APP_URL=https://unpetitpas.net
+APP_FALLBACK_URLS=https://www.unpetitpas.net,https://un-petit-pas.vercel.app
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_PRICE_MONTHLY=price_...
 STRIPE_PRICE_YEARLY=price_...
