@@ -4920,3 +4920,91 @@ body[data-active-route="about"] .topbar-brand {
 .btn.primary:not(.completed) {
   border-color: rgba(239, 203, 104, 0.42);
 }
+
+/* Stronger sage presence inspired by Caroline's signature card */
+.mission-card .primary-button:not(.completed) {
+  color: var(--ink);
+  background: linear-gradient(135deg, #b8c7ae, var(--growth));
+  border-color: rgba(95, 119, 88, 0.2);
+  box-shadow:
+    0 12px 28px rgba(95, 119, 88, 0.2),
+    0 0 24px rgba(166, 184, 154, 0.28);
+}
+
+.mission-card .primary-button:not(.completed):hover {
+  background: linear-gradient(135deg, #c0ceb7, #a9bc9f);
+  box-shadow:
+    0 15px 34px rgba(95, 119, 88, 0.24),
+    0 0 30px rgba(166, 184, 154, 0.34);
+}
+
+.home-timer-cta {
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(247, 246, 243, 0.22), transparent 9rem),
+    linear-gradient(135deg, #b8c7ae, var(--growth));
+  border: 1px solid rgba(95, 119, 88, 0.16);
+  box-shadow:
+    0 18px 40px rgba(49, 79, 65, 0.2),
+    0 0 32px rgba(166, 184, 154, 0.24),
+    0 0 52px rgba(95, 143, 196, 0.1);
+}
+
+.home-timer-cta:hover {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(247, 246, 243, 0.28), transparent 9rem),
+    linear-gradient(135deg, #c0ceb7, #a9bc9f);
+  box-shadow:
+    0 21px 46px rgba(49, 79, 65, 0.24),
+    0 0 38px rgba(166, 184, 154, 0.3),
+    0 0 58px rgba(95, 143, 196, 0.12);
+}
+
+.home-timer-icon {
+  color: var(--growth-dark);
+  background: rgba(247, 246, 243, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(95, 119, 88, 0.1);
+}
+
+.home-timer-cta small {
+  color: rgba(47, 58, 63, 0.72);
+}
+
+.tip-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(239, 203, 104, 0.24), transparent 11rem),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.99), rgba(248, 240, 210, 0.72)),
+    var(--surface-solid);
+  box-shadow:
+    inset 0 0 0 1px rgba(183, 143, 42, 0.08),
+    var(--shadow);
+}
+
+.tip-number {
+  color: #6b5420;
+  background: rgba(239, 203, 104, 0.38);
+}
+
+.progress-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(207, 227, 238, 0.46), transparent 11rem),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.99), rgba(224, 237, 244, 0.68)),
+    var(--surface-solid);
+  box-shadow:
+    inset 0 0 0 1px rgba(95, 143, 196, 0.08),
+    var(--shadow);
+}
+
+.weekly-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(166, 184, 154, 0.34), transparent 12rem),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.99), rgba(225, 235, 220, 0.72)),
+    var(--surface-solid);
+  box-shadow:
+    inset 0 0 0 1px rgba(95, 119, 88, 0.08),
+    var(--shadow);
+}
+
+.timer-fab {
+  border-color: rgba(239, 203, 104, 0.42);
+}
