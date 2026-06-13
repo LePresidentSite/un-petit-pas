@@ -4787,3 +4787,136 @@ body[data-active-route="about"] .topbar-brand {
   color: var(--growth-dark);
   background: var(--growth-soft);
 }
+
+/* Logo color balance
+   Blue structures the interface, green supports growth, and yellow guides action. */
+.mission-card::before,
+.weekly-card::before {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0 34%,
+    var(--growth) 34% 67%,
+    var(--butter) 67% 100%
+  );
+}
+
+.weekly-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.weekly-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  z-index: 1;
+}
+
+.quote-icon {
+  color: #6b5420;
+  background: rgba(239, 203, 104, 0.58);
+  box-shadow:
+    inset 0 0 0 1px rgba(171, 132, 33, 0.12),
+    0 8px 20px rgba(239, 203, 104, 0.18);
+}
+
+.tip-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(239, 203, 104, 0.22), transparent 10rem),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.98), rgba(231, 238, 227, 0.42)),
+    var(--surface-solid);
+}
+
+.tip-number,
+.pro-badge,
+.pricing-ribbon.recommended {
+  color: #604b18;
+  background: rgba(239, 203, 104, 0.62);
+}
+
+.time-pill {
+  color: var(--bg);
+  background: rgba(207, 227, 238, 0.88);
+}
+
+.zone-section-count,
+.routine-progress-badge,
+.completed-badge {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+  border-color: rgba(95, 119, 88, 0.18);
+}
+
+.zone-card:nth-child(3n + 1) .zone-icon {
+  color: var(--bg);
+  background: var(--sky);
+}
+
+.zone-card:nth-child(3n + 2) .zone-icon {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.zone-card:nth-child(3n) .zone-icon {
+  color: #6b5420;
+  background: rgba(239, 203, 104, 0.56);
+}
+
+.routine-item:nth-child(3n + 1) .routine-item-icon {
+  color: var(--bg);
+  background: var(--sky);
+}
+
+.routine-item:nth-child(3n + 2) .routine-item-icon {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.routine-item:nth-child(3n) .routine-item-icon {
+  color: #6b5420;
+  background: rgba(239, 203, 104, 0.5);
+}
+
+.benefit-grid > div:nth-child(3n + 1) {
+  background: rgba(207, 227, 238, 0.52);
+}
+
+.benefit-grid > div:nth-child(3n + 1) span {
+  color: var(--bg);
+  background: rgba(207, 227, 238, 0.92);
+}
+
+.benefit-grid > div:nth-child(3n + 2) {
+  background: rgba(231, 238, 227, 0.78);
+}
+
+.benefit-grid > div:nth-child(3n + 2) span {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.benefit-grid > div:nth-child(3n) {
+  background: rgba(239, 203, 104, 0.16);
+}
+
+.benefit-grid > div:nth-child(3n) span {
+  color: #6b5420;
+  background: rgba(239, 203, 104, 0.5);
+}
+
+.about-settings-link .settings-icon,
+.account-icon {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.nav-item.active::after {
+  background: linear-gradient(90deg, var(--growth), var(--butter));
+}
+
+.timer-fab,
+.home-timer-cta,
+.btn.primary:not(.completed) {
+  border-color: rgba(239, 203, 104, 0.42);
+}
