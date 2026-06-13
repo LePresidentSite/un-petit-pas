@@ -12,6 +12,10 @@
   --sage: #a6b89a;
   --sage-dark: #69815f;
   --sage-light: #dce6d7;
+  --growth: #a6b89a;
+  --growth-dark: #5f7758;
+  --growth-soft: #e7eee3;
+  --growth-wash: rgba(166, 184, 154, 0.2);
   --mint: #e9efe6;
   --peach: #efcb68;
   --butter: #efcb68;
@@ -4606,4 +4610,180 @@ body[data-active-route="about"] .topbar-brand {
   .advanced-stats-grid article {
     min-height: 96px;
   }
+}
+
+/* Natural growth accents */
+
+.card-kicker,
+.card .eyebrow {
+  color: var(--growth-dark);
+}
+
+.quote-card {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(166, 184, 154, 0.34), transparent 9rem),
+    linear-gradient(135deg, #fbfaf7, var(--surface-solid));
+}
+
+.quote-card::before,
+.progress-card::after {
+  position: absolute;
+  z-index: 0;
+  width: 34px;
+  height: 15px;
+  border-radius: 100% 0 100% 0;
+  background: rgba(95, 119, 88, 0.16);
+  box-shadow:
+    25px -13px 0 rgba(166, 184, 154, 0.2),
+    47px 3px 0 rgba(95, 119, 88, 0.12);
+  content: "";
+  pointer-events: none;
+}
+
+.quote-card::before {
+  right: 4.4rem;
+  bottom: 1.35rem;
+  transform: rotate(-24deg);
+}
+
+.quote-card::after {
+  z-index: 0;
+  border-color: rgba(166, 184, 154, 0.24);
+}
+
+.quote-card > *,
+.progress-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.quote-icon {
+  position: absolute;
+  z-index: 2;
+  top: 1.15rem;
+  right: 1.15rem;
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+  box-shadow: inset 0 0 0 1px rgba(95, 119, 88, 0.12);
+}
+
+.progress-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(166, 184, 154, 0.22), transparent 10rem),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.98), rgba(231, 238, 227, 0.72)),
+    var(--surface-solid);
+}
+
+.progress-card::after {
+  top: 1rem;
+  right: 1rem;
+  transform: scale(0.82) rotate(-32deg);
+}
+
+.progress-ring {
+  background: conic-gradient(
+    var(--growth-dark) calc(var(--progress) * 1%),
+    var(--growth-soft) 0
+  );
+  box-shadow: 0 12px 30px rgba(95, 119, 88, 0.12);
+}
+
+.zone-progress-track,
+.routine-progress-track {
+  background: var(--growth-soft);
+}
+
+.zone-progress-track span,
+.routine-progress-track span {
+  background: linear-gradient(90deg, var(--growth), var(--growth-dark));
+}
+
+.zone-percent,
+.routine-summary-card strong {
+  color: var(--growth-dark);
+}
+
+.zone-section-count {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.check-row.done,
+.routine-item.done {
+  background:
+    linear-gradient(90deg, rgba(231, 238, 227, 0.5), rgba(247, 246, 243, 0.3)),
+    var(--surface-solid);
+}
+
+.check-row.done .custom-check,
+.routine-item.done .custom-check {
+  border-color: var(--growth-dark);
+  color: #fff;
+  background: var(--growth-dark);
+  box-shadow: 0 5px 14px rgba(95, 119, 88, 0.2);
+}
+
+.routine-item.done .routine-item-icon {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
+}
+
+.routine-summary-card {
+  color: var(--growth-dark);
+  background:
+    linear-gradient(135deg, var(--growth-soft), rgba(207, 227, 238, 0.38));
+}
+
+.history-dot {
+  color: #fff;
+  background: var(--growth-dark);
+  box-shadow: 0 7px 18px rgba(95, 119, 88, 0.2);
+}
+
+.calendar-day.has-steps::after {
+  background: var(--growth-dark);
+}
+
+.calendar-day.today {
+  color: var(--growth-dark);
+  box-shadow: inset 0 0 0 1.5px var(--growth);
+}
+
+.switch input:checked + span {
+  background: var(--growth-dark);
+}
+
+.primary-button.completed,
+.text-button.completed {
+  color: var(--growth-dark);
+}
+
+.primary-button.completed {
+  background: var(--growth-soft);
+  box-shadow: inset 0 0 0 1px rgba(95, 119, 88, 0.12);
+}
+
+.timer-fab.complete {
+  background: linear-gradient(135deg, var(--growth), var(--growth-dark));
+}
+
+.timer-celebration {
+  color: #fff;
+  background: var(--growth-dark);
+  box-shadow: 0 0 0 12px rgba(166, 184, 154, 0.3);
+}
+
+.account-message.success {
+  color: #3f634d;
+  background: var(--growth-soft);
+}
+
+.pricing-ribbon.founder {
+  background: var(--growth-dark);
+}
+
+.benefit-grid > div:nth-child(even) > span,
+.advanced-stats-grid article:nth-child(2) > span {
+  color: var(--growth-dark);
+  background: var(--growth-soft);
 }
