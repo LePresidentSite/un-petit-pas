@@ -1,3 +1,24 @@
+[auth]
+site_url = "https://unpetitpas.net"
+additional_redirect_urls = [
+  "https://unpetitpas.net/**",
+  "https://www.unpetitpas.net/**",
+  "https://un-petit-pas.vercel.app/**",
+  "http://localhost:4173/**"
+]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+max_frequency = "1m"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [functions.create-checkout-session]
 verify_jwt = true
 
