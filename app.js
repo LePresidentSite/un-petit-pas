@@ -8,11 +8,23 @@
     home: "Aujourd'hui",
     zones: "Zones",
     routines: "Routines",
+    ambiance: "Ambiance", // NOUVEAU: Ambiance
     history: "Progrès",
     settings: "Réglages",
     pro: "Découvrir PRO",
     about: "À propos"
   };
+
+  // NOUVEAU: Ambiance - Liste des pistes audio MVP
+  const AMBIANCES = {
+    'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+    'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+    'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+    'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+    'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+    'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
+  };
+
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
     selectedMinutes: 5,
@@ -59,6 +71,7 @@
     timerInterval: null,
     audioContext: null,
     accountMode: "signup",
+    ambiancePlaying: false, // NOUVEAU: Ambiance
     account: {
       ready: false,
       cloudEnabled: false,
@@ -132,7 +145,9 @@
       "accountDialogCopy", "accountError", "accountSuccess",
       "accountFirstNameField", "accountFirstName", "accountEmail",
       "accountPassword", "accountSubmitButton", "accountModeSwitch",
-      "accountResetPassword", "accountCloudNotice", "closeAccountDialog"
+      "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
+      // NOUVEAU: Ambiance - Éléments du lecteur
+      "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -213,9 +228,20 @@
     document.addEventListener("visibilitychange", handleAppResume);
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
+
+    // NOUVEAU: Ambiance - Événements du lecteur
+    elements["mp-playpause"].addEventListener("click", toggleAmbiance);
+    elements["mp-close"].addEventListener("click", stopAmbiance);
   }
 
   function handleDocumentClick(event) {
+    // NOUVEAU: Ambiance - Détecter le clic sur une carte
+    const ambianceCard = event.target.closest("[data-audio]");
+    if (ambianceCard) {
+      playAmbiance(ambianceCard.dataset.audio);
+      return;
+    }
+
     const routeButton = event.target.closest("[data-route]");
     if (routeButton) {
       event.preventDefault();
@@ -1847,4 +1873,45 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
+
+  // NOUVEAU: Ambiance - Logique du lecteur audio
+  function playAmbiance(id) {
+    const track = AMBIANCES[id];
+    if (!track) return;
+
+    const player = elements["global-audio-player"];
+    player.src = track.src;
+    
+    // Le navigateur peut bloquer la lecture si l'utilisateur n'a pas encore interagi,
+    // le catch empêche l'erreur de faire planter l'application.
+    player.play().catch(function(e) { console.log("Lecture audio bloquée par le navigateur", e); });
+    state.ambiancePlaying = true;
+    
+    elements["mp-title"].textContent = track.name;
+    elements["mp-icon"].textContent = track.icon;
+    elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
+    
+    elements["mini-player"].classList.remove("hidden");
+  }
+
+  function toggleAmbiance() {
+    const player = elements["global-audio-player"];
+    if (state.ambiancePlaying) {
+      player.pause();
+      elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
+    } else {
+      player.play();
+      elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
+    }
+    state.ambiancePlaying = !state.ambiancePlaying;
+  }
+
+  function stopAmbiance() {
+    const player = elements["global-audio-player"];
+    player.pause();
+    player.currentTime = 0;
+    state.ambiancePlaying = false;
+    elements["mini-player"].classList.add("hidden");
+  }
+
 })();

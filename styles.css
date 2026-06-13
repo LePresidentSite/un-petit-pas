@@ -5253,4 +5253,130 @@ body {
   .about-lead {
     max-width: 28rem;
   }
+
+/* =========================================
+   SECTION AMBIANCE ET MINI-LECTEUR
+   ========================================= */
+
+.ambiance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.ambiance-card {
+  border: none;
+  border-radius: 16px;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ambiance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.ambiance-card .card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.ambiance-card .card-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+/* Le lecteur audio flottant */
+.mini-player {
+  position: fixed;
+  bottom: 80px; /* S'assure d'être au-dessus de la navigation mobile */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 100px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 1000;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mini-player.hidden {
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  pointer-events: none;
+}
+
+.mp-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mp-icon { 
+  font-size: 1.5rem; 
+}
+
+.mp-title { 
+  font-weight: 600; 
+  color: #1f4f86; 
+  font-size: 0.95rem;
+}
+
+.mp-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mp-btn {
+  background: none;
+  border: none;
+  color: #1f4f86;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mp-btn svg { 
+  width: 20px; 
+  height: 20px; 
+  fill: currentColor; 
+}
+
+.mp-btn:hover { 
+  background: rgba(31, 79, 134, 0.1); 
+}
+
+.mp-btn-close { 
+  font-size: 1.2rem; 
+  font-weight: bold; 
+}
+
+/* Ajustement pour les écrans d'ordinateur (décalage de la barre latérale) */
+@media (min-width: 768px) {
+  .mini-player { 
+    bottom: 24px; 
+    left: calc(50% + 120px); 
+  }
 }
