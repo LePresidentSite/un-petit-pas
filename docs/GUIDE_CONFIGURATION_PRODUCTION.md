@@ -247,7 +247,7 @@ Lorsque l'URL Vercel est connue :
 Exemple :
 
 ```text
-https://un-petit-pas.vercel.app/
+https://unpetitpas.net/
 ```
 
 3. Dans **Redirect URLs**, ajouter exactement la même URL.
@@ -458,7 +458,7 @@ Le projet est un site HTML/CSS/JavaScript statique. Il n'a pas besoin d'une comm
 Après quelques instants, Vercel affiche une adresse semblable à :
 
 ```text
-https://un-petit-pas.vercel.app
+https://unpetitpas.net
 ```
 
 1. Cliquer sur **Visit**.
@@ -691,7 +691,7 @@ APP_URL
 Valeur :
 
 ```text
-https://un-petit-pas.vercel.app/
+https://unpetitpas.net/
 ```
 
 Remplacer par la véritable URL Vercel. Garder `https://` et ajouter `/` à la fin.
@@ -1371,7 +1371,8 @@ Vérifier que `APP_URL` contient exactement le domaine ouvert dans le navigateur
 Correct :
 
 ```text
-APP_URL=https://un-petit-pas.vercel.app/
+APP_URL=https://unpetitpas.net
+APP_FALLBACK_URLS=https://www.unpetitpas.net,https://un-petit-pas.vercel.app
 ```
 
 Incorrect si l'application est ouverte ailleurs :
