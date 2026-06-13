@@ -3003,6 +3003,26 @@ a:focus-visible {
   margin-bottom: 0;
 }
 
+.contact-email {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(65, 93, 120, 0.14);
+  border-radius: 14px;
+  color: #415d78;
+  background: rgba(207, 227, 238, 0.42);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.contact-email:hover {
+  border-color: rgba(65, 93, 120, 0.28);
+  background: rgba(207, 227, 238, 0.68);
+  transform: translateY(-1px);
+}
+
 .bottom-nav {
   grid-template-columns: repeat(6, 1fr);
 }
@@ -4990,6 +5010,29 @@ body {
 
 .timer-fab {
   border-color: rgba(239, 203, 104, 0.42);
+}
+
+/* Calm daily typography */
+.mission-card h2 {
+  color: #415d78;
+  font-size: clamp(1.45rem, 5.4vw, 2rem);
+  font-weight: 590;
+  letter-spacing: -0.04em;
+}
+
+.tip-card .card-heading h2 {
+  color: #415d78;
+  font-size: 1.18rem;
+  font-weight: 590;
+  letter-spacing: -0.03em;
+}
+
+.tip-text {
+  color: #415d78;
+  font-size: 1.1rem;
+  font-weight: 540;
+  line-height: 1.46;
+  letter-spacing: -0.018em;
 }
 
 /* Shared application header */

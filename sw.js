@@ -1,10 +1,10 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v37";
+const CACHE_VERSION = "un-petit-pas-v39";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260613-unified-header",
+  "./styles.css?v=20260613-contact-email",
   "./config.js",
   "./account.js",
   "./data.js?v=20260613-daily-tips",
