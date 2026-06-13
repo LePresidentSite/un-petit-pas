@@ -110,7 +110,7 @@ Deno.serve(async (request) => {
       customer_email: customerId ? undefined : user.email,
       client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
-      allow_promotion_codes: !founderOffer,
+      allow_promotion_codes: true,
       locale: "fr",
       success_url: appUrl + "?payment=success#pro",
       cancel_url: appUrl + "?payment=cancelled#pro",
@@ -161,10 +161,7 @@ Deno.serve(async (request) => {
         .eq("id", founderReservationId)
         .eq("status", "reserved");
     }
-    const message = error instanceof Error &&
-        error.message.startsWith("La configuration Stripe Production")
-      ? error.message
-      : "Impossible de démarrer le paiement.";
+    const message = getSafeCheckoutError(error);
     return json(request, { error: message }, 500);
   }
 });
@@ -172,4 +169,22 @@ Deno.serve(async (request) => {
 function isMissingStripeResource(error: unknown) {
   const stripeError = error as { code?: string };
   return stripeError?.code === "resource_missing";
+}
+
+function getSafeCheckoutError(error: unknown) {
+  const stripeError = error as { type?: string; message?: string };
+  if (
+    typeof stripeError?.type === "string" &&
+    stripeError.type.startsWith("Stripe") &&
+    stripeError.message
+  ) {
+    return "Stripe : " + stripeError.message;
+  }
+  if (
+    error instanceof Error &&
+    error.message.startsWith("La configuration Stripe Production")
+  ) {
+    return error.message;
+  }
+  return "Impossible de démarrer le paiement.";
 }
