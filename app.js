@@ -5,10 +5,10 @@
   const DB = window.AppDB;
   const ACCOUNT = window.UnPetitPasAccount;
   const ROUTE_TITLES = {
-    home: "Bonjour",
-    zones: "Les zones",
-    routines: "Mes routines",
-    history: "Mes progrès",
+    home: "Aujourd'hui",
+    zones: "Zones",
+    routines: "Routines",
+    history: "Progrès",
     settings: "Réglages",
     pro: "Découvrir PRO",
     about: "À propos"
@@ -53,6 +53,7 @@
     deferredInstallPrompt: null,
     serviceWorkerRegistration: null,
     notificationTimer: null,
+    dailyRefreshTimer: null,
     toastTimer: null,
     timer: Object.assign({}, DEFAULT_TIMER_STATE),
     timerInterval: null,
@@ -86,6 +87,7 @@
       setupInstallPrompt();
       setupServiceWorker();
       startNotificationWatcher();
+      scheduleDailyRefresh();
       showApp();
       initializeAccount();
       handlePaymentReturn();
@@ -208,8 +210,8 @@
     document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
       button.addEventListener("click", selectTimerPreset);
     });
-    document.addEventListener("visibilitychange", updateTimer);
-    window.addEventListener("pageshow", updateTimer);
+    document.addEventListener("visibilitychange", handleAppResume);
+    window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
   }
 
@@ -248,8 +250,7 @@
       else button.removeAttribute("aria-current");
     });
 
-    const name = state.settings.firstName.trim();
-    elements.pageTitle.textContent = route === "home" && name ? "Bonjour, " + name : ROUTE_TITLES[route];
+    renderHeader(route);
     document.title = (route === "home" ? "Un Petit Pas" : ROUTE_TITLES[route] + " · Un Petit Pas");
 
     if (updateHash !== false && window.location.hash !== "#" + route) {
@@ -277,23 +278,28 @@
     navigate(state.route, false);
   }
 
-  function renderHeader() {
+  function renderHeader(route) {
+    const activeRoute = route || state.route;
     elements.todayLabel.textContent = new Intl.DateTimeFormat("fr-CA", {
       weekday: "long",
       day: "numeric",
       month: "long"
     }).format(state.today);
+    elements.pageTitle.textContent = ROUTE_TITLES[activeRoute] || ROUTE_TITLES.home;
   }
 
-  function getDailyContent() {
-    const dayNumber = daysSinceReference(state.today);
-    const weekNumber = getISOWeek(state.today);
+  function getDailyContent(date) {
+    const contentDate = date || state.today;
+    const dayNumber = daysSinceReference(contentDate);
+    const weekNumber = getISOWeek(contentDate);
+    const tipSelection = getDailyTip(contentDate);
     return {
       quote: DATA.quotes[dayNumber % DATA.quotes.length],
       mission: DATA.missions[dayNumber % DATA.missions.length],
       missionIndex: dayNumber % DATA.missions.length,
-      tip: DATA.tips[dayNumber % DATA.tips.length],
-      tipIndex: dayNumber % DATA.tips.length,
+      tip: tipSelection.tip,
+      tipIndex: tipSelection.index,
+      tipLabel: tipSelection.label,
       weeklyZone: DATA.weeklyZones[(weekNumber - 1) % DATA.weeklyZones.length],
       weeklyIndex: (weekNumber - 1) % DATA.weeklyZones.length
     };
@@ -316,7 +322,7 @@
     elements.missionTitle.textContent = daily.mission.title;
     elements.missionTime.textContent = daily.mission.minutes + " min";
     elements.missionDescription.textContent = daily.mission.description;
-    elements.tipNumber.textContent = (daily.tipIndex + 1) + "/365";
+    elements.tipNumber.textContent = daily.tipLabel;
     elements.dailyTip.textContent = daily.tip.text;
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
@@ -1550,7 +1556,7 @@
     const now = new Date();
     const todayKey = formatDateKey(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const daily = getDailyContent();
+    const daily = getDailyContent(now);
     const notifications = [
       {
         enabled: state.settings.missionReminder,
@@ -1730,6 +1736,67 @@
 
   function showFatalError() {
     elements.splash.innerHTML = "<p>Impossible d'ouvrir les données locales.</p><small>Recharge la page ou vérifie que la navigation privée est désactivée.</small>";
+  }
+
+  function getDailyTip(date) {
+    if (date.getMonth() === 1 && date.getDate() === 29 && DATA.leapDayTip) {
+      return {
+        tip: DATA.leapDayTip,
+        index: null,
+        label: "Jour bonus"
+      };
+    }
+
+    const index = getCalendarDayIndex(date) % DATA.tips.length;
+    return {
+      tip: DATA.tips[index],
+      index: index,
+      label: (index + 1) + "/" + DATA.tips.length
+    };
+  }
+
+  function getCalendarDayIndex(date) {
+    const year = date.getFullYear();
+    const start = Date.UTC(year, 0, 1);
+    const current = Date.UTC(year, date.getMonth(), date.getDate());
+    let index = Math.floor((current - start) / 86400000);
+
+    if (isLeapYear(year) && index > 59) index -= 1;
+    return index;
+  }
+
+  function isLeapYear(year) {
+    return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  }
+
+  function handleAppResume() {
+    updateTimer();
+    if (document.visibilityState === "visible") syncCurrentDay();
+  }
+
+  function syncCurrentDay() {
+    const now = new Date();
+    const dateChanged = formatDateKey(now) !== formatDateKey(state.today);
+    state.today = now;
+
+    if (dateChanged) {
+      state.selectedHistoryDate = formatDateKey(now);
+      state.calendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderHeader();
+      renderHome();
+      renderZones();
+      renderRoutines();
+      renderHistory();
+    }
+
+    scheduleDailyRefresh();
+  }
+
+  function scheduleDailyRefresh() {
+    if (state.dailyRefreshTimer) window.clearTimeout(state.dailyRefreshTimer);
+    const now = new Date();
+    const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2);
+    state.dailyRefreshTimer = window.setTimeout(syncCurrentDay, Math.max(1000, nextDay.getTime() - now.getTime()));
   }
 
   function daysSinceReference(date) {

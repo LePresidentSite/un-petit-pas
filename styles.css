@@ -4528,15 +4528,6 @@ body {
   background: rgba(247, 246, 243, 0.27);
 }
 
-body[data-active-route="about"] .topbar {
-  gap: 0.8rem;
-  margin-bottom: 0.85rem;
-}
-
-body[data-active-route="about"] .topbar-brand {
-  width: min(78vw, 330px);
-}
-
 @media (min-width: 680px) {
   .benefit-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4574,14 +4565,6 @@ body[data-active-route="about"] .topbar-brand {
       drop-shadow(0 10px 24px rgba(95, 143, 196, 0.13));
   }
 
-  body[data-active-route="about"] .main-content {
-    padding-top: 1.35rem;
-  }
-
-  body[data-active-route="about"] .topbar {
-    gap: 0.6rem;
-    margin-bottom: 0.7rem;
-  }
 }
 
 @media (max-width: 540px) {
@@ -5009,8 +4992,8 @@ body[data-active-route="about"] .topbar-brand {
   border-color: rgba(239, 203, 104, 0.42);
 }
 
-/* Compact and layered About introduction */
-body[data-active-route="about"] .topbar {
+/* Shared application header */
+.app-header {
   position: relative;
   z-index: 12;
   grid-template-columns: minmax(150px, 240px) minmax(0, 1fr);
@@ -5029,7 +5012,7 @@ body[data-active-route="about"] .topbar {
   isolation: isolate;
 }
 
-body[data-active-route="about"] .topbar::after {
+.app-header::after {
   position: absolute;
   right: -2rem;
   bottom: -3.2rem;
@@ -5042,33 +5025,33 @@ body[data-active-route="about"] .topbar::after {
   pointer-events: none;
 }
 
-body[data-active-route="about"] .topbar-brand {
+.app-header .topbar-brand {
   width: min(100%, 230px);
 }
 
-body[data-active-route="about"] .topbar-main {
+.app-header .topbar-main {
   min-height: 58px;
   align-items: center;
 }
 
-body[data-active-route="about"] #todayLabel {
+.app-header #todayLabel {
   display: none;
 }
 
-body[data-active-route="about"] #pageTitle {
+.app-header #pageTitle {
   margin: 0;
   font-size: clamp(1.55rem, 4vw, 2.15rem);
   line-height: 1;
   letter-spacing: -0.04em;
 }
 
-body[data-active-route="about"] .topbar-actions {
+.app-header .topbar-actions {
   align-items: center;
   gap: 0.55rem;
 }
 
-body[data-active-route="about"] .account-chip,
-body[data-active-route="about"] .install-button {
+.app-header .account-chip,
+.app-header .install-button {
   min-height: 44px;
   border-color: rgba(239, 203, 104, 0.34);
   color: #fff;
@@ -5077,8 +5060,8 @@ body[data-active-route="about"] .install-button {
   backdrop-filter: blur(8px);
 }
 
-body[data-active-route="about"] .account-chip:hover,
-body[data-active-route="about"] .install-button:hover {
+.app-header .account-chip:hover,
+.app-header .install-button:hover {
   border-color: rgba(239, 203, 104, 0.62);
   background: rgba(239, 203, 104, 0.16);
 }
@@ -5187,22 +5170,22 @@ body[data-active-route="about"] .install-button:hover {
 }
 
 @media (max-width: 679px) {
-  body[data-active-route="about"] .topbar {
+  .app-header {
     grid-template-columns: 1fr;
     gap: 0.55rem;
     padding: 0.85rem 0.95rem;
     border-radius: 22px;
   }
 
-  body[data-active-route="about"] .topbar-brand {
+  .app-header .topbar-brand {
     width: min(68vw, 220px);
   }
 
-  body[data-active-route="about"] .topbar-main {
+  .app-header .topbar-main {
     min-height: 44px;
   }
 
-  body[data-active-route="about"] #pageTitle {
+  .app-header #pageTitle {
     font-size: 1.55rem;
   }
 
