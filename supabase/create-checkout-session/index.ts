@@ -39,11 +39,42 @@ Deno.serve(async (request) => {
       .eq("user_id", user.id)
       .maybeSingle();
     if (subscriptionResult.error) throw subscriptionResult.error;
-    if (["active", "trialing"].includes(subscriptionResult.data?.status || "")) {
+
+    let customerId = subscriptionResult.data?.stripe_customer_id || undefined;
+    let customerExistsInCurrentStripeAccount = false;
+    if (customerId) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        customerExistsInCurrentStripeAccount = !customer.deleted;
+      } catch (error) {
+        if (!isMissingStripeResource(error)) throw error;
+        customerId = undefined;
+      }
+    }
+
+    if (!customerExistsInCurrentStripeAccount && subscriptionResult.data) {
+      const resetResult = await admin
+        .from("subscriptions")
+        .update({
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          status: "inactive",
+          plan: null,
+          price_id: null,
+          current_period_end: null,
+          cancel_at_period_end: false
+        })
+        .eq("user_id", user.id);
+      if (resetResult.error) throw resetResult.error;
+    }
+
+    if (
+      customerExistsInCurrentStripeAccount &&
+      ["active", "trialing"].includes(subscriptionResult.data?.status || "")
+    ) {
       return json(request, { error: "Ton accès PRO est déjà actif." }, 409);
     }
 
-    const customerId = subscriptionResult.data?.stripe_customer_id || undefined;
     let priceId = "";
     let mode: Stripe.Checkout.SessionCreateParams.Mode = "subscription";
     let founderOffer = false;
@@ -97,7 +128,17 @@ Deno.serve(async (request) => {
       common.payment_intent_data = { metadata };
     }
 
-    const session = await stripe.checkout.sessions.create(common);
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create(common);
+    } catch (error) {
+      if (isMissingStripeResource(error)) {
+        throw new Error(
+          "La configuration Stripe Production est incomplète. Vérifie les identifiants de tarifs."
+        );
+      }
+      throw error;
+    }
     if (founderReservationId) {
       const updateResult = await admin
         .from("founder_reservations")
@@ -120,6 +161,15 @@ Deno.serve(async (request) => {
         .eq("id", founderReservationId)
         .eq("status", "reserved");
     }
-    return json(request, { error: "Impossible de démarrer le paiement." }, 500);
+    const message = error instanceof Error &&
+        error.message.startsWith("La configuration Stripe Production")
+      ? error.message
+      : "Impossible de démarrer le paiement.";
+    return json(request, { error: message }, 500);
   }
 });
+
+function isMissingStripeResource(error: unknown) {
+  const stripeError = error as { code?: string };
+  return stripeError?.code === "resource_missing";
+}
