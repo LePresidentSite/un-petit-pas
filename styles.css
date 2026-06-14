@@ -1511,39 +1511,6 @@ input[type="time"] {
   cursor: pointer;
 }
 
-.timer-fab {
-  position: fixed;
-  right: 1rem;
-  bottom: calc(6.2rem + var(--safe-bottom));
-  z-index: 60;
-  display: flex;
-  max-width: calc(100vw - 2rem);
-  min-width: 126px;
-  min-height: 58px;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.48rem 0.85rem 0.48rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.84);
-  border-radius: 21px;
-  color: #fff;
-  background:
-    linear-gradient(135deg, rgba(79, 116, 98, 0.98), rgba(92, 132, 112, 0.98)),
-    var(--sage-dark);
-  box-shadow: 0 16px 38px rgba(48, 78, 63, 0.28);
-  cursor: pointer;
-  isolation: isolate;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-}
-
-.timer-fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 19px 42px rgba(48, 78, 63, 0.32);
-}
-
-.timer-fab:active {
-  transform: translateY(1px) scale(0.985);
-}
-
 .timer-fab-ring {
   --timer-fab-progress: 0deg;
   position: relative;
@@ -2046,11 +2013,6 @@ body.reduce-motion *::after {
     left: calc(278px + 1rem);
   }
 
-  .timer-fab {
-    right: 1.6rem;
-    bottom: 1.6rem;
-  }
-
   .timer-panel {
     right: 1.6rem;
     bottom: 6rem;
@@ -2487,31 +2449,6 @@ a:focus-visible {
   background: var(--sky);
 }
 
-.timer-fab {
-  border-color: rgba(207, 227, 238, 0.46);
-  color: #fff;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(207, 227, 238, 0.2), transparent 7rem),
-    linear-gradient(145deg, var(--bg-secondary), var(--bg));
-  box-shadow: 0 20px 48px rgba(4, 26, 49, 0.34);
-}
-
-.timer-fab-ring {
-  background: conic-gradient(var(--butter) var(--timer-fab-progress), rgba(207, 227, 238, 0.32) 0);
-}
-
-.timer-fab-ring::before {
-  background: var(--sky);
-}
-
-.timer-fab-ring svg {
-  color: var(--bg);
-}
-
-.timer-fab-copy small {
-  color: var(--sky);
-}
-
 .timer-panel,
 .task-dialog {
   border-color: rgba(207, 227, 238, 0.7);
@@ -2619,7 +2556,7 @@ a:focus-visible {
 
 .about-settings-link {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   width: 100%;
   min-height: 78px;
   align-items: center;
@@ -3021,14 +2958,6 @@ a:focus-visible {
   border-color: rgba(65, 93, 120, 0.28);
   background: rgba(207, 227, 238, 0.68);
   transform: translateY(-1px);
-}
-
-.bottom-nav {
-  grid-template-columns: repeat(6, 1fr);
-}
-
-.bottom-nav .nav-item {
-  font-size: 0.54rem;
 }
 
 @media (min-width: 680px) {
@@ -3510,35 +3439,6 @@ body {
   transform: translateY(-1px);
 }
 
-.timer-fab {
-  min-width: 190px;
-  color: var(--ink);
-  background: var(--butter);
-  box-shadow: 0 17px 42px rgba(170, 132, 35, 0.24);
-}
-
-.timer-fab-ring {
-  background: conic-gradient(#78a9bd var(--timer-fab-progress), rgba(252, 251, 248, 0.56) 0);
-}
-
-.timer-fab-ring::before {
-  background: var(--sky);
-}
-
-.timer-fab-copy {
-  min-width: 108px;
-}
-
-.timer-fab-copy small {
-  color: rgba(47, 58, 63, 0.64);
-}
-
-.timer-fab-copy strong {
-  margin-top: 0.22rem;
-  font-size: 0.86rem;
-  letter-spacing: -0.01em;
-}
-
 .timer-panel {
   border-color: rgba(47, 58, 63, 0.07);
   background:
@@ -3697,11 +3597,6 @@ body {
     grid-column: 1 / 13;
   }
 
-  .timer-fab {
-    right: 1.5rem;
-    bottom: 1.55rem;
-  }
-
   .timer-panel {
     right: 1.5rem;
     bottom: 6.2rem;
@@ -3752,20 +3647,6 @@ body {
     0 21px 44px rgba(180, 143, 43, 0.22),
     0 0 36px rgba(239, 203, 104, 0.35),
     0 0 60px rgba(95, 143, 196, 0.16);
-}
-
-.timer-fab {
-  box-shadow:
-    0 17px 42px rgba(170, 132, 35, 0.24),
-    0 0 30px rgba(239, 203, 104, 0.35),
-    0 0 54px rgba(95, 143, 196, 0.25);
-}
-
-.timer-fab:hover {
-  box-shadow:
-    0 20px 46px rgba(170, 132, 35, 0.28),
-    0 0 36px rgba(239, 203, 104, 0.38),
-    0 0 62px rgba(95, 143, 196, 0.28);
 }
 
 #enableNotificationsButton,
@@ -4827,8 +4708,11 @@ body {
 .tip-card {
   background:
     radial-gradient(circle at 100% 0, rgba(239, 203, 104, 0.22), transparent 10rem),
-    linear-gradient(145deg, rgba(252, 251, 248, 0.98), rgba(231, 238, 227, 0.42)),
+    linear-gradient(145deg, rgba(252, 251, 248, 0.99), rgba(248, 240, 210, 0.72)),
     var(--surface-solid);
+  box-shadow:
+    inset 0 0 0 1px rgba(183, 143, 42, 0.08),
+    var(--shadow);
 }
 
 .tip-number,
@@ -5006,10 +4890,6 @@ body {
   box-shadow:
     inset 0 0 0 1px rgba(95, 119, 88, 0.08),
     var(--shadow);
-}
-
-.timer-fab {
-  border-color: rgba(239, 203, 104, 0.42);
 }
 
 /* Calm daily typography */
@@ -5212,174 +5092,6 @@ body {
   z-index: 1;
 }
 
-@media (max-width: 679px) {
-  .app-header {
-    grid-template-columns: 1fr;
-    gap: 0.55rem;
-    padding: 0.85rem 0.95rem;
-    border-radius: 22px;
-  }
-
-  .app-header .topbar-brand {
-    width: min(68vw, 220px);
-  }
-
-  .app-header .topbar-main {
-    min-height: 44px;
-  }
-
-  .app-header #pageTitle {
-    font-size: 1.55rem;
-  }
-
-  .about-hero {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 1rem;
-    padding: 1.25rem 1.1rem 1.35rem;
-    text-align: center;
-  }
-
-  .about-intro {
-    justify-items: center;
-    text-align: center;
-  }
-
-  .about-photo-wrap {
-    width: 126px;
-    height: 126px;
-  }
-
-  .about-lead {
-    max-width: 28rem;
-  }
-
-/* =========================================
-   SECTION AMBIANCE ET MINI-LECTEUR
-   ========================================= */
-
-.ambiance-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.ambiance-card {
-  border: none;
-  border-radius: 16px;
-  padding: 24px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ambiance-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.ambiance-card .card-icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-}
-
-.ambiance-card .card-title {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-
-/* Le lecteur audio flottant */
-.mini-player {
-  position: fixed;
-  bottom: 80px; /* S'assure d'être au-dessus de la navigation mobile */
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 400px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 100px;
-  padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  z-index: 1000;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.mini-player.hidden {
-  opacity: 0;
-  transform: translate(-50%, 20px);
-  pointer-events: none;
-}
-
-.mp-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.mp-icon { 
-  font-size: 1.5rem; 
-}
-
-.mp-title { 
-  font-weight: 600; 
-  color: #1f4f86; 
-  font-size: 0.95rem;
-}
-
-.mp-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.mp-btn {
-  background: none;
-  border: none;
-  color: #1f4f86;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.mp-btn svg { 
-  width: 20px; 
-  height: 20px; 
-  fill: currentColor; 
-}
-
-.mp-btn:hover { 
-  background: rgba(31, 79, 134, 0.1); 
-}
-
-.mp-btn-close { 
-  font-size: 1.2rem; 
-  font-weight: bold; 
-}
-
-/* Ajustement pour les écrans d'ordinateur (décalage de la barre latérale) */
-@media (min-width: 768px) {
-  .mini-player { 
-    bottom: 24px; 
-    left: calc(50% + 120px); 
-  }
-}
 /* =========================================
    SECTION COIN AMBIANCE ET MINI-LECTEUR
    ========================================= */
@@ -5528,4 +5240,44 @@ body {
 
 @media (min-width: 768px) {
   .mini-player { bottom: 24px; left: calc(50% + 120px); }
+}
+
+
+/* =========================================
+   ANIMATION DU WIDGET MINUTERIE (MOBILE)
+   ========================================= */
+
+.timer-fab {
+  z-index: 100;
+  transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              min-width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              padding 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              border-radius 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+              background-color 0.3s ease,
+              transform 0.2s ease,
+              box-shadow 0.2s ease;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.timer-fab-copy {
+  transition: opacity 0.2s ease, max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin 0.4s ease, min-width 0.4s ease;
+  opacity: 1;
+  max-width: 200px;
+}
+
+.timer-fab.collapsed {
+  max-width: 58px;
+  min-width: 58px;
+  padding: 7px;
+  border-radius: 50%;
+  gap: 0;
+}
+
+.timer-fab.collapsed .timer-fab-copy {
+  opacity: 0;
+  max-width: 0;
+  min-width: 0;
+  margin: 0;
+  pointer-events: none;
 }
