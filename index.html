@@ -43,12 +43,103 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="./data.js?v=20260613-daily-tips" defer></script>
   <script src="./db.js" defer></script>
   <script src="./app.js?v=20260613-unified-header" defer></script>
+
+  <style>
+    .ambiance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .ambiance-card {
+      border: none;
+      border-radius: 16px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .ambiance-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .ambiance-card .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    .ambiance-card .card-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+    .mini-player {
+      position: fixed;
+      bottom: 80px; /* Au-dessus de la navigation mobile */
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 100px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      z-index: 1000;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .mini-player.hidden {
+      opacity: 0;
+      transform: translate(-50%, 20px);
+      pointer-events: none;
+    }
+    .mp-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .mp-icon { font-size: 1.5rem; }
+    .mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem;}
+    .mp-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .mp-btn {
+      background: none;
+      border: none;
+      color: #1f4f86;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .mp-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .mp-btn:hover { background: rgba(31, 79, 134, 0.1); }
+    .mp-btn-close { font-size: 1.2rem; font-weight: bold; }
+    @media (min-width: 768px) {
+      .mini-player { bottom: 24px; left: calc(50% + 120px); } /* Décalé de la sidebar sur ordi */
+    }
+  </style>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <svg class="svg-sprite" aria-hidden="true">
     <symbol id="icon-music" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></symbol>
+
     <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="icon-zones" viewBox="0 0 24 24"><path d="M4 3h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM4 13h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></symbol>
     <symbol id="icon-routines" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6.1l1.2 1.2L7.7 4.8M4 12.1l1.2 1.2 2.5-2.5M4 18.1l1.2 1.2 2.5-2.5"/></symbol>
@@ -94,7 +185,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
         <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
         <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
-        <button class="nav-item" data-route="timer"><svg><use href="#icon-timer"></use></svg><span>Minuterie</span></button>
         <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
         <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Historique</span></button>
         <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
@@ -231,81 +321,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="routineTaskList" class="routine-list"></div>
       </section>
 
-      <!-- NOUVELLE PAGE MINUTERIE OFFICIELLE -->
-      <section id="page-timer" class="page" data-page="timer">
-        <div class="section-intro">
-          <div>
-            <p class="eyebrow">Un moment pour avancer</p>
-            <h2>Minuterie douce</h2>
-          </div>
-          <p>Un espace sans pression pour tes petits pas.</p>
-        </div>
-
-        <article class="card timer-card">
-          <div id="timerMainView">
-            <div class="timer-display">
-              <svg class="timer-progress" viewBox="0 0 160 160" aria-hidden="true">
-                <circle class="timer-progress-track" cx="80" cy="80" r="69"></circle>
-                <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
-              </svg>
-              <div class="timer-time-copy">
-                <strong id="timerTimeRemaining">05:00</strong>
-                <span id="timerStatusText">Prête quand tu l'es</span>
-              </div>
-            </div>
-
-            <div class="timer-presets" aria-label="Durées rapides">
-              <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
-              <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
-              <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
-              <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
-              <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
-            </div>
-
-            <div class="timer-controls">
-              <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">
-                <svg><use href="#icon-reset"></use></svg>
-              </button>
-              <button id="timerPrimaryButton" class="timer-control primary" type="button">
-                <svg><use id="timerPrimaryIcon" href="#icon-play"></use></svg>
-                <span id="timerPrimaryLabel">Démarrer</span>
-              </button>
-            </div>
-            <p class="timer-gentle-note">Tu peux t'arrêter quand tu veux. Ce temps t'appartient.</p>
-          </div>
-
-          <div id="timerCompleteView" class="timer-complete-view" hidden>
-            <div class="timer-celebration" aria-hidden="true">
-              <span></span><span></span><span></span>
-              <svg><use href="#icon-check"></use></svg>
-            </div>
-            <p class="card-kicker">C'est terminé</p>
-            <h2>Bravo. Tu as fait un petit pas.</h2>
-            <p>Tu peux savourer ce moment et t'arrêter ici.</p>
-            <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
-          </div>
-        </article>
-      </section>
-
       <section id="page-ambiance" class="page" data-page="ambiance">
         <div class="section-intro">
           <div>
-            <p class="eyebrow">🎵 Coin Ambiance</p>
-            <h2>La bonne musique peut rendre un petit pas plus facile.</h2>
+            <p class="eyebrow">Un fond sonore</p>
+            <h2>Ambiance</h2>
           </div>
-          <p>Choisissez une ambiance ou ouvrez votre plateforme musicale préférée.</p>
+          <p>Choisis une atmosphère pour t'accompagner dans tes actions.</p>
         </div>
-        <div id="ambianceStationsList" class="ambiance-stations"></div>
-        <div class="external-music-section">
-          <div class="history-heading">
-            <h3>🎧 Ma musique préférée</h3>
-          </div>
-          <div class="external-music-grid">
-            <a href="https://open.spotify.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Spotify</a>
-            <a href="https://music.apple.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Apple Music</a>
-            <a href="https://music.amazon.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Amazon Music</a>
-            <a href="https://tunein.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">TuneIn</a>
-          </div>
+        <div class="ambiance-grid">
+          <article class="ambiance-card" data-audio="menage" style="background-color: #FFF3E0;">
+            <span class="card-icon">🧹</span><span class="card-title">Ménage</span>
+          </article>
+          <article class="ambiance-card" data-audio="concentration" style="background-color: #E3F2FD;">
+            <span class="card-icon">📚</span><span class="card-title">Concentration</span>
+          </article>
+          <article class="ambiance-card" data-audio="tdah" style="background-color: #FCE4EC;">
+            <span class="card-icon">⚡</span><span class="card-title">Motivation TDAH</span>
+          </article>
+          <article class="ambiance-card" data-audio="action" style="background-color: #E8F5E9;">
+            <span class="card-icon">🚶</span><span class="card-title">Mise en action</span>
+          </article>
+          <article class="ambiance-card" data-audio="calme" style="background-color: #F1F8E9;">
+            <span class="card-icon">🌿</span><span class="card-title">Calme</span>
+          </article>
+          <article class="ambiance-card" data-audio="detente" style="background-color: #EDE7F6;">
+            <span class="card-icon">😴</span><span class="card-title">Détente</span>
+          </article>
         </div>
       </section>
 
@@ -573,7 +615,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </footer>
       </section>
       
-      <!-- MINI LECTEUR AMBIANCE -->
       <audio id="global-audio-player" loop></audio>
       <div id="mini-player" class="mini-player hidden">
         <div class="mp-info">
@@ -590,17 +631,78 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     </main>
 
-    <!-- NAVIGATION MOBILE AVEC 8 ITEMS (défilement horizontal) -->
     <nav class="bottom-nav" aria-label="Navigation mobile">
       <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
       <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
       <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
-      <button class="nav-item" data-route="timer"><svg><use href="#icon-timer"></use></svg><span>Minuterie</span></button>
       <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
       <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
       <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
       <button class="nav-item" data-route="about"><svg><use href="#icon-about"></use></svg><span>À propos</span></button>
     </nav>
+
+    <button id="timerFab" class="timer-fab" type="button" aria-label="Ouvrir la minuterie" aria-expanded="false" aria-controls="timerPanel">
+      <span class="timer-fab-ring" id="timerFabRing">
+        <svg><use href="#icon-timer"></use></svg>
+      </span>
+      <span class="timer-fab-copy">
+        <small id="timerFabLabel">Minuterie</small>
+        <strong id="timerFabTime">Je fais un petit pas</strong>
+      </span>
+    </button>
+
+    <section id="timerPanel" class="timer-panel" role="dialog" aria-modal="false" aria-labelledby="timerPanelTitle" hidden>
+      <div class="timer-panel-header">
+        <div>
+          <p class="card-kicker">Un moment pour avancer</p>
+          <h2 id="timerPanelTitle">Minuterie douce</h2>
+        </div>
+        <button id="closeTimerButton" class="dialog-close timer-close" type="button" aria-label="Fermer la minuterie">×</button>
+      </div>
+
+      <div id="timerMainView">
+        <div class="timer-display">
+          <svg class="timer-progress" viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="timer-progress-track" cx="80" cy="80" r="69"></circle>
+            <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
+          </svg>
+          <div class="timer-time-copy">
+            <strong id="timerTimeRemaining">05:00</strong>
+            <span id="timerStatusText">Prête quand tu l'es</span>
+          </div>
+        </div>
+
+        <div class="timer-presets" aria-label="Durées rapides">
+          <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
+          <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
+          <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
+        </div>
+
+        <div class="timer-controls">
+          <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">
+            <svg><use href="#icon-reset"></use></svg>
+          </button>
+          <button id="timerPrimaryButton" class="timer-control primary" type="button">
+            <svg><use id="timerPrimaryIcon" href="#icon-play"></use></svg>
+            <span id="timerPrimaryLabel">Démarrer</span>
+          </button>
+        </div>
+        <p class="timer-gentle-note">Tu peux t'arrêter quand tu veux. Ce temps t'appartient.</p>
+      </div>
+
+      <div id="timerCompleteView" class="timer-complete-view" hidden>
+        <div class="timer-celebration" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <svg><use href="#icon-check"></use></svg>
+        </div>
+        <p class="card-kicker">C'est terminé</p>
+        <h2>Bravo. Tu as fait un petit pas aujourd'hui.</h2>
+        <p>Tu peux savourer ce moment et t'arrêter ici.</p>
+        <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
+      </div>
+    </section>
   </div>
 
   <dialog id="routineTaskDialog" class="task-dialog">
@@ -644,5 +746,70 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <span>Une nouvelle version est prête.</span>
     <button id="reloadAppButton">Actualiser</button>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Configuration des pistes de démonstration
+      const ambiances = {
+        'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+        'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+        'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+        'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+        'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
+      };
+
+      const audioPlayer = document.getElementById('global-audio-player');
+      const miniPlayer = document.getElementById('mini-player');
+      const mpTitle = document.getElementById('mp-title');
+      const mpIcon = document.getElementById('mp-icon');
+      const btnPlayPause = document.getElementById('mp-playpause');
+      const btnClose = document.getElementById('mp-close');
+      const playIconUse = document.getElementById('mp-play-icon-use');
+      
+      let isPlaying = false;
+
+      // Attacher les événements aux cartes d'ambiance
+      document.querySelectorAll('.ambiance-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.getAttribute('data-audio');
+          const track = ambiances[id];
+          if (!track) return;
+
+          // Lancer la lecture
+          audioPlayer.src = track.src;
+          audioPlayer.play().catch(e => console.log('Lecture auto bloquée par le navigateur', e));
+          isPlaying = true;
+          
+          // Mettre à jour l'interface du mini-lecteur
+          mpTitle.textContent = track.name;
+          mpIcon.textContent = track.icon;
+          playIconUse.setAttribute('href', '#icon-pause');
+          
+          miniPlayer.classList.remove('hidden');
+        });
+      });
+
+      // Contrôles du mini-lecteur : Lecture/Pause
+      btnPlayPause.addEventListener('click', () => {
+        if (isPlaying) {
+          audioPlayer.pause();
+          playIconUse.setAttribute('href', '#icon-play');
+        } else {
+          audioPlayer.play();
+          playIconUse.setAttribute('href', '#icon-pause');
+        }
+        isPlaying = !isPlaying;
+      });
+
+      // Contrôles du mini-lecteur : Fermer
+      btnClose.addEventListener('click', () => {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+        miniPlayer.classList.add('hidden');
+      });
+    });
+  </script>
 </body>
 </html>
