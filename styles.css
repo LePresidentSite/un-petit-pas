@@ -5244,40 +5244,56 @@ body {
 
 
 /* =========================================
-   ANIMATION DU WIDGET MINUTERIE (MOBILE)
+   WIDGET MINUTERIE : BARRE ANCRÉE (MOBILE)
    ========================================= */
 
 .timer-fab {
-  z-index: 100;
-  transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-              min-width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-              padding 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-              border-radius 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-              background-color 0.3s ease,
-              transform 0.2s ease,
-              box-shadow 0.2s ease;
-  overflow: hidden;
-  white-space: nowrap;
+  position: fixed;
+  /* On le colle parfaitement au-dessus de la navigation (68px de menu + espace) */
+  bottom: calc(85px + var(--safe-bottom)); 
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  width: calc(100% - 1.4rem); /* Exactement la même largeur que le menu */
+  max-width: 560px;
+  min-height: 58px;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.48rem 0.85rem 0.48rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 21px; /* S'harmonise avec les rondeurs du menu */
+  color: #fff;
+  background: linear-gradient(135deg, rgba(79, 116, 98, 0.98), rgba(92, 132, 112, 0.98)), var(--sage-dark);
+  box-shadow: 0 10px 25px rgba(48, 78, 63, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
 }
 
-.timer-fab-copy {
-  transition: opacity 0.2s ease, max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin 0.4s ease, min-width 0.4s ease;
-  opacity: 1;
-  max-width: 200px;
+/* On annule l'ancien effet de lévitation qui faisait bouger le bouton */
+.timer-fab:hover {
+  transform: translateX(-50%);
+  box-shadow: 0 10px 25px rgba(48, 78, 63, 0.15);
 }
 
-.timer-fab.collapsed {
-  max-width: 58px;
-  min-width: 58px;
-  padding: 7px;
-  border-radius: 50%;
-  gap: 0;
+/* Petit effet d'enfoncement naturel au clic */
+.timer-fab:active {
+  transform: translateX(-50%) scale(0.98);
 }
 
-.timer-fab.collapsed .timer-fab-copy {
-  opacity: 0;
-  max-width: 0;
-  min-width: 0;
-  margin: 0;
-  pointer-events: none;
+/* Sur les grands écrans (Ordi/Tablette), il retourne se ranger en bas à droite */
+@media (min-width: 1040px) {
+  .timer-fab {
+    left: auto;
+    transform: none;
+    right: 1.5rem;
+    bottom: 1.55rem;
+    width: auto;
+  }
+  .timer-fab:hover {
+    transform: translateY(-2px);
+  }
+  .timer-fab:active {
+    transform: scale(0.98);
+  }
 }
