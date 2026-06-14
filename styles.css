@@ -11505,7 +11505,7 @@ body {
     min-height: 64px;
   }
 
-  body:has(#mini-player:not(.hidden)) .timer-fab {
+  .timer-fab {
     right: 0.85rem;
     bottom: calc(8.75rem + var(--safe-bottom));
     width: 50px;
@@ -11522,11 +11522,11 @@ body {
       0 0 24px rgba(239, 203, 104, 0.28);
   }
 
-  body:has(#mini-player:not(.hidden)) .timer-fab-copy {
+  .timer-fab-copy {
     display: none;
   }
 
-  body:has(#mini-player:not(.hidden)) .timer-fab-ring {
+  .timer-fab-ring {
     width: 42px;
     height: 42px;
   }

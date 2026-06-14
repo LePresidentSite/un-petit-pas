@@ -1,10 +1,10 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v47";
+const CACHE_VERSION = "un-petit-pas-v48";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260614-audio-timer-mobile-v2",
+  "./styles.css?v=20260614-timer-icon-mobile",
   "./config.js",
   "./account.js",
   "./data.js?v=20260613-daily-tips",
