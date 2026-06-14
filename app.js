@@ -45,7 +45,7 @@
       webUrl: "https://music.amazon.ca/"
     }
   };
-  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v1";
+  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v2";
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
@@ -178,7 +178,8 @@
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
       "global-audio-player", "mini-player", "mp-title", "mp-subtitle", "mp-icon",
       "mp-playpause", "mp-close", "mp-play-icon-use", "ambiance-status",
-      "ambiance-active-name", "ambiance-active-meta", "ambiance-retry"
+      "ambiance-active-name", "ambiance-active-meta", "ambiance-play-ready",
+      "ambiance-retry"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -287,6 +288,11 @@
       if (state.ambianceCategory) {
         selectRadioCategory(state.ambianceCategory, true);
       }
+      return;
+    }
+
+    if (event.target.closest("#ambiance-play-ready")) {
+      toggleAmbiance();
       return;
     }
 
@@ -2065,7 +2071,7 @@
       const station = currentAmbianceStation();
       setAmbianceStatus(
         station ? station.name : "Station prête",
-        radioCategoryName() + " · Appuie sur Lecture",
+        radioCategoryName() + " · Appuie sur Écouter",
         "paused"
       );
       renderAmbianceSelection();
@@ -2151,6 +2157,7 @@
     elements["ambiance-active-name"].textContent = name;
     elements["ambiance-active-meta"].textContent = meta;
     elements["ambiance-status"].dataset.tone = tone;
+    elements["ambiance-play-ready"].hidden = tone !== "paused";
     elements["ambiance-retry"].hidden = tone !== "error";
   }
 

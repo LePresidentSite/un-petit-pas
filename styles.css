@@ -11158,7 +11158,14 @@ body {
   white-space: nowrap;
 }
 
-.ambiance-retry {
+.ambiance-status-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ambiance-retry,
+.ambiance-listen {
   min-height: 44px;
   padding: 0.7rem 1rem;
   border: 1px solid rgba(31, 79, 134, 0.16);
@@ -11167,6 +11174,13 @@ body {
   background: var(--surface-solid);
   font-weight: 750;
   cursor: pointer;
+}
+
+.ambiance-listen {
+  border-color: transparent;
+  color: var(--ink);
+  background: var(--ambiance-gold);
+  box-shadow: 0 8px 20px rgba(239, 203, 104, 0.25);
 }
 
 .ambiance-choice-section {
@@ -11450,9 +11464,16 @@ body {
     white-space: normal;
   }
 
-  .ambiance-retry {
+  .ambiance-status-actions {
     grid-column: 1 / -1;
-    justify-self: stretch;
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .ambiance-retry,
+  .ambiance-listen {
+    width: 100%;
   }
 
   .ambiance-section-heading {
@@ -11482,6 +11503,32 @@ body {
     bottom: calc(12rem + var(--safe-bottom));
     width: calc(100% - 1.25rem);
     min-height: 64px;
+  }
+
+  body:has(#mini-player:not(.hidden)) .timer-fab {
+    right: 0.85rem;
+    bottom: calc(8.75rem + var(--safe-bottom));
+    width: 50px;
+    max-width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow:
+      0 12px 28px rgba(170, 132, 35, 0.22),
+      0 0 24px rgba(239, 203, 104, 0.28);
+  }
+
+  body:has(#mini-player:not(.hidden)) .timer-fab-copy {
+    display: none;
+  }
+
+  body:has(#mini-player:not(.hidden)) .timer-fab-ring {
+    width: 42px;
+    height: 42px;
   }
 }
 

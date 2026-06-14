@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260614-ambiance-radio-v2">
+  <link rel="stylesheet" href="./styles.css?v=20260614-audio-timer-mobile-v2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js" defer></script>
   <script src="./data.js?v=20260613-daily-tips" defer></script>
   <script src="./db.js" defer></script>
-  <script src="./app.js?v=20260614-ambiance-radio-v3" defer></script>
+  <script src="./app.js?v=20260614-ambiance-radio-v5" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -247,7 +247,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <strong id="ambiance-active-name">Choisis ce qui te ferait du bien</strong>
             <span id="ambiance-active-meta">Une station apparaîtra ici dès que tu l'auras lancée.</span>
           </div>
-          <button id="ambiance-retry" class="ambiance-retry" type="button" hidden>Réessayer</button>
+          <div class="ambiance-status-actions">
+            <button id="ambiance-play-ready" class="ambiance-listen" type="button" hidden>Écouter</button>
+            <button id="ambiance-retry" class="ambiance-retry" type="button" hidden>Réessayer</button>
+          </div>
         </article>
 
         <section class="ambiance-choice-section" aria-labelledby="radioCategoriesTitle">
