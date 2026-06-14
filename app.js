@@ -146,7 +146,8 @@
       "accountFirstNameField", "accountFirstName", "accountEmail",
       "accountPassword", "accountSubmitButton", "accountModeSwitch",
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
-      "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use"
+      "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use",
+      "timerFab", "closeTimerButton" // Ajoutés pour éviter des erreurs s'ils existent encore
     ].forEach(function (id) {
       if (document.getElementById(id)) {
         elements[id] = document.getElementById(id);
@@ -192,56 +193,65 @@
   }
 
   function bindEvents() {
+    // Événements globaux (toujours présents)
     document.addEventListener("click", handleDocumentClick);
-    elements.completeMissionButton.addEventListener("click", completeMission);
-    elements.markTipButton.addEventListener("click", markTipRead);
-    elements.zonesList.addEventListener("click", handleZoneClick);
-    elements.routineTaskList.addEventListener("click", handleRoutineListClick);
-    elements.addRoutineTaskButton.addEventListener("click", function () { openRoutineDialog(); });
-    elements.routineTaskForm.addEventListener("submit", saveRoutineTask);
-    elements.previousMonth.addEventListener("click", function () { changeMonth(-1); });
-    elements.nextMonth.addEventListener("click", function () { changeMonth(1); });
-    elements.calendarGrid.addEventListener("click", selectCalendarDay);
-    elements.saveSettingsButton.addEventListener("click", saveSettings);
-    elements.enableNotificationsButton.addEventListener("click", requestNotifications);
-    if(elements.installButton) elements.installButton.addEventListener("click", installApp);
-    if(elements.installSettingsButton) elements.installSettingsButton.addEventListener("click", installApp);
-    elements.resetDataButton.addEventListener("click", resetData);
-    elements.reloadAppButton.addEventListener("click", activateUpdate);
-    
-    // Minuterie
-    elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
-    elements.timerResetButton.addEventListener("click", resetTimer);
-    elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
-    elements.homeTimerButton.addEventListener("click", function() { navigate("timer"); });
-    elements.missionTimerButton.addEventListener("click", openMissionTimer);
-    
-    elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
-    elements.favoritesList.addEventListener("click", handleFavoriteClick);
-    elements.accountButton.addEventListener("click", handleAccountButton);
-    elements.accountSettingsButton.addEventListener("click", handleAccountSettingsButton);
-    elements.manageSubscriptionButton.addEventListener("click", manageSubscription);
-    elements.signOutButton.addEventListener("click", signOutAccount);
-    elements.createAccountButton.addEventListener("click", function () { openAccountDialog("signup"); });
-    elements.loginAccountButton.addEventListener("click", function () { openAccountDialog("login"); });
-    elements.upgradeMonthlyButton.addEventListener("click", function () { startUpgrade("monthly"); });
-    elements.upgradeYearlyButton.addEventListener("click", function () { startUpgrade("yearly"); });
-    elements.upgradeLifetimeButton.addEventListener("click", function () { startUpgrade("lifetime"); });
-    elements.upgradePrimaryButton.addEventListener("click", function () { startUpgrade("yearly"); });
-    elements.accountForm.addEventListener("submit", submitAccountForm);
-    elements.accountModeSwitch.addEventListener("click", toggleAccountMode);
-    elements.accountResetPassword.addEventListener("click", resetAccountPassword);
-    elements.closeAccountDialog.addEventListener("click", function () { elements.accountDialog.close(); });
     window.addEventListener("unpetitpas:account-change", handleAccountChange);
-    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
-      button.addEventListener("click", selectTimerPreset);
-    });
     document.addEventListener("visibilitychange", handleAppResume);
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
 
-    elements["mp-playpause"].addEventListener("click", toggleAmbiance);
-    elements["mp-close"].addEventListener("click", stopAmbiance);
+    // Vérification de sécurité avant d'attacher chaque événement
+    if (elements.completeMissionButton) elements.completeMissionButton.addEventListener("click", completeMission);
+    if (elements.markTipButton) elements.markTipButton.addEventListener("click", markTipRead);
+    if (elements.zonesList) elements.zonesList.addEventListener("click", handleZoneClick);
+    if (elements.routineTaskList) elements.routineTaskList.addEventListener("click", handleRoutineListClick);
+    if (elements.addRoutineTaskButton) elements.addRoutineTaskButton.addEventListener("click", function () { openRoutineDialog(); });
+    if (elements.routineTaskForm) elements.routineTaskForm.addEventListener("submit", saveRoutineTask);
+    if (elements.previousMonth) elements.previousMonth.addEventListener("click", function () { changeMonth(-1); });
+    if (elements.nextMonth) elements.nextMonth.addEventListener("click", function () { changeMonth(1); });
+    if (elements.calendarGrid) elements.calendarGrid.addEventListener("click", selectCalendarDay);
+    if (elements.saveSettingsButton) elements.saveSettingsButton.addEventListener("click", saveSettings);
+    if (elements.enableNotificationsButton) elements.enableNotificationsButton.addEventListener("click", requestNotifications);
+    if (elements.installButton) elements.installButton.addEventListener("click", installApp);
+    if (elements.installSettingsButton) elements.installSettingsButton.addEventListener("click", installApp);
+    if (elements.resetDataButton) elements.resetDataButton.addEventListener("click", resetData);
+    if (elements.reloadAppButton) elements.reloadAppButton.addEventListener("click", activateUpdate);
+
+    // Minuterie (Vérifications ajoutées)
+    if (elements.timerFab) elements.timerFab.addEventListener("click", function() { toggleTimerPanel(); });
+    if (elements.closeTimerButton) elements.closeTimerButton.addEventListener("click", function() { closeTimerPanel(); });
+    if (elements.timerPrimaryButton) elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
+    if (elements.timerResetButton) elements.timerResetButton.addEventListener("click", resetTimer);
+    if (elements.timerDoneButton) elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
+    if (elements.homeTimerButton) elements.homeTimerButton.addEventListener("click", function() { navigate("timer"); });
+    if (elements.missionTimerButton) elements.missionTimerButton.addEventListener("click", openMissionTimer);
+
+    // Favoris et Compte
+    if (elements.favoriteMissionButton) elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
+    if (elements.favoritesList) elements.favoritesList.addEventListener("click", handleFavoriteClick);
+    if (elements.accountButton) elements.accountButton.addEventListener("click", handleAccountButton);
+    if (elements.accountSettingsButton) elements.accountSettingsButton.addEventListener("click", handleAccountSettingsButton);
+    if (elements.manageSubscriptionButton) elements.manageSubscriptionButton.addEventListener("click", manageSubscription);
+    if (elements.signOutButton) elements.signOutButton.addEventListener("click", signOutAccount);
+    if (elements.createAccountButton) elements.createAccountButton.addEventListener("click", function () { openAccountDialog("signup"); });
+    if (elements.loginAccountButton) elements.loginAccountButton.addEventListener("click", function () { openAccountDialog("login"); });
+    if (elements.upgradeMonthlyButton) elements.upgradeMonthlyButton.addEventListener("click", function () { startUpgrade("monthly"); });
+    if (elements.upgradeYearlyButton) elements.upgradeYearlyButton.addEventListener("click", function () { startUpgrade("yearly"); });
+    if (elements.upgradeLifetimeButton) elements.upgradeLifetimeButton.addEventListener("click", function () { startUpgrade("lifetime"); });
+    if (elements.upgradePrimaryButton) elements.upgradePrimaryButton.addEventListener("click", function () { startUpgrade("yearly"); });
+    if (elements.accountForm) elements.accountForm.addEventListener("submit", submitAccountForm);
+    if (elements.accountModeSwitch) elements.accountModeSwitch.addEventListener("click", toggleAccountMode);
+    if (elements.accountResetPassword) elements.accountResetPassword.addEventListener("click", resetAccountPassword);
+    if (elements.closeAccountDialog) elements.closeAccountDialog.addEventListener("click", function () { elements.accountDialog.close(); });
+
+    // Ambiance
+    if (elements["mp-playpause"]) elements["mp-playpause"].addEventListener("click", toggleAmbiance);
+    if (elements["mp-close"]) elements["mp-close"].addEventListener("click", stopAmbiance);
+
+    // Durées de la minuterie
+    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
+      button.addEventListener("click", selectTimerPreset);
+    });
   }
 
   function handleDocumentClick(event) {
@@ -266,7 +276,7 @@
     }
 
     if (event.target.closest("[data-close-dialog]")) {
-      elements.routineTaskDialog.close();
+      if (elements.routineTaskDialog) elements.routineTaskDialog.close();
     }
   }
 
@@ -316,12 +326,16 @@
 
   function renderHeader(route) {
     const activeRoute = route || state.route;
-    elements.todayLabel.textContent = new Intl.DateTimeFormat("fr-CA", {
-      weekday: "long",
-      day: "numeric",
-      month: "long"
-    }).format(state.today);
-    elements.pageTitle.textContent = ROUTE_TITLES[activeRoute] || ROUTE_TITLES.home;
+    if (elements.todayLabel) {
+        elements.todayLabel.textContent = new Intl.DateTimeFormat("fr-CA", {
+          weekday: "long",
+          day: "numeric",
+          month: "long"
+        }).format(state.today);
+    }
+    if (elements.pageTitle) {
+        elements.pageTitle.textContent = ROUTE_TITLES[activeRoute] || ROUTE_TITLES.home;
+    }
   }
 
   function getDailyContent(date) {
@@ -354,42 +368,53 @@
     });
     const progress = Math.round(([missionDone, tipDone, otherStepDone].filter(Boolean).length / 3) * 100);
 
-    elements.dailyQuote.textContent = daily.quote;
-    elements.missionTitle.textContent = daily.mission.title;
-    elements.missionTime.textContent = daily.mission.minutes + " min";
-    elements.missionDescription.textContent = daily.mission.description;
-    elements.tipNumber.textContent = daily.tipLabel;
-    elements.dailyTip.textContent = daily.tip.text;
-    elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
-    elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
-    elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
+    if (elements.dailyQuote) elements.dailyQuote.textContent = daily.quote;
+    if (elements.missionTitle) elements.missionTitle.textContent = daily.mission.title;
+    if (elements.missionTime) elements.missionTime.textContent = daily.mission.minutes + " min";
+    if (elements.missionDescription) elements.missionDescription.textContent = daily.mission.description;
+    if (elements.tipNumber) elements.tipNumber.textContent = daily.tipLabel;
+    if (elements.dailyTip) elements.dailyTip.textContent = daily.tip.text;
+    if (elements.weeklyZoneTitle) elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
+    if (elements.weeklyZoneDescription) elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
+    if (elements.weeklyZoneVisual) elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
 
-    elements.completeMissionButton.classList.toggle("completed", missionDone);
-    elements.completeMissionButton.disabled = missionDone;
-    elements.completeMissionButton.querySelector("span").textContent = missionDone ? "Mission terminée" : "J'ai terminé";
+    if (elements.completeMissionButton) {
+        elements.completeMissionButton.classList.toggle("completed", missionDone);
+        elements.completeMissionButton.disabled = missionDone;
+        elements.completeMissionButton.querySelector("span").textContent = missionDone ? "Mission terminée" : "J'ai terminé";
+    }
 
-    elements.markTipButton.classList.toggle("completed", tipDone);
-    elements.markTipButton.disabled = tipDone;
-    elements.markTipButton.firstChild.textContent = tipDone ? "Conseil lu " : "Marquer comme lu ";
-    elements.favoriteMissionButton.classList.toggle("completed", missionFavorite);
-    elements.favoriteMissionButton.setAttribute("aria-pressed", String(missionFavorite));
-    elements.favoriteMissionButton.querySelector("span").textContent = missionFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
+    if (elements.markTipButton) {
+        elements.markTipButton.classList.toggle("completed", tipDone);
+        elements.markTipButton.disabled = tipDone;
+        elements.markTipButton.firstChild.textContent = tipDone ? "Conseil lu " : "Marquer comme lu ";
+    }
 
-    elements.dailyProgressRing.style.setProperty("--progress", String(progress));
-    elements.dailyProgressValue.textContent = progress + "%";
+    if (elements.favoriteMissionButton) {
+        elements.favoriteMissionButton.classList.toggle("completed", missionFavorite);
+        elements.favoriteMissionButton.setAttribute("aria-pressed", String(missionFavorite));
+        elements.favoriteMissionButton.querySelector("span").textContent = missionFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
+    }
 
-    if (progress === 100) {
-      elements.progressTitle.textContent = "C'est assez pour aujourd'hui";
-      elements.progressCaption.textContent = "Tu peux être fière ou fier de ce pas.";
-    } else if (progress >= 66) {
-      elements.progressTitle.textContent = "Tu avances déjà";
-      elements.progressCaption.textContent = "Chaque geste compte.";
-    } else if (progress >= 33) {
-      elements.progressTitle.textContent = "Un beau début";
-      elements.progressCaption.textContent = "La suite peut attendre.";
-    } else {
-      elements.progressTitle.textContent = "Un pas à la fois";
-      elements.progressCaption.textContent = "Rien ne presse.";
+    if (elements.dailyProgressRing) {
+        elements.dailyProgressRing.style.setProperty("--progress", String(progress));
+        elements.dailyProgressValue.textContent = progress + "%";
+    }
+
+    if (elements.progressTitle && elements.progressCaption) {
+        if (progress === 100) {
+          elements.progressTitle.textContent = "C'est assez pour aujourd'hui";
+          elements.progressCaption.textContent = "Tu peux être fière ou fier de ce pas.";
+        } else if (progress >= 66) {
+          elements.progressTitle.textContent = "Tu avances déjà";
+          elements.progressCaption.textContent = "Chaque geste compte.";
+        } else if (progress >= 33) {
+          elements.progressTitle.textContent = "Un beau début";
+          elements.progressCaption.textContent = "La suite peut attendre.";
+        } else {
+          elements.progressTitle.textContent = "Un pas à la fois";
+          elements.progressCaption.textContent = "Rien ne presse.";
+        }
     }
   }
 
@@ -449,6 +474,8 @@
     const currentWeeklyZone = getDailyContent().weeklyZone;
     const hasCompleteZones = canUse("completeZones");
     const freeTaskLimit = state.account.limits.zoneTasksPerSection;
+    if (!elements.zonesList) return;
+    
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
       const availableTasks = zone.tasks.filter(function (task) {
         if (hasCompleteZones) return true;
@@ -599,16 +626,20 @@
       evening: "#icon-moon"
     };
 
-    elements.routineSummary.innerHTML = [
-      '<div class="routine-summary-card">',
-      "<strong>", completed, " sur ", tasks.length, " aujourd'hui</strong>",
-      "<p>Routine ", names[state.activeRoutine], " · avance à ton rythme</p>",
-      '<div class="routine-progress-track"><span style="--width:', percent, '%"></span></div>',
-      !canUse("unlimitedRoutines")
-        ? '<p class="routine-plan-note"><svg><use href="#icon-lock"></use></svg>' + getCustomRoutineCount() + " sur " + state.account.limits.customRoutineTasks + ' tâches personnalisées gratuites</p>'
-        : "",
-      "</div>"
-    ].join("");
+    if (elements.routineSummary) {
+        elements.routineSummary.innerHTML = [
+          '<div class="routine-summary-card">',
+          "<strong>", completed, " sur ", tasks.length, " aujourd'hui</strong>",
+          "<p>Routine ", names[state.activeRoutine], " · avance à ton rythme</p>",
+          '<div class="routine-progress-track"><span style="--width:', percent, '%"></span></div>',
+          !canUse("unlimitedRoutines")
+            ? '<p class="routine-plan-note"><svg><use href="#icon-lock"></use></svg>' + getCustomRoutineCount() + " sur " + state.account.limits.customRoutineTasks + ' tâches personnalisées gratuites</p>'
+            : "",
+          "</div>"
+        ].join("");
+    }
+
+    if (!elements.routineTaskList) return;
 
     if (!tasks.length) {
       elements.routineTaskList.innerHTML = '<div class="empty-state"><h3>Une routine toute légère</h3><p>Ajoute une première tâche quand tu es prête ou prêt.</p></div>';
@@ -698,18 +729,18 @@
       showToast("PRO permet d'ajouter des tâches de routine sans limite.");
       return;
     }
-    elements.routineDialogTitle.textContent = editing ? "Modifier la tâche" : "Ajouter une tâche";
-    elements.routineTaskId.value = editing ? task.id : "";
-    elements.routineTaskName.value = editing ? task.title : "";
-    elements.routineTaskPeriod.value = editing ? task.routine : state.activeRoutine;
-    elements.routineTaskDuration.value = editing ? task.duration : "";
-    elements.routineTaskDialog.showModal();
-    window.setTimeout(function () { elements.routineTaskName.focus(); }, 50);
+    if (elements.routineDialogTitle) elements.routineDialogTitle.textContent = editing ? "Modifier la tâche" : "Ajouter une tâche";
+    if (elements.routineTaskId) elements.routineTaskId.value = editing ? task.id : "";
+    if (elements.routineTaskName) elements.routineTaskName.value = editing ? task.title : "";
+    if (elements.routineTaskPeriod) elements.routineTaskPeriod.value = editing ? task.routine : state.activeRoutine;
+    if (elements.routineTaskDuration) elements.routineTaskDuration.value = editing ? task.duration : "";
+    if (elements.routineTaskDialog) elements.routineTaskDialog.showModal();
+    window.setTimeout(function () { if(elements.routineTaskName) elements.routineTaskName.focus(); }, 50);
   }
 
   async function saveRoutineTask(event) {
     event.preventDefault();
-    if (!elements.routineTaskForm.reportValidity()) return;
+    if (!elements.routineTaskForm || !elements.routineTaskForm.reportValidity()) return;
 
     const id = elements.routineTaskId.value || createId();
     const existing = state.routineTasks.find(function (task) { return task.id === id; });
@@ -738,7 +769,7 @@
       state.routineTasks.push(task);
     }
     state.activeRoutine = routine;
-    elements.routineTaskDialog.close();
+    if (elements.routineTaskDialog) elements.routineTaskDialog.close();
     renderRoutines();
     showToast(existing ? "Tâche mise à jour." : "Tâche ajoutée.");
   }
@@ -767,9 +798,9 @@
 
   function renderHistory() {
     const activities = Array.from(state.activities.values());
-    elements.totalSteps.textContent = String(activities.length);
-    elements.missionCount.textContent = String(activities.filter(function (item) { return item.type === "mission"; }).length);
-    elements.tipCount.textContent = String(activities.filter(function (item) { return item.type === "tip"; }).length);
+    if (elements.totalSteps) elements.totalSteps.textContent = String(activities.length);
+    if (elements.missionCount) elements.missionCount.textContent = String(activities.filter(function (item) { return item.type === "mission"; }).length);
+    if (elements.tipCount) elements.tipCount.textContent = String(activities.filter(function (item) { return item.type === "tip"; }).length);
     renderCalendar(activities);
     renderHistoryDay(activities);
     renderFavorites();
@@ -780,7 +811,13 @@
     const favorites = Array.from(state.favorites.values()).sort(function (a, b) {
       return b.savedAt.localeCompare(a.savedAt);
     });
-    elements.favoriteCount.textContent = favorites.length + " favori" + (favorites.length > 1 ? "s" : "");
+    
+    if (elements.favoriteCount) {
+        elements.favoriteCount.textContent = favorites.length + " favori" + (favorites.length > 1 ? "s" : "");
+    }
+    
+    if (!elements.favoritesList) return;
+    
     if (!favorites.length) {
       elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucune mission favorite</h3><p>Ajoute une mission depuis l\'accueil pour la retrouver ici.</p></div>';
       return;
@@ -817,10 +854,12 @@
     const activityDates = new Set(activities.map(function (item) { return item.date; }));
     const todayKey = formatDateKey(state.today);
 
-    elements.calendarMonth.textContent = new Intl.DateTimeFormat("fr-CA", {
-      month: "long",
-      year: "numeric"
-    }).format(firstDay);
+    if (elements.calendarMonth) {
+        elements.calendarMonth.textContent = new Intl.DateTimeFormat("fr-CA", {
+          month: "long",
+          year: "numeric"
+        }).format(firstDay);
+    }
 
     const cells = [];
     for (let i = 0; i < startOffset; i += 1) {
@@ -838,7 +877,9 @@
       ].filter(Boolean).join(" ");
       cells.push('<button class="' + classes + '"' + (allowed ? ' data-date="' + dateKey + '"' : ' disabled title="Historique complet avec PRO"') + ' aria-label="' + dateKey + '">' + day + "</button>");
     }
-    elements.calendarGrid.innerHTML = cells.join("");
+    if (elements.calendarGrid) {
+        elements.calendarGrid.innerHTML = cells.join("");
+    }
   }
 
   function renderHistoryDay(activities) {
@@ -848,19 +889,29 @@
       .filter(function (item) { return item.date === state.selectedHistoryDate; })
       .sort(function (a, b) { return b.completedAt.localeCompare(a.completedAt); });
 
-    elements.historyDayTitle.textContent = state.selectedHistoryDate === todayKey
-      ? "Aujourd'hui"
-      : capitalize(new Intl.DateTimeFormat("fr-CA", { weekday: "long", day: "numeric", month: "long" }).format(selectedDate));
-    elements.historyDayCount.textContent = dayActivities.length + (dayActivities.length > 1 ? " petits pas" : " petit pas");
-    elements.historyAccessNote.hidden = true;
+    if (elements.historyDayTitle) {
+        elements.historyDayTitle.textContent = state.selectedHistoryDate === todayKey
+          ? "Aujourd'hui"
+          : capitalize(new Intl.DateTimeFormat("fr-CA", { weekday: "long", day: "numeric", month: "long" }).format(selectedDate));
+    }
+    if (elements.historyDayCount) {
+        elements.historyDayCount.textContent = dayActivities.length + (dayActivities.length > 1 ? " petits pas" : " petit pas");
+    }
+    if (elements.historyAccessNote) {
+        elements.historyAccessNote.hidden = true;
+    }
 
     if (!isHistoryDateAllowed(state.selectedHistoryDate)) {
-      elements.historyDayCount.textContent = "PRO";
-      elements.historyList.innerHTML = "";
-      elements.historyAccessNote.hidden = false;
-      elements.historyAccessNote.innerHTML = '<svg><use href="#icon-lock"></use></svg><div><strong>Ton historique détaillé gratuit couvre les 7 derniers jours.</strong><p>PRO conserve l\'accès à tout ton parcours.</p></div><button class="secondary-button" type="button" data-route="pro">Découvrir PRO</button>';
+      if (elements.historyDayCount) elements.historyDayCount.textContent = "PRO";
+      if (elements.historyList) elements.historyList.innerHTML = "";
+      if (elements.historyAccessNote) {
+          elements.historyAccessNote.hidden = false;
+          elements.historyAccessNote.innerHTML = '<svg><use href="#icon-lock"></use></svg><div><strong>Ton historique détaillé gratuit couvre les 7 derniers jours.</strong><p>PRO conserve l\'accès à tout ton parcours.</p></div><button class="secondary-button" type="button" data-route="pro">Découvrir PRO</button>';
+      }
       return;
     }
+
+    if (!elements.historyList) return;
 
     if (!dayActivities.length) {
       elements.historyList.innerHTML = '<div class="empty-state"><h3>Aucun pas enregistré</h3><p>Cette journée peut rester douce et vide.</p></div>';
@@ -894,6 +945,8 @@
   }
 
   function renderAdvancedStats(activities) {
+    if (!elements.advancedStatsContent) return;
+
     if (!canUse("advancedStats")) {
       elements.advancedStatsContent.innerHTML = '<div class="advanced-stats-locked"><span><svg><use href="#icon-lock"></use></svg></span><div><strong>Une vue plus complète avec PRO</strong><p>Découvre tes journées actives, ta série actuelle et le temps consacré à la minuterie.</p></div><button class="secondary-button" type="button" data-route="pro">Voir les avantages</button></div>';
       return;
@@ -943,18 +996,21 @@
   }
 
   function renderSettings() {
-    elements.missionReminder.checked = Boolean(state.settings.missionReminder);
-    elements.missionTimeSetting.value = state.settings.missionTime;
-    elements.tipReminder.checked = Boolean(state.settings.tipReminder);
-    elements.tipTimeSetting.value = state.settings.tipTime;
-    elements.zoneReminder.checked = Boolean(state.settings.zoneReminder);
-    elements.zoneTimeSetting.value = state.settings.zoneTime;
-    elements.reduceMotionSetting.checked = Boolean(state.settings.reduceMotion);
-    elements.firstNameSetting.value = state.settings.firstName || "";
+    if (elements.missionReminder) elements.missionReminder.checked = Boolean(state.settings.missionReminder);
+    if (elements.missionTimeSetting) elements.missionTimeSetting.value = state.settings.missionTime;
+    if (elements.tipReminder) elements.tipReminder.checked = Boolean(state.settings.tipReminder);
+    if (elements.tipTimeSetting) elements.tipTimeSetting.value = state.settings.tipTime;
+    if (elements.zoneReminder) elements.zoneReminder.checked = Boolean(state.settings.zoneReminder);
+    if (elements.zoneTimeSetting) elements.zoneTimeSetting.value = state.settings.zoneTime;
+    if (elements.reduceMotionSetting) elements.reduceMotionSetting.checked = Boolean(state.settings.reduceMotion);
+    if (elements.firstNameSetting) elements.firstNameSetting.value = state.settings.firstName || "";
+    
     const customTimesEnabled = canUse("customReminderTimes");
     [elements.missionTimeSetting, elements.tipTimeSetting, elements.zoneTimeSetting].forEach(function (input) {
-      input.disabled = !customTimesEnabled;
-      input.title = customTimesEnabled ? "" : "Les heures personnalisées sont incluses avec PRO.";
+      if(input) {
+          input.disabled = !customTimesEnabled;
+          input.title = customTimesEnabled ? "" : "Les heures personnalisées sont incluses avec PRO.";
+      }
     });
     document.querySelectorAll(".pro-mini").forEach(function (badge) {
       badge.hidden = customTimesEnabled;
@@ -998,29 +1054,34 @@
     const isPro = Boolean(state.account.isPro);
     const cloudEnabled = Boolean(state.account.cloudEnabled);
     const hasLifetimeAccess = state.account.subscription && state.account.subscription.plan === "lifetime";
-    elements.accountButton.classList.toggle("pro", isPro);
-    elements.accountButtonLabel.textContent = isPro ? "PRO" : user ? "Mon compte" : "Connexion";
-    elements.accountPlanLabel.textContent = hasLifetimeAccess ? "Accès PRO à vie" : isPro ? "Abonnement PRO actif" : user ? "Forfait gratuit" : "Mode local gratuit";
-    elements.accountSettingsStatus.textContent = user ? (isPro ? "Un Petit Pas PRO" : "Mon compte gratuit") : "Mon compte";
-    elements.accountSettingsEmail.textContent = user
-      ? user.email
-      : cloudEnabled ? "Crée un compte gratuitement pour préparer ton accès PRO." : "Tes données restent sur cet appareil.";
-    elements.accountSettingsButton.textContent = user ? (isPro ? "Voir les avantages PRO" : "Découvrir PRO") : "Créer un compte";
-    elements.manageSubscriptionButton.hidden = !isPro || hasLifetimeAccess;
-    elements.signOutButton.hidden = !user;
-    elements.createAccountButton.hidden = Boolean(user);
-    elements.loginAccountButton.hidden = Boolean(user);
+    
+    if(elements.accountButton) elements.accountButton.classList.toggle("pro", isPro);
+    if(elements.accountButtonLabel) elements.accountButtonLabel.textContent = isPro ? "PRO" : user ? "Mon compte" : "Connexion";
+    if(elements.accountPlanLabel) elements.accountPlanLabel.textContent = hasLifetimeAccess ? "Accès PRO à vie" : isPro ? "Abonnement PRO actif" : user ? "Forfait gratuit" : "Mode local gratuit";
+    if(elements.accountSettingsStatus) elements.accountSettingsStatus.textContent = user ? (isPro ? "Un Petit Pas PRO" : "Mon compte gratuit") : "Mon compte";
+    if(elements.accountSettingsEmail) {
+        elements.accountSettingsEmail.textContent = user
+          ? user.email
+          : cloudEnabled ? "Crée un compte gratuitement pour préparer ton accès PRO." : "Tes données restent sur cet appareil.";
+    }
+    if(elements.accountSettingsButton) elements.accountSettingsButton.textContent = user ? (isPro ? "Voir les avantages PRO" : "Découvrir PRO") : "Créer un compte";
+    if(elements.manageSubscriptionButton) elements.manageSubscriptionButton.hidden = !isPro || hasLifetimeAccess;
+    if(elements.signOutButton) elements.signOutButton.hidden = !user;
+    if(elements.createAccountButton) elements.createAccountButton.hidden = Boolean(user);
+    if(elements.loginAccountButton) elements.loginAccountButton.hidden = Boolean(user);
 
     [elements.upgradeMonthlyButton, elements.upgradeYearlyButton, elements.upgradeLifetimeButton, elements.upgradePrimaryButton].forEach(function (button) {
-      button.disabled = isPro;
+      if(button) button.disabled = isPro;
     });
-    elements.upgradeMonthlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
-    elements.upgradeYearlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
-    elements.upgradeLifetimeButton.textContent = isPro ? "PRO est actif" : "Obtenir l'accès à vie";
-    elements.upgradePrimaryButton.textContent = isPro ? "Ton accès PRO est actif" : "Essayer l'annuel 45 jours";
+    
+    if(elements.upgradeMonthlyButton) elements.upgradeMonthlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
+    if(elements.upgradeYearlyButton) elements.upgradeYearlyButton.textContent = isPro ? "PRO est actif" : "Essayer PRO 45 jours";
+    if(elements.upgradeLifetimeButton) elements.upgradeLifetimeButton.textContent = isPro ? "PRO est actif" : "Obtenir l'accès à vie";
+    if(elements.upgradePrimaryButton) elements.upgradePrimaryButton.textContent = isPro ? "Ton accès PRO est actif" : "Essayer l'annuel 45 jours";
+    
     renderFounderOffer();
 
-    if (elements.accountDialog.open) renderAccountDialog();
+    if (elements.accountDialog && elements.accountDialog.open) renderAccountDialog();
   }
 
   function renderFounderOffer() {
@@ -1028,15 +1089,21 @@
     const active = Boolean(pricing.founderActive) && Number(pricing.founderRemaining) > 0;
     const remaining = Math.max(0, Number(pricing.founderRemaining) || 0);
     const limit = Math.max(1, Number(pricing.founderLimit) || 100);
-    elements.founderOfferPanel.hidden = !active;
-    elements.founderOfferBadge.hidden = !active;
-    elements.lifetimePricingCard.classList.toggle("founder-active", active);
-    elements.lifetimeRegularPrice.hidden = !active;
-    elements.lifetimePrice.textContent = active ? "39,99 $" : "99,00 $";
-    elements.lifetimeDescription.textContent = active
-      ? "Un seul paiement. Réservé aux " + limit + " premiers membres."
-      : "Un seul paiement pour conserver PRO sans renouvellement.";
-    elements.founderCounter.textContent = remaining + " place" + (remaining === 1 ? "" : "s") + " restante" + (remaining === 1 ? "" : "s") + " sur " + limit;
+    
+    if(elements.founderOfferPanel) elements.founderOfferPanel.hidden = !active;
+    if(elements.founderOfferBadge) elements.founderOfferBadge.hidden = !active;
+    if(elements.lifetimePricingCard) elements.lifetimePricingCard.classList.toggle("founder-active", active);
+    if(elements.lifetimeRegularPrice) elements.lifetimeRegularPrice.hidden = !active;
+    if(elements.lifetimePrice) elements.lifetimePrice.textContent = active ? "39,99 $" : "99,00 $";
+    
+    if(elements.lifetimeDescription) {
+        elements.lifetimeDescription.textContent = active
+          ? "Un seul paiement. Réservé aux " + limit + " premiers membres."
+          : "Un seul paiement pour conserver PRO sans renouvellement.";
+    }
+    if(elements.founderCounter) {
+        elements.founderCounter.textContent = remaining + " place" + (remaining === 1 ? "" : "s") + " restante" + (remaining === 1 ? "" : "s") + " sur " + limit;
+    }
   }
 
   function handleAccountButton() {
@@ -1057,49 +1124,54 @@
 
   function openAccountDialog(mode) {
     state.accountMode = mode === "login" ? "login" : "signup";
-    elements.accountForm.reset();
-    elements.accountError.hidden = true;
-    elements.accountSuccess.hidden = true;
+    if(elements.accountForm) elements.accountForm.reset();
+    if(elements.accountError) elements.accountError.hidden = true;
+    if(elements.accountSuccess) elements.accountSuccess.hidden = true;
     renderAccountDialog();
-    elements.accountDialog.showModal();
+    if(elements.accountDialog) elements.accountDialog.showModal();
     window.setTimeout(function () {
-      (state.accountMode === "signup" ? elements.accountFirstName : elements.accountEmail).focus();
+      const field = state.accountMode === "signup" ? elements.accountFirstName : elements.accountEmail;
+      if(field) field.focus();
     }, 50);
   }
 
   function renderAccountDialog() {
     const isLogin = state.accountMode === "login";
-    elements.accountDialogTitle.textContent = isLogin ? "Heureuse de te revoir" : "Créer mon compte";
-    elements.accountDialogCopy.textContent = isLogin
-      ? "Connecte-toi pour retrouver ton statut et gérer ton abonnement."
-      : "Le compte gratuit permet de préparer ton accès PRO sans retirer le mode local.";
-    elements.accountFirstNameField.hidden = isLogin;
-    elements.accountPassword.autocomplete = isLogin ? "current-password" : "new-password";
-    elements.accountSubmitButton.textContent = isLogin ? "Me connecter" : "Créer mon compte";
-    elements.accountModeSwitch.textContent = isLogin ? "Je veux créer un compte" : "J'ai déjà un compte";
-    elements.accountResetPassword.hidden = !isLogin;
-    elements.accountCloudNotice.hidden = Boolean(state.account.cloudEnabled);
-    elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
+    if(elements.accountDialogTitle) elements.accountDialogTitle.textContent = isLogin ? "Heureuse de te revoir" : "Créer mon compte";
+    if(elements.accountDialogCopy) {
+        elements.accountDialogCopy.textContent = isLogin
+          ? "Connecte-toi pour retrouver ton statut et gérer ton abonnement."
+          : "Le compte gratuit permet de préparer ton accès PRO sans retirer le mode local.";
+    }
+    if(elements.accountFirstNameField) elements.accountFirstNameField.hidden = isLogin;
+    if(elements.accountPassword) elements.accountPassword.autocomplete = isLogin ? "current-password" : "new-password";
+    if(elements.accountSubmitButton) {
+        elements.accountSubmitButton.textContent = isLogin ? "Me connecter" : "Créer mon compte";
+        elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
+    }
+    if(elements.accountModeSwitch) elements.accountModeSwitch.textContent = isLogin ? "Je veux créer un compte" : "J'ai déjà un compte";
+    if(elements.accountResetPassword) elements.accountResetPassword.hidden = !isLogin;
+    if(elements.accountCloudNotice) elements.accountCloudNotice.hidden = Boolean(state.account.cloudEnabled);
   }
 
   function toggleAccountMode() {
     state.accountMode = state.accountMode === "login" ? "signup" : "login";
-    elements.accountError.hidden = true;
-    elements.accountSuccess.hidden = true;
+    if(elements.accountError) elements.accountError.hidden = true;
+    if(elements.accountSuccess) elements.accountSuccess.hidden = true;
     renderAccountDialog();
   }
 
   async function submitAccountForm(event) {
     event.preventDefault();
     if (!ACCOUNT || !state.account.cloudEnabled) return;
-    elements.accountError.hidden = true;
-    elements.accountSuccess.hidden = true;
-    elements.accountSubmitButton.disabled = true;
+    if(elements.accountError) elements.accountError.hidden = true;
+    if(elements.accountSuccess) elements.accountSuccess.hidden = true;
+    if(elements.accountSubmitButton) elements.accountSubmitButton.disabled = true;
 
     try {
       if (state.accountMode === "login") {
         await ACCOUNT.signIn(elements.accountEmail.value, elements.accountPassword.value);
-        elements.accountDialog.close();
+        if(elements.accountDialog) elements.accountDialog.close();
         showToast("Connexion réussie. Bon retour.");
       } else {
         const result = await ACCOUNT.signUp(
@@ -1108,32 +1180,40 @@
           elements.accountFirstName.value
         );
         if (result.session) {
-          elements.accountDialog.close();
+          if(elements.accountDialog) elements.accountDialog.close();
           showToast("Ton compte gratuit est prêt.");
         } else {
-          elements.accountSuccess.textContent = "Compte créé. Vérifie ton courriel pour confirmer ton adresse.";
-          elements.accountSuccess.hidden = false;
+          if(elements.accountSuccess) {
+              elements.accountSuccess.textContent = "Compte créé. Vérifie ton courriel pour confirmer ton adresse.";
+              elements.accountSuccess.hidden = false;
+          }
         }
       }
     } catch (error) {
-      elements.accountError.textContent = friendlyAccountError(error);
-      elements.accountError.hidden = false;
+      if(elements.accountError) {
+          elements.accountError.textContent = friendlyAccountError(error);
+          elements.accountError.hidden = false;
+      }
     } finally {
-      elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
+      if(elements.accountSubmitButton) elements.accountSubmitButton.disabled = !state.account.cloudEnabled;
     }
   }
 
   async function resetAccountPassword() {
     if (!ACCOUNT || !state.account.cloudEnabled) return;
-    elements.accountError.hidden = true;
-    elements.accountSuccess.hidden = true;
+    if(elements.accountError) elements.accountError.hidden = true;
+    if(elements.accountSuccess) elements.accountSuccess.hidden = true;
     try {
       await ACCOUNT.resetPassword(elements.accountEmail.value);
-      elements.accountSuccess.textContent = "Le courriel de réinitialisation a été envoyé.";
-      elements.accountSuccess.hidden = false;
+      if(elements.accountSuccess) {
+          elements.accountSuccess.textContent = "Le courriel de réinitialisation a été envoyé.";
+          elements.accountSuccess.hidden = false;
+      }
     } catch (error) {
-      elements.accountError.textContent = friendlyAccountError(error);
-      elements.accountError.hidden = false;
+      if(elements.accountError) {
+          elements.accountError.textContent = friendlyAccountError(error);
+          elements.accountError.hidden = false;
+      }
     }
   }
 
@@ -1164,7 +1244,7 @@
     }
 
     const buttons = [elements.upgradeMonthlyButton, elements.upgradeYearlyButton, elements.upgradeLifetimeButton, elements.upgradePrimaryButton];
-    buttons.forEach(function (button) { button.disabled = true; });
+    buttons.forEach(function (button) { if(button) button.disabled = true; });
     try {
       await ACCOUNT.startCheckout(plan);
     } catch (error) {
@@ -1392,7 +1472,6 @@
     if (playSound) playTimerChime();
     if (document.hidden) showTimerNotification();
     
-    // Si l'utilisateur n'est pas sur la page minuterie, on l'informe poliment
     if (state.route !== "timer") {
       showToast("Ton minuteur est terminé. Bravo !");
     }
@@ -1417,11 +1496,11 @@
     const isActive = status === "running" || status === "paused";
     const displayTime = formatTimerTime(remainingMs);
 
-    elements.timerTimeRemaining.textContent = displayTime;
-    elements.timerProgressCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - ratio));
+    if (elements.timerTimeRemaining) elements.timerTimeRemaining.textContent = displayTime;
+    if (elements.timerProgressCircle) elements.timerProgressCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - ratio));
     
-    elements.timerMainView.hidden = status === "complete";
-    elements.timerCompleteView.hidden = status !== "complete";
+    if (elements.timerMainView) elements.timerMainView.hidden = status === "complete";
+    if (elements.timerCompleteView) elements.timerCompleteView.hidden = status !== "complete";
 
     document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
       button.classList.toggle("active", Number(button.dataset.timerMinutes) === state.timer.selectedMinutes);
@@ -1434,19 +1513,19 @@
       paused: "En pause, sans culpabilité",
       complete: "Petit pas terminé"
     };
-    elements.timerStatusText.textContent = statusCopy[status];
+    if (elements.timerStatusText) elements.timerStatusText.textContent = statusCopy[status];
 
     if (status === "running") {
-      elements.timerPrimaryIcon.setAttribute("href", "#icon-pause");
-      elements.timerPrimaryLabel.textContent = "Pause";
+      if (elements.timerPrimaryIcon) elements.timerPrimaryIcon.setAttribute("href", "#icon-pause");
+      if (elements.timerPrimaryLabel) elements.timerPrimaryLabel.textContent = "Pause";
     } else if (status === "paused") {
-      elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
-      elements.timerPrimaryLabel.textContent = "Reprendre";
+      if (elements.timerPrimaryIcon) elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
+      if (elements.timerPrimaryLabel) elements.timerPrimaryLabel.textContent = "Reprendre";
     } else {
-      elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
-      elements.timerPrimaryLabel.textContent = "Démarrer";
+      if (elements.timerPrimaryIcon) elements.timerPrimaryIcon.setAttribute("href", "#icon-play");
+      if (elements.timerPrimaryLabel) elements.timerPrimaryLabel.textContent = "Démarrer";
     }
-    elements.timerResetButton.disabled = status === "idle";
+    if (elements.timerResetButton) elements.timerResetButton.disabled = status === "idle";
   }
 
   function formatTimerTime(milliseconds) {
@@ -1543,19 +1622,22 @@
 
   function renderNotificationStatus() {
     if (!("Notification" in window)) {
-      elements.notificationStatus.textContent = "Les notifications ne sont pas prises en charge ici.";
-      elements.enableNotificationsButton.disabled = true;
+      if (elements.notificationStatus) elements.notificationStatus.textContent = "Les notifications ne sont pas prises en charge ici.";
+      if (elements.enableNotificationsButton) elements.enableNotificationsButton.disabled = true;
       return;
     }
 
     const permission = Notification.permission;
-    elements.enableNotificationsButton.hidden = permission === "granted";
-    if (permission === "granted") {
-      elements.notificationStatus.textContent = "Notifications autorisées. Les rappels sont vérifiés lorsque l'application est ouverte ou active en arrière-plan selon ton appareil.";
-    } else if (permission === "denied") {
-      elements.notificationStatus.textContent = "Notifications bloquées. Tu peux les réactiver dans les réglages du navigateur.";
-    } else {
-      elements.notificationStatus.textContent = "Autorise les notifications pour recevoir les rappels aux heures choisies.";
+    if (elements.enableNotificationsButton) elements.enableNotificationsButton.hidden = permission === "granted";
+    
+    if (elements.notificationStatus) {
+        if (permission === "granted") {
+          elements.notificationStatus.textContent = "Notifications autorisées. Les rappels sont vérifiés lorsque l'application est ouverte ou active en arrière-plan selon ton appareil.";
+        } else if (permission === "denied") {
+          elements.notificationStatus.textContent = "Notifications bloquées. Tu peux les réactiver dans les réglages du navigateur.";
+        } else {
+          elements.notificationStatus.textContent = "Autorise les notifications pour recevoir les rappels aux heures choisies.";
+        }
     }
   }
 
@@ -1676,7 +1758,7 @@
         if (!worker) return;
         worker.addEventListener("statechange", function () {
           if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            elements.updateBanner.hidden = false;
+            if (elements.updateBanner) elements.updateBanner.hidden = false;
           }
         });
       });
@@ -1733,6 +1815,7 @@
   }
 
   function showToast(message) {
+    if (!elements.toast) return;
     window.clearTimeout(state.toastTimer);
     elements.toast.textContent = message;
     elements.toast.classList.add("show");
@@ -1742,6 +1825,7 @@
   }
 
   function showApp() {
+    if (!elements.app || !elements.splash) return;
     elements.app.hidden = false;
     window.setTimeout(function () {
       elements.splash.classList.add("hidden");
@@ -1750,7 +1834,9 @@
   }
 
   function showFatalError() {
-    elements.splash.innerHTML = "<p>Impossible d'ouvrir les données locales.</p><small>Recharge la page ou vérifie que la navigation privée est désactivée.</small>";
+    if (elements.splash) {
+        elements.splash.innerHTML = "<p>Impossible d'ouvrir les données locales.</p><small>Recharge la page ou vérifie que la navigation privée est désactivée.</small>";
+    }
   }
 
   function getDailyTip(date) {
@@ -1902,22 +1988,28 @@
     state.currentStationId = id;
     player.src = station.src;
     
-    elements["mp-title"].textContent = "Connexion...";
-    elements["mp-title"].classList.add("loading");
+    if (elements["mp-title"]) {
+        elements["mp-title"].textContent = "Connexion...";
+        elements["mp-title"].classList.add("loading");
+    }
     
     player.play().then(() => {
-      elements["mp-title"].classList.remove("loading");
-      elements["mp-title"].textContent = station.name;
+      if (elements["mp-title"]) {
+          elements["mp-title"].classList.remove("loading");
+          elements["mp-title"].textContent = station.name;
+      }
     }).catch(function(e) { 
       console.warn("Lecture audio bloquée ou impossible", e);
-      elements["mp-title"].classList.remove("loading");
-      elements["mp-title"].textContent = "Lecture en pause";
+      if (elements["mp-title"]) {
+          elements["mp-title"].classList.remove("loading");
+          elements["mp-title"].textContent = "Lecture en pause";
+      }
     });
 
     state.ambiancePlaying = true;
-    elements["mp-icon"].textContent = station.icon;
-    elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
-    elements["mini-player"].classList.remove("hidden");
+    if (elements["mp-icon"]) elements["mp-icon"].textContent = station.icon;
+    if (elements["mp-play-icon-use"]) elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
+    if (elements["mini-player"]) elements["mini-player"].classList.remove("hidden");
     
     renderAmbiance(); 
   }
@@ -1926,10 +2018,10 @@
     const player = elements["global-audio-player"];
     if (state.ambiancePlaying) {
       player.pause();
-      elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
+      if (elements["mp-play-icon-use"]) elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
     } else {
       player.play();
-      elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
+      if (elements["mp-play-icon-use"]) elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
     }
     state.ambiancePlaying = !state.ambiancePlaying;
     renderAmbiance(); 
@@ -1942,7 +2034,7 @@
     player.load(); 
     state.ambiancePlaying = false;
     state.currentStationId = null;
-    elements["mini-player"].classList.add("hidden");
+    if (elements["mini-player"]) elements["mini-player"].classList.add("hidden");
     renderAmbiance(); 
   }
 
