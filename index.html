@@ -43,129 +43,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="./data.js?v=20260613-daily-tips" defer></script>
   <script src="./db.js" defer></script>
   <script src="./app.js?v=20260613-unified-header" defer></script>
-
-  <style>
-    /* Styles pour le Coin Ambiance et le lecteur audio */
-    .ambiance-stations {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .station-card {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      background: white;
-    }
-    .station-card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .station-icon {
-      font-size: 2rem;
-      background: #f0f4f8;
-      padding: 12px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .station-card-header h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1rem;
-      color: #1f4f86;
-    }
-    .station-card-header p {
-      margin: 0;
-      font-size: 0.95rem;
-      color: #666;
-      line-height: 1.4;
-    }
-    .station-play-btn {
-      align-self: flex-start;
-      margin-top: 8px;
-    }
-    .station-play-btn.playing {
-      background-color: #f0f4f8;
-      color: #1f4f86;
-    }
-    .external-music-section {
-      margin-top: 40px;
-    }
-    .external-music-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 16px;
-    }
-    .external-music-btn {
-      justify-content: center;
-      font-weight: 500;
-      border: 1px solid rgba(0,0,0,0.05);
-      text-decoration: none;
-      color: inherit;
-    }
-    .mp-title.loading {
-      opacity: 0.5;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
-    }
-    .mini-player {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 100px;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      z-index: 1000;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .mini-player.hidden {
-      opacity: 0;
-      transform: translate(-50%, 20px);
-      pointer-events: none;
-    }
-    .mp-info { display: flex; align-items: center; gap: 12px; }
-    .mp-icon { font-size: 1.5rem; }
-    .mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem; }
-    .mp-controls { display: flex; gap: 8px; align-items: center; }
-    .mp-btn {
-      background: none;
-      border: none;
-      color: #1f4f86;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .mp-btn svg { width: 20px; height: 20px; fill: currentColor; }
-    .mp-btn:hover { background: rgba(31, 79, 134, 0.1); }
-    .mp-btn-close { font-size: 1.2rem; font-weight: bold; }
-    @media (min-width: 768px) {
-      .mini-player { bottom: 24px; left: calc(50% + 120px); }
-    }
-  </style>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -217,6 +94,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
         <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
         <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+        <button class="nav-item" data-route="timer"><svg><use href="#icon-timer"></use></svg><span>Minuterie</span></button>
         <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
         <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Historique</span></button>
         <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
@@ -353,6 +231,62 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="routineTaskList" class="routine-list"></div>
       </section>
 
+      <!-- NOUVELLE PAGE MINUTERIE OFFICIELLE -->
+      <section id="page-timer" class="page" data-page="timer">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Un moment pour avancer</p>
+            <h2>Minuterie douce</h2>
+          </div>
+          <p>Un espace sans pression pour tes petits pas.</p>
+        </div>
+
+        <article class="card timer-card">
+          <div id="timerMainView">
+            <div class="timer-display">
+              <svg class="timer-progress" viewBox="0 0 160 160" aria-hidden="true">
+                <circle class="timer-progress-track" cx="80" cy="80" r="69"></circle>
+                <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
+              </svg>
+              <div class="timer-time-copy">
+                <strong id="timerTimeRemaining">05:00</strong>
+                <span id="timerStatusText">Prête quand tu l'es</span>
+              </div>
+            </div>
+
+            <div class="timer-presets" aria-label="Durées rapides">
+              <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
+              <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
+              <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
+              <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
+              <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
+            </div>
+
+            <div class="timer-controls">
+              <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">
+                <svg><use href="#icon-reset"></use></svg>
+              </button>
+              <button id="timerPrimaryButton" class="timer-control primary" type="button">
+                <svg><use id="timerPrimaryIcon" href="#icon-play"></use></svg>
+                <span id="timerPrimaryLabel">Démarrer</span>
+              </button>
+            </div>
+            <p class="timer-gentle-note">Tu peux t'arrêter quand tu veux. Ce temps t'appartient.</p>
+          </div>
+
+          <div id="timerCompleteView" class="timer-complete-view" hidden>
+            <div class="timer-celebration" aria-hidden="true">
+              <span></span><span></span><span></span>
+              <svg><use href="#icon-check"></use></svg>
+            </div>
+            <p class="card-kicker">C'est terminé</p>
+            <h2>Bravo. Tu as fait un petit pas.</h2>
+            <p>Tu peux savourer ce moment et t'arrêter ici.</p>
+            <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
+          </div>
+        </article>
+      </section>
+
       <section id="page-ambiance" class="page" data-page="ambiance">
         <div class="section-intro">
           <div>
@@ -361,9 +295,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <p>Choisissez une ambiance ou ouvrez votre plateforme musicale préférée.</p>
         </div>
-
         <div id="ambianceStationsList" class="ambiance-stations"></div>
-
         <div class="external-music-section">
           <div class="history-heading">
             <h3>🎧 Ma musique préférée</h3>
@@ -641,6 +573,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </footer>
       </section>
       
+      <!-- MINI LECTEUR AMBIANCE -->
       <audio id="global-audio-player" loop></audio>
       <div id="mini-player" class="mini-player hidden">
         <div class="mp-info">
@@ -657,78 +590,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     </main>
 
+    <!-- NAVIGATION MOBILE AVEC 8 ITEMS (défilement horizontal) -->
     <nav class="bottom-nav" aria-label="Navigation mobile">
       <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
       <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
       <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+      <button class="nav-item" data-route="timer"><svg><use href="#icon-timer"></use></svg><span>Minuterie</span></button>
       <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
       <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
       <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
       <button class="nav-item" data-route="about"><svg><use href="#icon-about"></use></svg><span>À propos</span></button>
     </nav>
-
-    <button id="timerFab" class="timer-fab" type="button" aria-label="Ouvrir la minuterie" aria-expanded="false" aria-controls="timerPanel">
-      <span class="timer-fab-ring" id="timerFabRing">
-        <svg><use href="#icon-timer"></use></svg>
-      </span>
-      <span class="timer-fab-copy">
-        <small id="timerFabLabel">Minuterie</small>
-        <strong id="timerFabTime">Je fais un petit pas</strong>
-      </span>
-    </button>
-
-    <section id="timerPanel" class="timer-panel" role="dialog" aria-modal="false" aria-labelledby="timerPanelTitle" hidden>
-      <div class="timer-panel-header">
-        <div>
-          <p class="card-kicker">Un moment pour avancer</p>
-          <h2 id="timerPanelTitle">Minuterie douce</h2>
-        </div>
-        <button id="closeTimerButton" class="dialog-close timer-close" type="button" aria-label="Fermer la minuterie">×</button>
-      </div>
-
-      <div id="timerMainView">
-        <div class="timer-display">
-          <svg class="timer-progress" viewBox="0 0 160 160" aria-hidden="true">
-            <circle class="timer-progress-track" cx="80" cy="80" r="69"></circle>
-            <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
-          </svg>
-          <div class="timer-time-copy">
-            <strong id="timerTimeRemaining">05:00</strong>
-            <span id="timerStatusText">Prête quand tu l'es</span>
-          </div>
-        </div>
-
-        <div class="timer-presets" aria-label="Durées rapides">
-          <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
-          <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
-        </div>
-
-        <div class="timer-controls">
-          <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">
-            <svg><use href="#icon-reset"></use></svg>
-          </button>
-          <button id="timerPrimaryButton" class="timer-control primary" type="button">
-            <svg><use id="timerPrimaryIcon" href="#icon-play"></use></svg>
-            <span id="timerPrimaryLabel">Démarrer</span>
-          </button>
-        </div>
-        <p class="timer-gentle-note">Tu peux t'arrêter quand tu veux. Ce temps t'appartient.</p>
-      </div>
-
-      <div id="timerCompleteView" class="timer-complete-view" hidden>
-        <div class="timer-celebration" aria-hidden="true">
-          <span></span><span></span><span></span>
-          <svg><use href="#icon-check"></use></svg>
-        </div>
-        <p class="card-kicker">C'est terminé</p>
-        <h2>Bravo. Tu as fait un petit pas aujourd'hui.</h2>
-        <p>Tu peux savourer ce moment et t'arrêter ici.</p>
-        <button id="timerDoneButton" class="primary-button full-width" type="button">Merci, c'est fait</button>
-      </div>
-    </section>
   </div>
 
   <dialog id="routineTaskDialog" class="task-dialog">

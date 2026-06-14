@@ -8,6 +8,7 @@
     home: "Aujourd'hui",
     zones: "Zones",
     routines: "Routines",
+    timer: "Minuterie",
     ambiance: "Ambiance",
     history: "Progrès",
     settings: "Réglages",
@@ -15,7 +16,6 @@
     about: "À propos"
   };
 
-  // NOUVEAU: Coin Ambiance - Architecture de configuration
   const AMBIANCE_STATIONS = [
     {
       id: 'nrj-france',
@@ -73,7 +73,7 @@
     audioContext: null,
     accountMode: "signup",
     ambiancePlaying: false,
-    currentStationId: null, // NOUVEAU: Coin Ambiance
+    currentStationId: null,
     account: {
       ready: false,
       cloudEnabled: false,
@@ -128,11 +128,9 @@
       "installSettingsButton", "resetDataButton", "routineTaskDialog",
       "routineTaskForm", "routineDialogTitle", "routineTaskId", "routineTaskName",
       "routineTaskPeriod", "routineTaskDuration", "toast", "updateBanner",
-      "reloadAppButton", "timerFab", "timerFabRing", "timerFabLabel",
-      "timerFabTime", "timerPanel", "closeTimerButton", "timerMainView",
-      "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
-      "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
-      "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
+      "reloadAppButton", "timerMainView", "timerProgressCircle", 
+      "timerTimeRemaining", "timerStatusText", "timerResetButton", "timerPrimaryButton", 
+      "timerPrimaryIcon", "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
       "homeTimerButton", "missionTimerButton", "accountButton",
       "favoriteMissionButton", "favoritesList", "favoriteCount",
       "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
@@ -150,10 +148,11 @@
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
       "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use"
     ].forEach(function (id) {
-      elements[id] = document.getElementById(id);
+      if (document.getElementById(id)) {
+        elements[id] = document.getElementById(id);
+      }
     });
 
-    // Gestion des erreurs du lecteur audio
     if (elements["global-audio-player"]) {
       elements["global-audio-player"].addEventListener("error", function() {
         if (state.ambiancePlaying) {
@@ -205,17 +204,18 @@
     elements.calendarGrid.addEventListener("click", selectCalendarDay);
     elements.saveSettingsButton.addEventListener("click", saveSettings);
     elements.enableNotificationsButton.addEventListener("click", requestNotifications);
-    elements.installButton.addEventListener("click", installApp);
-    elements.installSettingsButton.addEventListener("click", installApp);
+    if(elements.installButton) elements.installButton.addEventListener("click", installApp);
+    if(elements.installSettingsButton) elements.installSettingsButton.addEventListener("click", installApp);
     elements.resetDataButton.addEventListener("click", resetData);
     elements.reloadAppButton.addEventListener("click", activateUpdate);
-    elements.timerFab.addEventListener("click", toggleTimerPanel);
-    elements.closeTimerButton.addEventListener("click", closeTimerPanel);
+    
+    // Minuterie
     elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
     elements.timerResetButton.addEventListener("click", resetTimer);
     elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
-    elements.homeTimerButton.addEventListener("click", openTimerPanel);
+    elements.homeTimerButton.addEventListener("click", function() { navigate("timer"); });
     elements.missionTimerButton.addEventListener("click", openMissionTimer);
+    
     elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
     elements.favoritesList.addEventListener("click", handleFavoriteClick);
     elements.accountButton.addEventListener("click", handleAccountButton);
@@ -245,7 +245,6 @@
   }
 
   function handleDocumentClick(event) {
-    // NOUVEAU: Coin Ambiance - Détecter le clic sur le bouton Écouter
     const stationPlayBtn = event.target.closest("[data-station-id]");
     if (stationPlayBtn) {
       playAmbiance(stationPlayBtn.dataset.stationId);
@@ -311,7 +310,7 @@
     renderSettings();
     renderAccountUi();
     renderTimer();
-    renderAmbiance(); // NOUVEAU: Appel du rendu du Coin Ambiance
+    renderAmbiance();
     navigate(state.route, false);
   }
 
@@ -1192,10 +1191,12 @@
     state.route = "pro";
     navigate("pro", false);
 
-    elements.proPaymentNotice.hidden = false;
-    elements.proPaymentNotice.textContent = payment === "success"
-      ? "Merci. Stripe confirme ton abonnement; ton accès PRO va s'activer dans quelques instants."
-      : "Le paiement a été annulé. Aucun montant n'a été prélevé.";
+    if(elements.proPaymentNotice) {
+      elements.proPaymentNotice.hidden = false;
+      elements.proPaymentNotice.textContent = payment === "success"
+        ? "Merci. Stripe confirme ton abonnement; ton accès PRO va s'activer dans quelques instants."
+        : "Le paiement a été annulé. Aucun montant n'a été prélevé.";
+    }
 
     if (payment === "success" && ACCOUNT) {
       window.setTimeout(async function () {
@@ -1244,28 +1245,12 @@
       const remainingMs = getTimerRemaining();
       if (remainingMs <= 0) {
         await completeTimer(false);
-        openTimerPanel();
         return;
       }
       state.timer.remainingMs = remainingMs;
       startTimerTicker();
     }
     renderTimer();
-  }
-
-  function toggleTimerPanel() {
-    if (elements.timerPanel.hidden) openTimerPanel();
-    else closeTimerPanel();
-  }
-
-  function openTimerPanel() {
-    elements.timerPanel.hidden = false;
-    elements.timerFab.setAttribute("aria-expanded", "true");
-  }
-
-  function closeTimerPanel() {
-    elements.timerPanel.hidden = true;
-    elements.timerFab.setAttribute("aria-expanded", "false");
   }
 
   function selectTimerPreset(event) {
@@ -1297,7 +1282,7 @@
     if (state.timer.status !== "running" && state.timer.status !== "paused") {
       setTimerPreset(nearestPreset);
     }
-    openTimerPanel();
+    navigate("timer");
   }
 
   async function handleTimerPrimaryAction() {
@@ -1354,7 +1339,7 @@
 
   async function acknowledgeTimerCompletion() {
     await resetTimer();
-    closeTimerPanel();
+    navigate("home");
   }
 
   function startTimerTicker() {
@@ -1406,7 +1391,12 @@
 
     if (playSound) playTimerChime();
     if (document.hidden) showTimerNotification();
-    openTimerPanel();
+    
+    // Si l'utilisateur n'est pas sur la page minuterie, on l'informe poliment
+    if (state.route !== "timer") {
+      showToast("Ton minuteur est terminé. Bravo !");
+    }
+    
     renderTimer();
     renderHome();
     renderHistory();
@@ -1428,13 +1418,8 @@
     const displayTime = formatTimerTime(remainingMs);
 
     elements.timerTimeRemaining.textContent = displayTime;
-    elements.timerFabTime.textContent = status === "idle"
-      ? "Je fais un petit pas"
-      : status === "complete" ? "C'est fait" : displayTime;
     elements.timerProgressCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - ratio));
-    elements.timerFabRing.style.setProperty("--timer-fab-progress", (ratio * 360) + "deg");
-    elements.timerFab.classList.toggle("running", status === "running");
-    elements.timerFab.classList.toggle("complete", status === "complete");
+    
     elements.timerMainView.hidden = status === "complete";
     elements.timerCompleteView.hidden = status !== "complete";
 
@@ -1449,14 +1434,7 @@
       paused: "En pause, sans culpabilité",
       complete: "Petit pas terminé"
     };
-    const fabCopy = {
-      idle: "Minuterie",
-      running: "En cours",
-      paused: "En pause",
-      complete: "Bravo"
-    };
     elements.timerStatusText.textContent = statusCopy[status];
-    elements.timerFabLabel.textContent = fabCopy[status];
 
     if (status === "running") {
       elements.timerPrimaryIcon.setAttribute("href", "#icon-pause");
@@ -1656,13 +1634,13 @@
     window.addEventListener("beforeinstallprompt", function (event) {
       event.preventDefault();
       state.deferredInstallPrompt = event;
-      elements.installButton.hidden = false;
-      elements.installSettingsButton.hidden = false;
+      if(elements.installButton) elements.installButton.hidden = false;
+      if(elements.installSettingsButton) elements.installSettingsButton.hidden = false;
     });
 
     window.addEventListener("appinstalled", function () {
       state.deferredInstallPrompt = null;
-      elements.installButton.hidden = true;
+      if(elements.installButton) elements.installButton.hidden = true;
       showToast("Un Petit Pas est installé.");
     });
   }
@@ -1672,7 +1650,7 @@
       state.deferredInstallPrompt.prompt();
       await state.deferredInstallPrompt.userChoice;
       state.deferredInstallPrompt = null;
-      elements.installButton.hidden = true;
+      if(elements.installButton) elements.installButton.hidden = true;
       return;
     }
 
@@ -1885,8 +1863,6 @@
       .replace(/'/g, "&#039;");
   }
 
-  // --- LOGIQUE DU COIN AMBIANCE ---
-
   function renderAmbiance() {
     const container = document.getElementById("ambianceStationsList");
     if (!container) return;
@@ -1918,13 +1894,11 @@
 
     const player = elements["global-audio-player"];
     
-    // Si on clique sur la même station qui joue déjà
     if (state.currentStationId === id && state.ambiancePlaying) {
       toggleAmbiance();
       return;
     }
 
-    // Lancer une nouvelle station
     state.currentStationId = id;
     player.src = station.src;
     
@@ -1945,7 +1919,7 @@
     elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
     elements["mini-player"].classList.remove("hidden");
     
-    renderAmbiance(); // Met à jour les boutons sur la page
+    renderAmbiance(); 
   }
 
   function toggleAmbiance() {
@@ -1958,18 +1932,18 @@
       elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
     }
     state.ambiancePlaying = !state.ambiancePlaying;
-    renderAmbiance(); // Met à jour les boutons sur la page
+    renderAmbiance(); 
   }
 
   function stopAmbiance() {
     const player = elements["global-audio-player"];
     player.pause();
-    player.removeAttribute('src'); // Vide la source pour vraiment stopper le flux
+    player.removeAttribute('src'); 
     player.load(); 
     state.ambiancePlaying = false;
     state.currentStationId = null;
     elements["mini-player"].classList.add("hidden");
-    renderAmbiance(); // Met à jour les boutons sur la page
+    renderAmbiance(); 
   }
 
 })();
