@@ -36,103 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260613-contact-email">
+  <link rel="stylesheet" href="./styles.css?v=20260614-ambiance-radio-v2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js" defer></script>
   <script src="./data.js?v=20260613-daily-tips" defer></script>
   <script src="./db.js" defer></script>
-  <script src="./app.js?v=20260613-unified-header" defer></script>
-
-  <style>
-    .ambiance-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-    .ambiance-card {
-      border: none;
-      border-radius: 16px;
-      padding: 24px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .ambiance-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .ambiance-card .card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-    }
-    .ambiance-card .card-title {
-      font-weight: 600;
-      color: #333;
-      font-size: 0.95rem;
-      line-height: 1.2;
-    }
-    .mini-player {
-      position: fixed;
-      bottom: 80px; /* Au-dessus de la navigation mobile */
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 100px;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      z-index: 1000;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .mini-player.hidden {
-      opacity: 0;
-      transform: translate(-50%, 20px);
-      pointer-events: none;
-    }
-    .mp-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .mp-icon { font-size: 1.5rem; }
-    .mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem;}
-    .mp-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .mp-btn {
-      background: none;
-      border: none;
-      color: #1f4f86;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .mp-btn svg { width: 20px; height: 20px; fill: currentColor; }
-    .mp-btn:hover { background: rgba(31, 79, 134, 0.1); }
-    .mp-btn-close { font-size: 1.2rem; font-weight: bold; }
-    @media (min-width: 768px) {
-      .mini-player { bottom: 24px; left: calc(50% + 120px); } /* Décalé de la sidebar sur ordi */
-    }
-  </style>
+  <script src="./app.js?v=20260614-ambiance-radio-v3" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -324,31 +234,77 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <section id="page-ambiance" class="page" data-page="ambiance">
         <div class="section-intro">
           <div>
-            <p class="eyebrow">Un fond sonore</p>
-            <h2>Ambiance</h2>
+            <p class="eyebrow">Un fond sonore, sans pression</p>
+            <h2>Choisis ton ambiance</h2>
           </div>
-          <p>Choisis une atmosphère pour t'accompagner dans tes actions.</p>
+          <p>Quelques choix simples pour accompagner ton prochain petit pas.</p>
         </div>
-        <div class="ambiance-grid">
-          <article class="ambiance-card" data-audio="menage" style="background-color: #FFF3E0;">
-            <span class="card-icon">🧹</span><span class="card-title">Ménage</span>
-          </article>
-          <article class="ambiance-card" data-audio="concentration" style="background-color: #E3F2FD;">
-            <span class="card-icon">📚</span><span class="card-title">Concentration</span>
-          </article>
-          <article class="ambiance-card" data-audio="tdah" style="background-color: #FCE4EC;">
-            <span class="card-icon">⚡</span><span class="card-title">Motivation TDAH</span>
-          </article>
-          <article class="ambiance-card" data-audio="action" style="background-color: #E8F5E9;">
-            <span class="card-icon">🚶</span><span class="card-title">Mise en action</span>
-          </article>
-          <article class="ambiance-card" data-audio="calme" style="background-color: #F1F8E9;">
-            <span class="card-icon">🌿</span><span class="card-title">Calme</span>
-          </article>
-          <article class="ambiance-card" data-audio="detente" style="background-color: #EDE7F6;">
-            <span class="card-icon">😴</span><span class="card-title">Détente</span>
-          </article>
-        </div>
+
+        <article id="ambiance-status" class="ambiance-status" data-tone="idle" aria-live="polite">
+          <span class="ambiance-status-icon" aria-hidden="true">♪</span>
+          <div class="ambiance-status-copy">
+            <span class="ambiance-status-label">En ce moment</span>
+            <strong id="ambiance-active-name">Choisis ce qui te ferait du bien</strong>
+            <span id="ambiance-active-meta">Une station apparaîtra ici dès que tu l'auras lancée.</span>
+          </div>
+          <button id="ambiance-retry" class="ambiance-retry" type="button" hidden>Réessayer</button>
+        </article>
+
+        <section class="ambiance-choice-section" aria-labelledby="radioCategoriesTitle">
+          <div class="ambiance-section-heading">
+            <div>
+              <p class="eyebrow">Radios intégrées</p>
+              <h3 id="radioCategoriesTitle">Une catégorie, une station</h3>
+            </div>
+            <span>La station est choisie automatiquement.</span>
+          </div>
+          <div class="ambiance-category-grid">
+            <button class="ambiance-choice" type="button" data-radio-category="quebec-pop" aria-pressed="false">
+              <span class="ambiance-choice-icon" aria-hidden="true">🎵</span>
+              <span>Pop québécoise</span>
+            </button>
+            <button class="ambiance-choice" type="button" data-radio-category="hits" aria-pressed="false">
+              <span class="ambiance-choice-icon" aria-hidden="true">🎵</span>
+              <span>Hits du moment</span>
+            </button>
+            <button class="ambiance-choice" type="button" data-radio-category="80s" aria-pressed="false">
+              <span class="ambiance-choice-icon" aria-hidden="true">🎵</span>
+              <span>Années 80</span>
+            </button>
+            <button class="ambiance-choice" type="button" data-radio-category="relax" aria-pressed="false">
+              <span class="ambiance-choice-icon" aria-hidden="true">🎵</span>
+              <span>Détente</span>
+            </button>
+            <button class="ambiance-choice" type="button" data-radio-category="instrumental" aria-pressed="false">
+              <span class="ambiance-choice-icon" aria-hidden="true">🎵</span>
+              <span>Instrumentale</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="ambiance-choice-section music-services" aria-labelledby="musicServicesTitle">
+          <div class="ambiance-section-heading">
+            <div>
+              <p class="eyebrow">Tes applications</p>
+              <h3 id="musicServicesTitle">Continuer ailleurs</h3>
+            </div>
+            <span>L'application s'ouvre lorsqu'elle est disponible.</span>
+          </div>
+          <div class="music-service-grid">
+            <button class="music-service-button" type="button" data-music-service="spotify">
+              <span aria-hidden="true">🎧</span><strong>Spotify</strong>
+            </button>
+            <button class="music-service-button" type="button" data-music-service="apple">
+              <span aria-hidden="true">🎧</span><strong>Apple Music</strong>
+            </button>
+            <button class="music-service-button" type="button" data-music-service="tunein">
+              <span aria-hidden="true">🎧</span><strong>TuneIn</strong>
+            </button>
+            <button class="music-service-button" type="button" data-music-service="amazon">
+              <span aria-hidden="true">🎧</span><strong>Amazon Music</strong>
+            </button>
+          </div>
+        </section>
       </section>
 
       <section id="page-history" class="page" data-page="history">
@@ -615,11 +571,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </footer>
       </section>
       
-      <audio id="global-audio-player" loop></audio>
+      <audio id="global-audio-player" preload="none"></audio>
       <div id="mini-player" class="mini-player hidden">
         <div class="mp-info">
-          <span id="mp-icon" class="mp-icon">🎵</span>
-          <span id="mp-title" class="mp-title">Titre</span>
+          <span id="mp-icon" class="mp-icon" aria-hidden="true">🎵</span>
+          <span class="mp-copy">
+            <strong id="mp-title" class="mp-title">Station radio</strong>
+            <span id="mp-subtitle" class="mp-subtitle">Ambiance</span>
+          </span>
         </div>
         <div class="mp-controls">
           <button id="mp-playpause" class="mp-btn" aria-label="Lecture/Pause">
@@ -747,69 +706,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <button id="reloadAppButton">Actualiser</button>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Configuration des pistes de démonstration
-      const ambiances = {
-        'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-        'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-        'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-        'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-        'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-        'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
-      };
-
-      const audioPlayer = document.getElementById('global-audio-player');
-      const miniPlayer = document.getElementById('mini-player');
-      const mpTitle = document.getElementById('mp-title');
-      const mpIcon = document.getElementById('mp-icon');
-      const btnPlayPause = document.getElementById('mp-playpause');
-      const btnClose = document.getElementById('mp-close');
-      const playIconUse = document.getElementById('mp-play-icon-use');
-      
-      let isPlaying = false;
-
-      // Attacher les événements aux cartes d'ambiance
-      document.querySelectorAll('.ambiance-card').forEach(card => {
-        card.addEventListener('click', () => {
-          const id = card.getAttribute('data-audio');
-          const track = ambiances[id];
-          if (!track) return;
-
-          // Lancer la lecture
-          audioPlayer.src = track.src;
-          audioPlayer.play().catch(e => console.log('Lecture auto bloquée par le navigateur', e));
-          isPlaying = true;
-          
-          // Mettre à jour l'interface du mini-lecteur
-          mpTitle.textContent = track.name;
-          mpIcon.textContent = track.icon;
-          playIconUse.setAttribute('href', '#icon-pause');
-          
-          miniPlayer.classList.remove('hidden');
-        });
-      });
-
-      // Contrôles du mini-lecteur : Lecture/Pause
-      btnPlayPause.addEventListener('click', () => {
-        if (isPlaying) {
-          audioPlayer.pause();
-          playIconUse.setAttribute('href', '#icon-play');
-        } else {
-          audioPlayer.play();
-          playIconUse.setAttribute('href', '#icon-pause');
-        }
-        isPlaying = !isPlaying;
-      });
-
-      // Contrôles du mini-lecteur : Fermer
-      btnClose.addEventListener('click', () => {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        isPlaying = false;
-        miniPlayer.classList.add('hidden');
-      });
-    });
-  </script>
 </body>
 </html>

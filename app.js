@@ -15,15 +15,38 @@
     about: "À propos"
   };
 
-  // NOUVEAU: Ambiance - Liste des pistes audio MVP
-  const AMBIANCES = {
-    'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-    'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-    'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-    'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
+  const RADIO_CATEGORIES = {
+    "quebec-pop": { name: "Pop québécoise", icon: "🎵" },
+    hits: { name: "Hits du moment", icon: "🎵" },
+    "80s": { name: "Années 80", icon: "🎵" },
+    relax: { name: "Détente", icon: "🎵" },
+    instrumental: { name: "Instrumentale", icon: "🎵" }
   };
+  const MUSIC_SERVICES = {
+    spotify: {
+      name: "Spotify",
+      icon: "🎧",
+      webUrl: "https://open.spotify.com/",
+      androidUrl: "spotify:"
+    },
+    apple: {
+      name: "Apple Music",
+      icon: "🎧",
+      webUrl: "https://music.apple.com/ca/browse"
+    },
+    tunein: {
+      name: "TuneIn",
+      icon: "🎧",
+      webUrl: "https://tunein.com/radio/"
+    },
+    amazon: {
+      name: "Amazon Music",
+      icon: "🎧",
+      webUrl: "https://music.amazon.ca/"
+    }
+  };
+  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v1";
+  const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -71,7 +94,14 @@
     timerInterval: null,
     audioContext: null,
     accountMode: "signup",
-    ambiancePlaying: false, // NOUVEAU: Ambiance
+    ambiancePlaying: false,
+    ambianceLoading: false,
+    ambianceCategory: null,
+    ambianceCandidates: [],
+    ambianceCandidateIndex: -1,
+    ambianceAttemptToken: 0,
+    ambiancePlaybackTimer: null,
+    ambianceActiveService: null,
     account: {
       ready: false,
       cloudEnabled: false,
@@ -146,8 +176,9 @@
       "accountFirstNameField", "accountFirstName", "accountEmail",
       "accountPassword", "accountSubmitButton", "accountModeSwitch",
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
-      // NOUVEAU: Ambiance - Éléments du lecteur
-      "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use"
+      "global-audio-player", "mini-player", "mp-title", "mp-subtitle", "mp-icon",
+      "mp-playpause", "mp-close", "mp-play-icon-use", "ambiance-status",
+      "ambiance-active-name", "ambiance-active-meta", "ambiance-retry"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
@@ -229,16 +260,33 @@
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
 
-    // NOUVEAU: Ambiance - Événements du lecteur
     elements["mp-playpause"].addEventListener("click", toggleAmbiance);
     elements["mp-close"].addEventListener("click", stopAmbiance);
+    elements["global-audio-player"].addEventListener("playing", handleAmbiancePlaying);
+    elements["global-audio-player"].addEventListener("pause", handleAmbiancePause);
+    elements["global-audio-player"].addEventListener("error", handleAmbiancePlaybackError);
+    elements["global-audio-player"].addEventListener("stalled", handleAmbianceStalled);
+    elements["global-audio-player"].addEventListener("waiting", handleAmbianceStalled);
+    elements["global-audio-player"].addEventListener("ended", handleAmbiancePlaybackError);
   }
 
   function handleDocumentClick(event) {
-    // NOUVEAU: Ambiance - Détecter le clic sur une carte
-    const ambianceCard = event.target.closest("[data-audio]");
-    if (ambianceCard) {
-      playAmbiance(ambianceCard.dataset.audio);
+    const radioCategory = event.target.closest("[data-radio-category]");
+    if (radioCategory) {
+      selectRadioCategory(radioCategory.dataset.radioCategory);
+      return;
+    }
+
+    const musicService = event.target.closest("[data-music-service]");
+    if (musicService) {
+      openMusicService(musicService.dataset.musicService);
+      return;
+    }
+
+    if (event.target.closest("#ambiance-retry")) {
+      if (state.ambianceCategory) {
+        selectRadioCategory(state.ambianceCategory, true);
+      }
       return;
     }
 
@@ -1874,44 +1922,338 @@
       .replace(/'/g, "&#039;");
   }
 
-  // NOUVEAU: Ambiance - Logique du lecteur audio
-  function playAmbiance(id) {
-    const track = AMBIANCES[id];
-    if (!track) return;
+  async function selectRadioCategory(categoryId, forceRefresh) {
+    const category = RADIO_CATEGORIES[categoryId];
+    if (!category) return;
 
-    const player = elements["global-audio-player"];
-    player.src = track.src;
-    
-    // Le navigateur peut bloquer la lecture si l'utilisateur n'a pas encore interagi,
-    // le catch empêche l'erreur de faire planter l'application.
-    player.play().catch(function(e) { console.log("Lecture audio bloquée par le navigateur", e); });
-    state.ambiancePlaying = true;
-    
-    elements["mp-title"].textContent = track.name;
-    elements["mp-icon"].textContent = track.icon;
-    elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
-    
-    elements["mini-player"].classList.remove("hidden");
+    resetAmbiancePlayback();
+    state.ambianceCategory = categoryId;
+    state.ambianceActiveService = null;
+    state.ambianceLoading = true;
+    renderAmbianceSelection();
+    setAmbianceStatus("Recherche d'une station…", category.name, "loading");
+
+    try {
+      state.ambianceCandidates = await loadRadioCandidates(categoryId, forceRefresh);
+      state.ambianceCandidateIndex = -1;
+      if (!state.ambianceCandidates.length) throw new Error("Aucune station compatible");
+      tryRadioCandidate(0);
+    } catch (error) {
+      console.warn("Radio unavailable:", error);
+      state.ambianceLoading = false;
+      setAmbianceStatus(
+        "Aucune station disponible pour le moment",
+        "Réessaie dans quelques instants. Tes autres outils restent accessibles.",
+        "error"
+      );
+      renderAmbianceSelection();
+    }
   }
 
   function toggleAmbiance() {
     const player = elements["global-audio-player"];
     if (state.ambiancePlaying) {
       player.pause();
-      elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
-    } else {
-      player.play();
-      elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
+      return;
     }
-    state.ambiancePlaying = !state.ambiancePlaying;
+
+    if (!state.ambianceCategory || !player.src) return;
+    state.ambianceLoading = true;
+    updateMiniPlayer();
+    scheduleAmbianceFailover(state.ambianceAttemptToken, 10000);
+    player.play().catch(function (error) {
+      handleAmbiancePlayRejection(error, state.ambianceAttemptToken);
+    });
   }
 
   function stopAmbiance() {
+    resetAmbiancePlayback();
+    state.ambianceCategory = null;
+    state.ambianceCandidates = [];
+    state.ambianceCandidateIndex = -1;
+    state.ambianceActiveService = null;
+    setAmbianceStatus(
+      "Choisis ce qui te ferait du bien",
+      "Une station apparaîtra ici dès que tu l'auras lancée.",
+      "idle"
+    );
+    renderAmbianceSelection();
+  }
+
+  async function loadRadioCandidates(categoryId, forceRefresh) {
+    const cache = readRadioCache();
+    const cached = cache[categoryId];
+    const fresh = cached && Date.now() - cached.savedAt < RADIO_CACHE_MAX_AGE;
+    if (!forceRefresh && fresh && Array.isArray(cached.stations) && cached.stations.length) {
+      return cached.stations;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(function () {
+      controller.abort();
+    }, 18000);
+
+    try {
+      const response = await fetch("/api/radio-stations?category=" + encodeURIComponent(categoryId), {
+        headers: { Accept: "application/json" },
+        signal: controller.signal
+      });
+      const payload = await response.json().catch(function () { return {}; });
+      if (!response.ok || !Array.isArray(payload.stations)) {
+        throw new Error(payload.error || "Radio Browser indisponible");
+      }
+
+      cache[categoryId] = { savedAt: Date.now(), stations: payload.stations };
+      writeRadioCache(cache);
+      return payload.stations;
+    } catch (error) {
+      if (cached && Array.isArray(cached.stations) && cached.stations.length) {
+        return cached.stations;
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function tryRadioCandidate(index) {
+    const station = state.ambianceCandidates[index];
+    if (!station) {
+      state.ambianceLoading = false;
+      state.ambiancePlaying = false;
+      setAmbianceStatus(
+        "Les stations proposées ne répondent pas",
+        "Nous avons essayé plusieurs relais. Tu peux relancer la recherche.",
+        "error"
+      );
+      renderAmbianceSelection();
+      elements["mini-player"].classList.add("hidden");
+      return;
+    }
+
     const player = elements["global-audio-player"];
-    player.pause();
-    player.currentTime = 0;
+    const token = ++state.ambianceAttemptToken;
+    clearAmbiancePlaybackTimer();
+    state.ambianceCandidateIndex = index;
+    state.ambianceLoading = true;
     state.ambiancePlaying = false;
+
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+    player.src = station.url;
+
+    setAmbianceStatus("Connexion à " + station.name + "…", radioCategoryName(), "loading");
+    elements["mp-title"].textContent = station.name;
+    elements["mp-subtitle"].textContent = "Connexion en cours";
+    elements["mp-icon"].textContent = RADIO_CATEGORIES[state.ambianceCategory].icon;
+    elements["mini-player"].classList.remove("hidden");
+    updateMiniPlayer();
+    scheduleAmbianceFailover(token, 10000);
+
+    player.play().catch(function (error) {
+      handleAmbiancePlayRejection(error, token);
+    });
+  }
+
+  function handleAmbiancePlayRejection(error, token) {
+    if (token !== state.ambianceAttemptToken || !state.ambianceCategory) return;
+    if (error && error.name === "NotAllowedError") {
+      clearAmbiancePlaybackTimer();
+      state.ambianceLoading = false;
+      state.ambiancePlaying = false;
+      const station = currentAmbianceStation();
+      setAmbianceStatus(
+        station ? station.name : "Station prête",
+        radioCategoryName() + " · Appuie sur Lecture",
+        "paused"
+      );
+      renderAmbianceSelection();
+      updateMiniPlayer();
+      return;
+    }
+    advanceToNextStation(token);
+  }
+
+  function handleAmbiancePlaying() {
+    if (!state.ambianceCategory) return;
+    clearAmbiancePlaybackTimer();
+    state.ambianceLoading = false;
+    state.ambiancePlaying = true;
+    const station = currentAmbianceStation();
+    setAmbianceStatus(station ? station.name : "Station en lecture", radioCategoryName(), "playing");
+    renderAmbianceSelection();
+    updateMiniPlayer();
+    if (station && station.stationuuid) registerRadioClick(station.stationuuid);
+  }
+
+  function handleAmbiancePause() {
+    if (!state.ambianceCategory || state.ambianceLoading) return;
+    state.ambiancePlaying = false;
+    const station = currentAmbianceStation();
+    if (station) setAmbianceStatus(station.name, radioCategoryName() + " · En pause", "paused");
+    updateMiniPlayer();
+  }
+
+  function handleAmbiancePlaybackError() {
+    if (!state.ambianceCategory) return;
+    advanceToNextStation(state.ambianceAttemptToken);
+  }
+
+  function handleAmbianceStalled() {
+    if (!state.ambianceCategory || !state.ambianceLoading && !state.ambiancePlaying) return;
+    scheduleAmbianceFailover(state.ambianceAttemptToken, 8000);
+  }
+
+  function scheduleAmbianceFailover(token, delay) {
+    clearAmbiancePlaybackTimer();
+    state.ambiancePlaybackTimer = window.setTimeout(function () {
+      advanceToNextStation(token);
+    }, delay);
+  }
+
+  function advanceToNextStation(token) {
+    if (token !== state.ambianceAttemptToken || !state.ambianceCategory) return;
+    clearAmbiancePlaybackTimer();
+    tryRadioCandidate(state.ambianceCandidateIndex + 1);
+  }
+
+  function resetAmbiancePlayback() {
+    const player = elements["global-audio-player"];
+    ++state.ambianceAttemptToken;
+    clearAmbiancePlaybackTimer();
+    state.ambianceLoading = false;
+    state.ambiancePlaying = false;
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
     elements["mini-player"].classList.add("hidden");
+    elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
+  }
+
+  function clearAmbiancePlaybackTimer() {
+    if (state.ambiancePlaybackTimer) {
+      window.clearTimeout(state.ambiancePlaybackTimer);
+      state.ambiancePlaybackTimer = null;
+    }
+  }
+
+  function currentAmbianceStation() {
+    return state.ambianceCandidates[state.ambianceCandidateIndex] || null;
+  }
+
+  function radioCategoryName() {
+    const category = RADIO_CATEGORIES[state.ambianceCategory];
+    return category ? category.name : "Radio";
+  }
+
+  function setAmbianceStatus(name, meta, tone) {
+    elements["ambiance-active-name"].textContent = name;
+    elements["ambiance-active-meta"].textContent = meta;
+    elements["ambiance-status"].dataset.tone = tone;
+    elements["ambiance-retry"].hidden = tone !== "error";
+  }
+
+  function renderAmbianceSelection() {
+    document.querySelectorAll("[data-radio-category]").forEach(function (button) {
+      const active = button.dataset.radioCategory === state.ambianceCategory;
+      button.classList.toggle("active", active);
+      button.classList.toggle("loading", active && state.ambianceLoading);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    document.querySelectorAll("[data-music-service]").forEach(function (button) {
+      button.classList.toggle("active", button.dataset.musicService === state.ambianceActiveService);
+    });
+  }
+
+  function updateMiniPlayer() {
+    const station = currentAmbianceStation();
+    if (station) {
+      elements["mp-title"].textContent = station.name;
+      elements["mp-subtitle"].textContent = state.ambianceLoading
+        ? "Connexion en cours"
+        : radioCategoryName();
+    }
+    elements["mp-play-icon-use"].setAttribute(
+      "href",
+      state.ambiancePlaying ? "#icon-pause" : "#icon-play"
+    );
+    elements["mp-playpause"].setAttribute(
+      "aria-label",
+      state.ambiancePlaying ? "Mettre la radio en pause" : "Reprendre la radio"
+    );
+    elements["mp-playpause"].disabled = state.ambianceLoading;
+  }
+
+  function registerRadioClick(stationuuid) {
+    fetch("/api/radio-stations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stationuuid: stationuuid }),
+      keepalive: true
+    }).catch(function () {});
+  }
+
+  function readRadioCache() {
+    try {
+      return JSON.parse(localStorage.getItem(RADIO_CACHE_KEY) || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function writeRadioCache(cache) {
+    try {
+      localStorage.setItem(RADIO_CACHE_KEY, JSON.stringify(cache));
+    } catch (error) {
+      // La radio reste disponible même si le stockage local est plein ou désactivé.
+    }
+  }
+
+  function openMusicService(serviceId) {
+    const service = MUSIC_SERVICES[serviceId];
+    if (!service) return;
+
+    resetAmbiancePlayback();
+    state.ambianceCategory = null;
+    state.ambianceCandidates = [];
+    state.ambianceCandidateIndex = -1;
+    state.ambianceActiveService = serviceId;
+    setAmbianceStatus(service.name, "Ouverture du service musical…", "service");
+    renderAmbianceSelection();
+
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (!isMobile) {
+      window.open(service.webUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (isAndroid && service.androidUrl) {
+      openNativeWithFallback(service.androidUrl, service.webUrl);
+      return;
+    }
+
+    // Ces liens universels ouvrent l'application installée, sinon leur version web.
+    window.location.assign(service.webUrl);
+  }
+
+  function openNativeWithFallback(nativeUrl, webUrl) {
+    let fallbackTimer = window.setTimeout(function () {
+      window.location.assign(webUrl);
+    }, 1100);
+
+    function cancelFallback() {
+      if (document.hidden && fallbackTimer) {
+        window.clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+      }
+    }
+
+    document.addEventListener("visibilitychange", cancelFallback, { once: true });
+    window.addEventListener("pagehide", cancelFallback, { once: true });
+    window.location.assign(nativeUrl);
   }
 
 })();
