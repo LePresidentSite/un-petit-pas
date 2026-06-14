@@ -45,42 +45,83 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="./app.js?v=20260613-unified-header" defer></script>
 
   <style>
-    .ambiance-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-    .ambiance-card {
-      border: none;
-      border-radius: 16px;
-      padding: 24px 12px;
+    /* Styles pour le Coin Ambiance et le lecteur audio */
+    .ambiance-stations {
       display: flex;
       flex-direction: column;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .station-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: white;
+    }
+    .station-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .station-icon {
+      font-size: 2rem;
+      background: #f0f4f8;
+      padding: 12px;
+      border-radius: 16px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .ambiance-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    .station-card-header h3 {
+      margin: 0 0 4px 0;
+      font-size: 1.1rem;
+      color: #1f4f86;
     }
-    .ambiance-card .card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-    }
-    .ambiance-card .card-title {
-      font-weight: 600;
-      color: #333;
+    .station-card-header p {
+      margin: 0;
       font-size: 0.95rem;
-      line-height: 1.2;
+      color: #666;
+      line-height: 1.4;
+    }
+    .station-play-btn {
+      align-self: flex-start;
+      margin-top: 8px;
+    }
+    .station-play-btn.playing {
+      background-color: #f0f4f8;
+      color: #1f4f86;
+    }
+    .external-music-section {
+      margin-top: 40px;
+    }
+    .external-music-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .external-music-btn {
+      justify-content: center;
+      font-weight: 500;
+      border: 1px solid rgba(0,0,0,0.05);
+      text-decoration: none;
+      color: inherit;
+    }
+    .mp-title.loading {
+      opacity: 0.5;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
     }
     .mini-player {
       position: fixed;
-      bottom: 80px; /* Au-dessus de la navigation mobile */
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
       width: calc(100% - 32px);
@@ -101,18 +142,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       transform: translate(-50%, 20px);
       pointer-events: none;
     }
-    .mp-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .mp-info { display: flex; align-items: center; gap: 12px; }
     .mp-icon { font-size: 1.5rem; }
-    .mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem;}
-    .mp-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+    .mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem; }
+    .mp-controls { display: flex; gap: 8px; align-items: center; }
     .mp-btn {
       background: none;
       border: none;
@@ -130,7 +163,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .mp-btn:hover { background: rgba(31, 79, 134, 0.1); }
     .mp-btn-close { font-size: 1.2rem; font-weight: bold; }
     @media (min-width: 768px) {
-      .mini-player { bottom: 24px; left: calc(50% + 120px); } /* Décalé de la sidebar sur ordi */
+      .mini-player { bottom: 24px; left: calc(50% + 120px); }
     }
   </style>
 </head>
@@ -139,7 +172,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <svg class="svg-sprite" aria-hidden="true">
     <symbol id="icon-music" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></symbol>
-
     <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="icon-zones" viewBox="0 0 24 24"><path d="M4 3h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM4 13h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Zm10 0h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></symbol>
     <symbol id="icon-routines" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6.1l1.2 1.2L7.7 4.8M4 12.1l1.2 1.2 2.5-2.5M4 18.1l1.2 1.2 2.5-2.5"/></symbol>
@@ -324,30 +356,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <section id="page-ambiance" class="page" data-page="ambiance">
         <div class="section-intro">
           <div>
-            <p class="eyebrow">Un fond sonore</p>
-            <h2>Ambiance</h2>
+            <p class="eyebrow">🎵 Coin Ambiance</p>
+            <h2>La bonne musique peut rendre un petit pas plus facile.</h2>
           </div>
-          <p>Choisis une atmosphère pour t'accompagner dans tes actions.</p>
+          <p>Choisissez une ambiance ou ouvrez votre plateforme musicale préférée.</p>
         </div>
-        <div class="ambiance-grid">
-          <article class="ambiance-card" data-audio="menage" style="background-color: #FFF3E0;">
-            <span class="card-icon">🧹</span><span class="card-title">Ménage</span>
-          </article>
-          <article class="ambiance-card" data-audio="concentration" style="background-color: #E3F2FD;">
-            <span class="card-icon">📚</span><span class="card-title">Concentration</span>
-          </article>
-          <article class="ambiance-card" data-audio="tdah" style="background-color: #FCE4EC;">
-            <span class="card-icon">⚡</span><span class="card-title">Motivation TDAH</span>
-          </article>
-          <article class="ambiance-card" data-audio="action" style="background-color: #E8F5E9;">
-            <span class="card-icon">🚶</span><span class="card-title">Mise en action</span>
-          </article>
-          <article class="ambiance-card" data-audio="calme" style="background-color: #F1F8E9;">
-            <span class="card-icon">🌿</span><span class="card-title">Calme</span>
-          </article>
-          <article class="ambiance-card" data-audio="detente" style="background-color: #EDE7F6;">
-            <span class="card-icon">😴</span><span class="card-title">Détente</span>
-          </article>
+
+        <div id="ambianceStationsList" class="ambiance-stations"></div>
+
+        <div class="external-music-section">
+          <div class="history-heading">
+            <h3>🎧 Ma musique préférée</h3>
+          </div>
+          <div class="external-music-grid">
+            <a href="https://open.spotify.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Spotify</a>
+            <a href="https://music.apple.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Apple Music</a>
+            <a href="https://music.amazon.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">Amazon Music</a>
+            <a href="https://tunein.com" target="_blank" rel="noopener noreferrer" class="secondary-button external-music-btn">TuneIn</a>
+          </div>
         </div>
       </section>
 
@@ -746,70 +772,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <span>Une nouvelle version est prête.</span>
     <button id="reloadAppButton">Actualiser</button>
   </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Configuration des pistes de démonstration
-      const ambiances = {
-        'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-        'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-        'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-        'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-        'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-        'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
-      };
-
-      const audioPlayer = document.getElementById('global-audio-player');
-      const miniPlayer = document.getElementById('mini-player');
-      const mpTitle = document.getElementById('mp-title');
-      const mpIcon = document.getElementById('mp-icon');
-      const btnPlayPause = document.getElementById('mp-playpause');
-      const btnClose = document.getElementById('mp-close');
-      const playIconUse = document.getElementById('mp-play-icon-use');
-      
-      let isPlaying = false;
-
-      // Attacher les événements aux cartes d'ambiance
-      document.querySelectorAll('.ambiance-card').forEach(card => {
-        card.addEventListener('click', () => {
-          const id = card.getAttribute('data-audio');
-          const track = ambiances[id];
-          if (!track) return;
-
-          // Lancer la lecture
-          audioPlayer.src = track.src;
-          audioPlayer.play().catch(e => console.log('Lecture auto bloquée par le navigateur', e));
-          isPlaying = true;
-          
-          // Mettre à jour l'interface du mini-lecteur
-          mpTitle.textContent = track.name;
-          mpIcon.textContent = track.icon;
-          playIconUse.setAttribute('href', '#icon-pause');
-          
-          miniPlayer.classList.remove('hidden');
-        });
-      });
-
-      // Contrôles du mini-lecteur : Lecture/Pause
-      btnPlayPause.addEventListener('click', () => {
-        if (isPlaying) {
-          audioPlayer.pause();
-          playIconUse.setAttribute('href', '#icon-play');
-        } else {
-          audioPlayer.play();
-          playIconUse.setAttribute('href', '#icon-pause');
-        }
-        isPlaying = !isPlaying;
-      });
-
-      // Contrôles du mini-lecteur : Fermer
-      btnClose.addEventListener('click', () => {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        isPlaying = false;
-        miniPlayer.classList.add('hidden');
-      });
-    });
-  </script>
 </body>
 </html>

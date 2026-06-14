@@ -8,22 +8,23 @@
     home: "Aujourd'hui",
     zones: "Zones",
     routines: "Routines",
-    ambiance: "Ambiance", // NOUVEAU: Ambiance
+    ambiance: "Ambiance",
     history: "Progrès",
     settings: "Réglages",
     pro: "Découvrir PRO",
     about: "À propos"
   };
 
-  // NOUVEAU: Ambiance - Liste des pistes audio MVP
-  const AMBIANCES = {
-    'menage': { name: 'Ménage', icon: '🧹', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-    'concentration': { name: 'Concentration', icon: '📚', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-    'tdah': { name: 'Motivation TDAH', icon: '⚡', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-    'action': { name: 'Mise en action', icon: '🚶', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-    'calme': { name: 'Calme', icon: '🌿', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-    'detente': { name: 'Détente', icon: '😴', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
-  };
+  // NOUVEAU: Coin Ambiance - Architecture de configuration
+  const AMBIANCE_STATIONS = [
+    {
+      id: 'nrj-france',
+      name: 'NRJ Hits (France)',
+      icon: '📻',
+      description: 'Pop et hits énergiques pour le ménage, la motivation et la mise en action.',
+      src: 'https://scdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3'
+    }
+  ];
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -71,7 +72,8 @@
     timerInterval: null,
     audioContext: null,
     accountMode: "signup",
-    ambiancePlaying: false, // NOUVEAU: Ambiance
+    ambiancePlaying: false,
+    currentStationId: null, // NOUVEAU: Coin Ambiance
     account: {
       ready: false,
       cloudEnabled: false,
@@ -146,11 +148,20 @@
       "accountFirstNameField", "accountFirstName", "accountEmail",
       "accountPassword", "accountSubmitButton", "accountModeSwitch",
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
-      // NOUVEAU: Ambiance - Éléments du lecteur
       "global-audio-player", "mini-player", "mp-title", "mp-icon", "mp-playpause", "mp-close", "mp-play-icon-use"
     ].forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
+
+    // Gestion des erreurs du lecteur audio
+    if (elements["global-audio-player"]) {
+      elements["global-audio-player"].addEventListener("error", function() {
+        if (state.ambiancePlaying) {
+          showToast("Impossible de se connecter à la station pour le moment.");
+          stopAmbiance();
+        }
+      });
+    }
   }
 
   async function loadState() {
@@ -229,16 +240,15 @@
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
 
-    // NOUVEAU: Ambiance - Événements du lecteur
     elements["mp-playpause"].addEventListener("click", toggleAmbiance);
     elements["mp-close"].addEventListener("click", stopAmbiance);
   }
 
   function handleDocumentClick(event) {
-    // NOUVEAU: Ambiance - Détecter le clic sur une carte
-    const ambianceCard = event.target.closest("[data-audio]");
-    if (ambianceCard) {
-      playAmbiance(ambianceCard.dataset.audio);
+    // NOUVEAU: Coin Ambiance - Détecter le clic sur le bouton Écouter
+    const stationPlayBtn = event.target.closest("[data-station-id]");
+    if (stationPlayBtn) {
+      playAmbiance(stationPlayBtn.dataset.stationId);
       return;
     }
 
@@ -301,6 +311,7 @@
     renderSettings();
     renderAccountUi();
     renderTimer();
+    renderAmbiance(); // NOUVEAU: Appel du rendu du Coin Ambiance
     navigate(state.route, false);
   }
 
@@ -1874,24 +1885,67 @@
       .replace(/'/g, "&#039;");
   }
 
-  // NOUVEAU: Ambiance - Logique du lecteur audio
+  // --- LOGIQUE DU COIN AMBIANCE ---
+
+  function renderAmbiance() {
+    const container = document.getElementById("ambianceStationsList");
+    if (!container) return;
+
+    container.innerHTML = AMBIANCE_STATIONS.map(function(station) {
+      const isPlayingThis = state.ambiancePlaying && state.currentStationId === station.id;
+      
+      return [
+        '<article class="card station-card">',
+          '<div class="station-card-header">',
+            '<span class="station-icon">', station.icon, '</span>',
+            '<div>',
+              '<h3>', escapeHtml(station.name), '</h3>',
+              '<p>', escapeHtml(station.description), '</p>',
+            '</div>',
+          '</div>',
+          '<button class="primary-button station-play-btn ', isPlayingThis ? 'playing' : '', '" type="button" data-station-id="', station.id, '">',
+            '<svg><use href="', isPlayingThis ? '#icon-pause' : '#icon-play', '"></use></svg>',
+            '<span>', isPlayingThis ? 'En pause' : 'Écouter', '</span>',
+          '</button>',
+        '</article>'
+      ].join("");
+    }).join("");
+  }
+
   function playAmbiance(id) {
-    const track = AMBIANCES[id];
-    if (!track) return;
+    const station = AMBIANCE_STATIONS.find(function(s) { return s.id === id; });
+    if (!station) return;
 
     const player = elements["global-audio-player"];
-    player.src = track.src;
     
-    // Le navigateur peut bloquer la lecture si l'utilisateur n'a pas encore interagi,
-    // le catch empêche l'erreur de faire planter l'application.
-    player.play().catch(function(e) { console.log("Lecture audio bloquée par le navigateur", e); });
+    // Si on clique sur la même station qui joue déjà
+    if (state.currentStationId === id && state.ambiancePlaying) {
+      toggleAmbiance();
+      return;
+    }
+
+    // Lancer une nouvelle station
+    state.currentStationId = id;
+    player.src = station.src;
+    
+    elements["mp-title"].textContent = "Connexion...";
+    elements["mp-title"].classList.add("loading");
+    
+    player.play().then(() => {
+      elements["mp-title"].classList.remove("loading");
+      elements["mp-title"].textContent = station.name;
+    }).catch(function(e) { 
+      console.warn("Lecture audio bloquée ou impossible", e);
+      elements["mp-title"].classList.remove("loading");
+      elements["mp-title"].textContent = "Lecture en pause";
+    });
+
     state.ambiancePlaying = true;
-    
-    elements["mp-title"].textContent = track.name;
-    elements["mp-icon"].textContent = track.icon;
+    elements["mp-icon"].textContent = station.icon;
     elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
-    
     elements["mini-player"].classList.remove("hidden");
+    
+    renderAmbiance(); // Met à jour les boutons sur la page
   }
 
   function toggleAmbiance() {
@@ -1904,14 +1958,18 @@
       elements["mp-play-icon-use"].setAttribute("href", "#icon-pause");
     }
     state.ambiancePlaying = !state.ambiancePlaying;
+    renderAmbiance(); // Met à jour les boutons sur la page
   }
 
   function stopAmbiance() {
     const player = elements["global-audio-player"];
     player.pause();
-    player.currentTime = 0;
+    player.removeAttribute('src'); // Vide la source pour vraiment stopper le flux
+    player.load(); 
     state.ambiancePlaying = false;
+    state.currentStationId = null;
     elements["mini-player"].classList.add("hidden");
+    renderAmbiance(); // Met à jour les boutons sur la page
   }
 
 })();

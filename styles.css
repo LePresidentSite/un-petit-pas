@@ -5380,3 +5380,152 @@ body {
     left: calc(50% + 120px); 
   }
 }
+/* =========================================
+   SECTION COIN AMBIANCE ET MINI-LECTEUR
+   ========================================= */
+
+.ambiance-stations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.station-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  background: white;
+}
+
+.station-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.station-icon {
+  font-size: 2rem;
+  background: #f0f4f8;
+  padding: 12px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.station-card-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  color: #1f4f86;
+}
+
+.station-card-header p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.station-play-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.station-play-btn.playing {
+  background-color: #f0f4f8;
+  color: #1f4f86;
+}
+
+/* Section musiques externes */
+.external-music-section {
+  margin-top: 40px;
+}
+
+.external-music-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.external-music-btn {
+  justify-content: center;
+  font-weight: 500;
+  border: 1px solid rgba(0,0,0,0.05);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Animation de chargement pour le lecteur */
+.mp-title.loading {
+  opacity: 0.5;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+/* Le lecteur audio flottant */
+.mini-player {
+  position: fixed;
+  bottom: 80px; /* S'assure d'être au-dessus de la navigation mobile */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 100px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 1000;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mini-player.hidden {
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  pointer-events: none;
+}
+
+.mp-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mp-icon { font-size: 1.5rem; }
+.mp-title { font-weight: 600; color: #1f4f86; font-size: 0.95rem;}
+.mp-controls { display: flex; gap: 8px; align-items: center; }
+
+.mp-btn {
+  background: none;
+  border: none;
+  color: #1f4f86;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mp-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.mp-btn:hover { background: rgba(31, 79, 134, 0.1); }
+.mp-btn-close { font-size: 1.2rem; font-weight: bold; }
+
+@media (min-width: 768px) {
+  .mini-player { bottom: 24px; left: calc(50% + 120px); }
+}
