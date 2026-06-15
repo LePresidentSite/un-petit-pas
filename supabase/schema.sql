@@ -107,3 +107,74 @@ $$;
 
 revoke all on function public.reserve_founder_access(uuid) from public, anon, authenticated;
 grant execute on function public.reserve_founder_access(uuid) to service_role;
+
+create table if not exists public.user_backups (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_backups enable row level security;
+
+drop policy if exists "PRO users can read their backup" on public.user_backups;
+create policy "PRO users can read their backup"
+on public.user_backups
+for select
+to authenticated
+using (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.subscriptions
+    where subscriptions.user_id = auth.uid()
+      and subscriptions.status in ('active', 'trialing')
+  )
+);
+
+drop policy if exists "PRO users can create their backup" on public.user_backups;
+create policy "PRO users can create their backup"
+on public.user_backups
+for insert
+to authenticated
+with check (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.subscriptions
+    where subscriptions.user_id = auth.uid()
+      and subscriptions.status in ('active', 'trialing')
+  )
+);
+
+drop policy if exists "PRO users can update their backup" on public.user_backups;
+create policy "PRO users can update their backup"
+on public.user_backups
+for update
+to authenticated
+using (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.subscriptions
+    where subscriptions.user_id = auth.uid()
+      and subscriptions.status in ('active', 'trialing')
+  )
+)
+with check (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.subscriptions
+    where subscriptions.user_id = auth.uid()
+      and subscriptions.status in ('active', 'trialing')
+  )
+);
+
+revoke all on public.user_backups from anon;
+grant select, insert, update on public.user_backups to authenticated;
+
+drop trigger if exists user_backups_updated_at on public.user_backups;
+create trigger user_backups_updated_at
+before update on public.user_backups
+for each row execute function public.set_subscription_updated_at();
