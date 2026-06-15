@@ -7,6 +7,7 @@
   const ROUTE_TITLES = {
     home: "Aujourd'hui",
     zones: "Zones",
+    principles: "Principes",
     routines: "Routines",
     ambiance: "Ambiance", // NOUVEAU: Ambiance
     history: "Progrès",
@@ -50,9 +51,9 @@
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
-    selectedMinutes: 5,
-    durationMs: 5 * 60 * 1000,
-    remainingMs: 5 * 60 * 1000,
+    selectedMinutes: 15,
+    durationMs: 15 * 60 * 1000,
+    remainingMs: 15 * 60 * 1000,
     status: "idle",
     endAt: null,
     startedAt: null,
@@ -70,6 +71,8 @@
     lastMissionNotification: "",
     lastTipNotification: "",
     lastZoneNotification: "",
+    smallStepProgress: { currentIndex: 0, cycle: 1, finished: false },
+    zoneVisits: {},
     timerState: Object.assign({}, DEFAULT_TIMER_STATE)
   };
 
@@ -144,10 +147,12 @@
     [
       "app", "splash", "todayLabel", "pageTitle", "dailyQuote", "dailyProgressRing",
       "dailyProgressValue", "progressTitle", "progressCaption", "missionTitle",
-      "missionTime", "missionDescription", "completeMissionButton", "tipNumber",
-      "dailyTip", "markTipButton", "weeklyZoneVisual", "weeklyZoneTitle",
-      "weeklyZoneDescription", "zonesList", "addRoutineTaskButton", "routineSummary",
-      "routineTaskList", "totalSteps", "missionCount", "tipCount", "calendarMonth",
+      "missionTime", "missionDescription", "completeMissionButton", "smallStepNumber",
+      "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
+      "completeSmallStepButton", "favoriteSmallStepButton",
+      "smallStepRestartButton", "weeklyZoneVisual", "weeklyZoneTitle",
+      "weeklyZoneDescription", "zonesList", "principlesList", "addRoutineTaskButton", "routineSummary",
+      "routineTaskList", "totalSteps", "missionCount", "smallStepCount", "calendarMonth",
       "calendarGrid", "historyDayTitle", "historyDayCount", "historyList",
       "previousMonth", "nextMonth", "missionReminder", "missionTimeSetting",
       "tipReminder", "tipTimeSetting", "zoneReminder", "zoneTimeSetting",
@@ -161,7 +166,7 @@
       "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
       "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
       "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
-      "homeTimerButton", "missionTimerButton", "accountButton",
+      "accountButton",
       "favoriteMissionButton", "favoritesList", "favoriteCount",
       "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
       "signOutButton", "accountPlanLabel", "accountSettingsStatus",
@@ -190,6 +195,8 @@
     state.selectedHistoryDate = todayKey;
     state.calendarCursor = new Date(state.today.getFullYear(), state.today.getMonth(), 1);
     state.settings = await DB.getSettings(DEFAULT_SETTINGS);
+    state.settings.smallStepProgress = normalizeSmallStepProgress(state.settings.smallStepProgress);
+    state.settings.zoneVisits = normalizeZoneVisits(state.settings.zoneVisits);
     state.timer = normalizeTimerState(state.settings.timerState);
     state.settings.timerState = Object.assign({}, state.timer);
     state.routineTasks = await DB.seedRoutines(DATA.defaultRoutines);
@@ -205,7 +212,6 @@
     state.routineChecks = new Map(results[1].map(function (item) { return [item.id, item]; }));
     state.zoneStates = new Map(results[2].map(function (item) { return [item.id, item]; }));
     state.favorites = new Map(results[3].map(function (item) { return [item.id, item]; }));
-    await migrateLegacyZoneData();
 
     const hashRoute = window.location.hash.replace("#", "");
     if (Object.prototype.hasOwnProperty.call(ROUTE_TITLES, hashRoute)) {
@@ -216,7 +222,9 @@
   function bindEvents() {
     document.addEventListener("click", handleDocumentClick);
     elements.completeMissionButton.addEventListener("click", completeMission);
-    elements.markTipButton.addEventListener("click", markTipRead);
+    elements.completeSmallStepButton.addEventListener("click", completeCurrentSmallStep);
+    elements.favoriteSmallStepButton.addEventListener("click", toggleCurrentSmallStepFavorite);
+    elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
     elements.zonesList.addEventListener("click", handleZoneClick);
     elements.routineTaskList.addEventListener("click", handleRoutineListClick);
     elements.addRoutineTaskButton.addEventListener("click", function () { openRoutineDialog(); });
@@ -235,8 +243,6 @@
     elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
     elements.timerResetButton.addEventListener("click", resetTimer);
     elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
-    elements.homeTimerButton.addEventListener("click", openTimerPanel);
-    elements.missionTimerButton.addEventListener("click", openMissionTimer);
     elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
     elements.favoritesList.addEventListener("click", handleFavoriteClick);
     elements.accountButton.addEventListener("click", handleAccountButton);
@@ -254,9 +260,6 @@
     elements.accountResetPassword.addEventListener("click", resetAccountPassword);
     elements.closeAccountDialog.addEventListener("click", function () { elements.accountDialog.close(); });
     window.addEventListener("unpetitpas:account-change", handleAccountChange);
-    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
-      button.addEventListener("click", selectTimerPreset);
-    });
     document.addEventListener("visibilitychange", handleAppResume);
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
@@ -350,6 +353,7 @@
     renderHeader();
     renderHome();
     renderZones();
+    renderPrinciples();
     renderRoutines();
     renderHistory();
     renderSettings();
@@ -366,6 +370,55 @@
       month: "long"
     }).format(state.today);
     elements.pageTitle.textContent = ROUTE_TITLES[activeRoute] || ROUTE_TITLES.home;
+  }
+
+  function normalizeSmallStepProgress(savedProgress) {
+    const saved = savedProgress && typeof savedProgress === "object" ? savedProgress : {};
+    const currentIndex = Math.max(0, Math.min(
+      Number.isInteger(Number(saved.currentIndex)) ? Number(saved.currentIndex) : 0,
+      DATA.smallSteps.length
+    ));
+    return {
+      currentIndex: currentIndex,
+      cycle: Math.max(1, Number.isInteger(Number(saved.cycle)) ? Number(saved.cycle) : 1),
+      finished: Boolean(saved.finished) || currentIndex >= DATA.smallSteps.length
+    };
+  }
+
+  function normalizeZoneVisits(savedVisits) {
+    if (!savedVisits || typeof savedVisits !== "object" || Array.isArray(savedVisits)) return {};
+    return Object.keys(savedVisits).reduce(function (visits, zoneId) {
+      if (typeof savedVisits[zoneId] === "string" && !Number.isNaN(Date.parse(savedVisits[zoneId]))) {
+        visits[zoneId] = savedVisits[zoneId];
+      }
+      return visits;
+    }, {});
+  }
+
+  function getCurrentSmallStep() {
+    const journey = state.settings.smallStepProgress;
+    if (!journey || journey.finished) return null;
+    return DATA.smallSteps[journey.currentIndex] || null;
+  }
+
+  function renderTextParagraphs(value) {
+    return String(value || "")
+      .split(/\n\s*\n/)
+      .filter(Boolean)
+      .map(function (paragraph) { return "<p>" + escapeHtml(paragraph) + "</p>"; })
+      .join("");
+  }
+
+  function formatZoneVisitLabel(visitedAt) {
+    if (!visitedAt) return "Pas encore visitée";
+    const visited = new Date(visitedAt);
+    if (Number.isNaN(visited.getTime())) return "Pas encore visitée";
+    const today = new Date(state.today.getFullYear(), state.today.getMonth(), state.today.getDate());
+    const visitDay = new Date(visited.getFullYear(), visited.getMonth(), visited.getDate());
+    const days = Math.max(0, Math.floor((today.getTime() - visitDay.getTime()) / 86400000));
+    if (days === 0) return "Visitée aujourd'hui";
+    if (days === 1) return "Dernière visite : hier";
+    return "Dernière visite : il y a " + days + " jours";
   }
 
   function getDailyContent(date) {
@@ -390,20 +443,22 @@
     const todayKey = formatDateKey(state.today);
     const missionRef = "mission-" + daily.missionIndex;
     const missionDone = hasActivity("mission", todayKey, missionRef);
-    const tipDone = hasActivity("tip", todayKey, daily.tip.id);
+    const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
+      return activity.date === todayKey && activity.type === "small-step";
+    });
     const missionFavoriteId = "mission-" + daily.missionIndex;
     const missionFavorite = state.favorites.has(missionFavoriteId);
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
-      return activity.date === todayKey && activity.type !== "mission" && activity.type !== "tip";
+      return activity.date === todayKey && !["mission", "tip", "small-step"].includes(activity.type);
     });
-    const progress = Math.round(([missionDone, tipDone, otherStepDone].filter(Boolean).length / 3) * 100);
+    const progress = Math.round(([missionDone, smallStepDone, otherStepDone].filter(Boolean).length / 3) * 100);
+    const journey = state.settings.smallStepProgress;
+    const currentStep = getCurrentSmallStep();
 
     elements.dailyQuote.textContent = daily.quote;
     elements.missionTitle.textContent = daily.mission.title;
     elements.missionTime.textContent = daily.mission.minutes + " min";
     elements.missionDescription.textContent = daily.mission.description;
-    elements.tipNumber.textContent = daily.tipLabel;
-    elements.dailyTip.textContent = daily.tip.text;
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
@@ -412,12 +467,35 @@
     elements.completeMissionButton.disabled = missionDone;
     elements.completeMissionButton.querySelector("span").textContent = missionDone ? "Mission terminée" : "J'ai terminé";
 
-    elements.markTipButton.classList.toggle("completed", tipDone);
-    elements.markTipButton.disabled = tipDone;
-    elements.markTipButton.firstChild.textContent = tipDone ? "Conseil lu " : "Marquer comme lu ";
     elements.favoriteMissionButton.classList.toggle("completed", missionFavorite);
     elements.favoriteMissionButton.setAttribute("aria-pressed", String(missionFavorite));
     elements.favoriteMissionButton.querySelector("span").textContent = missionFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
+
+    if (currentStep) {
+      const favoriteId = "small-step:" + currentStep.id;
+      const isFavorite = state.favorites.has(favoriteId);
+      elements.smallStepNumber.textContent = (journey.currentIndex + 1) + "/" + DATA.smallSteps.length;
+      elements.smallStepTitle.textContent = currentStep.title;
+      elements.smallStepDescription.textContent = currentStep.description;
+      elements.smallStepDetails.innerHTML = renderTextParagraphs(currentStep.details);
+      elements.completeSmallStepButton.hidden = false;
+      elements.completeSmallStepButton.disabled = false;
+      elements.favoriteSmallStepButton.hidden = false;
+      elements.favoriteSmallStepButton.classList.toggle("completed", isFavorite);
+      elements.favoriteSmallStepButton.setAttribute("aria-pressed", String(isFavorite));
+      elements.favoriteSmallStepButton.querySelector("span").textContent = isFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
+      elements.smallStepRestartButton.hidden = true;
+      elements.smallStepDetailsPanel.hidden = false;
+    } else {
+      elements.smallStepNumber.textContent = DATA.smallSteps.length + "/" + DATA.smallSteps.length;
+      elements.smallStepTitle.textContent = "Ton parcours est complété";
+      elements.smallStepDescription.textContent = "Tu as parcouru les 31 Petits pas. Prends un moment pour reconnaître tout ce chemin.";
+      elements.smallStepDetails.innerHTML = renderTextParagraphs("Tu peux continuer à utiliser les zones, les principes et la minuterie à ton rythme.\n\nLorsque tu seras prête ou prêt, le parcours pourra recommencer au Petit pas 1 sans effacer ton historique.");
+      elements.completeSmallStepButton.hidden = true;
+      elements.favoriteSmallStepButton.hidden = true;
+      elements.smallStepRestartButton.hidden = false;
+      elements.smallStepDetailsPanel.hidden = false;
+    }
 
     elements.dailyProgressRing.style.setProperty("--progress", String(progress));
     elements.dailyProgressValue.textContent = progress + "%";
@@ -447,13 +525,76 @@
     showToast("C'est fait. Ce petit pas compte vraiment.");
   }
 
-  async function markTipRead() {
-    const daily = getDailyContent();
+  async function completeCurrentSmallStep() {
+    const step = getCurrentSmallStep();
+    if (!step) return;
+    const journey = state.settings.smallStepProgress;
     const todayKey = formatDateKey(state.today);
-    await addActivity("tip", todayKey, daily.tip.id, "Conseil du jour lu");
+    const reference = step.id + "-cycle-" + journey.cycle;
+    await addActivity("small-step", todayKey, reference, step.title);
+
+    const nextIndex = journey.currentIndex + 1;
+    state.settings.smallStepProgress = {
+      currentIndex: Math.min(nextIndex, DATA.smallSteps.length),
+      cycle: journey.cycle,
+      finished: nextIndex >= DATA.smallSteps.length
+    };
+    await DB.saveSettings({ smallStepProgress: state.settings.smallStepProgress });
+    elements.smallStepDetailsPanel.open = false;
     renderHome();
     renderHistory();
-    showToast("Conseil gardé pour aujourd'hui.");
+    showToast(DATA.quotes[(journey.currentIndex + journey.cycle) % DATA.quotes.length]);
+  }
+
+  async function restartSmallStepJourney() {
+    const journey = state.settings.smallStepProgress;
+    state.settings.smallStepProgress = {
+      currentIndex: 0,
+      cycle: journey.cycle + 1,
+      finished: false
+    };
+    await DB.saveSettings({ smallStepProgress: state.settings.smallStepProgress });
+    elements.smallStepDetailsPanel.open = false;
+    renderHome();
+    showToast("Un nouveau parcours commence, un petit pas à la fois.");
+  }
+
+  async function toggleCurrentSmallStepFavorite() {
+    const step = getCurrentSmallStep();
+    if (!step) return;
+    const id = "small-step:" + step.id;
+
+    if (state.favorites.has(id)) {
+      await DB.remove("favorites", id);
+      state.favorites.delete(id);
+      renderHome();
+      renderFavorites();
+      showToast("Petit pas retiré des favoris.");
+      return;
+    }
+
+    const smallStepFavoriteCount = Array.from(state.favorites.values()).filter(function (favorite) {
+      return favorite.type === "small-step";
+    }).length;
+    if (!canUse("unlimitedFavorites") && smallStepFavoriteCount >= state.account.limits.favorites) {
+      navigate("pro");
+      showToast("La version gratuite permet de garder trois Petits pas favoris.");
+      return;
+    }
+
+    const favorite = {
+      id: id,
+      type: "small-step",
+      title: step.title,
+      description: step.description,
+      details: step.details,
+      savedAt: new Date().toISOString()
+    };
+    await DB.put("favorites", favorite);
+    state.favorites.set(id, favorite);
+    renderHome();
+    renderFavorites();
+    showToast("Petit pas ajouté aux favoris.");
   }
 
   async function toggleDailyMissionFavorite() {
@@ -468,7 +609,10 @@
       return;
     }
 
-    if (!canUse("unlimitedFavorites") && state.favorites.size >= state.account.limits.favorites) {
+    const missionFavoriteCount = Array.from(state.favorites.values()).filter(function (favorite) {
+      return !favorite.type || favorite.type === "mission";
+    }).length;
+    if (!canUse("unlimitedFavorites") && missionFavoriteCount >= state.account.limits.favorites) {
       navigate("pro");
       showToast("La version gratuite permet de garder trois missions favorites.");
       return;
@@ -491,136 +635,68 @@
 
   function renderZones() {
     const currentWeeklyZone = getDailyContent().weeklyZone;
-    const hasCompleteZones = canUse("completeZones");
-    const freeTaskLimit = state.account.limits.zoneTasksPerSection;
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
-      const availableTasks = zone.tasks.filter(function (task) {
-        if (hasCompleteZones) return true;
-        const sectionTasks = zone.tasks.filter(function (row) { return row.categorie === task.categorie; });
-        return sectionTasks.indexOf(task) < freeTaskLimit;
-      });
-      const doneCount = availableTasks.filter(function (task) {
-        return isZoneTaskDone(task.id);
-      }).length;
-      const percent = Math.round((doneCount / availableTasks.length) * 100);
-      const sections = zone.sections.map(function (section, sectionIndex) {
+      const isCurrent = currentWeeklyZone.id === zone.id;
+      const sections = zone.sections.map(function (section) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
-        const visibleTasks = hasCompleteZones ? sectionTasks : sectionTasks.slice(0, freeTaskLimit);
-        const hiddenTaskCount = Math.max(0, sectionTasks.length - visibleTasks.length);
-        const sectionDone = visibleTasks.filter(function (task) { return isZoneTaskDone(task.id); }).length;
-        const tasks = visibleTasks.map(function (task) {
-          const done = isZoneTaskDone(task.id);
+        const tasks = sectionTasks.map(function (task) {
           return [
-            '<button class="check-row zone-task-row', done ? " done" : "",
-            '" data-zone-id="', zone.id, '" data-zone-task-id="', task.id,
-            '" aria-pressed="', String(done), '">',
-            '<span class="custom-check"><svg><use href="#icon-check"></use></svg></span>',
-            '<span class="zone-task-copy"><span class="task-label">', escapeHtml(task.titre), "</span>",
-            '<span class="zone-task-meta"><span>', escapeHtml(task.categorie), '</span><span class="zone-duration"><svg><use href="#icon-clock"></use></svg>', task.duree, " min</span></span></span>",
-            "</button>"
+            '<li class="zone-reference-item">',
+            '<span aria-hidden="true"></span>',
+            '<span>', escapeHtml(task.titre), "</span>",
+            "</li>"
           ].join("");
         }).join("");
 
         return [
-          '<details class="zone-subsection"', currentWeeklyZone.id === zone.id && sectionIndex === 0 ? " open" : "", ">",
-          '<summary><span>', escapeHtml(section), '</span><span class="zone-section-count">', sectionDone, "/", visibleTasks.length,
+          '<details class="zone-subsection">',
+          '<summary><span>', escapeHtml(section), '</span><span class="zone-section-count">', sectionTasks.length,
           '</span><svg><use href="#icon-chevron"></use></svg></summary>',
-          '<div class="mini-task-list">', tasks,
-          hiddenTaskCount ? '<button class="zone-pro-teaser" type="button" data-route="pro"><svg><use href="#icon-lock"></use></svg><span>' + hiddenTaskCount + ' autres mini-tâches avec PRO</span><svg><use href="#icon-chevron"></use></svg></button>' : "",
-          "</div>",
+          '<ul class="zone-reference-list">', tasks, "</ul>",
           "</details>"
         ].join("");
       }).join("");
 
       return [
-        '<article class="card zone-card', currentWeeklyZone.id === zone.id ? " current-zone" : "", '">',
-        '<div class="zone-card-header">',
+        '<details class="card zone-card zone-overview', isCurrent ? " current-zone" : "", '" name="house-zones" data-zone-id="', zone.id, '"', isCurrent ? " open" : "", ">",
+        '<summary class="zone-overview-summary" data-zone-summary="', zone.id, '">',
         '<span class="zone-icon">', zone.short, "</span>",
-        "<div><h3>", escapeHtml(zone.name), "</h3><p>", doneCount, " sur ", availableTasks.length, " terminées", hasCompleteZones ? "" : " · essentiel gratuit", "</p></div>",
-        '<span class="zone-percent">', percent, "%</span>",
-        "</div>",
-        '<div class="zone-progress-track"><span style="--width:', percent, '%"></span></div>',
+        "<div><h3>", escapeHtml(zone.name), "</h3>",
+        '<p class="zone-visit-label" data-zone-last-visit="', zone.id, '">', formatZoneVisitLabel(state.settings.zoneVisits[zone.id]), "</p></div>",
+        isCurrent ? '<span class="zone-active-badge">Zone active cette semaine</span>' : "",
+        '<svg class="zone-overview-chevron"><use href="#icon-chevron"></use></svg>',
+        "</summary>",
         '<p class="zone-description">', escapeHtml(zone.description), "</p>",
+        '<p class="zone-reference-note">Liste de référence : choisis seulement ce qui est utile aujourd\'hui.</p>',
         '<div class="zone-subsections">', sections, "</div>",
-        "</article>"
+        "</details>"
       ].join("");
     }).join("");
   }
 
-  function isZoneTaskDone(taskId) {
-    const row = state.zoneStates.get(taskId);
-    return Boolean(row && row.completed);
-  }
-
   async function handleZoneClick(event) {
-    const taskButton = event.target.closest("[data-zone-task-id]");
-    if (!taskButton) return;
-
-    const zoneId = taskButton.dataset.zoneId;
-    const taskId = taskButton.dataset.zoneTaskId;
-    const zone = DATA.zones.find(function (item) { return item.id === zoneId; });
-    const task = zone && zone.tasks.find(function (item) { return item.id === taskId; });
-    if (!zone || !task) return;
-
-    const current = state.zoneStates.get(task.id);
-    const completed = !(current && current.completed);
-
-    if (completed) {
-      const completedDate = formatDateKey(new Date());
-      const row = { id: task.id, completed: true, completedDate: completedDate };
-      await DB.put("zoneTaskStates", row);
-      state.zoneStates.set(task.id, row);
-      await addActivity("zone", completedDate, task.id, task.categorie + " · " + task.titre);
-      showToast("Un petit pas de plus.");
-    } else {
-      const completedDate = current.completedDate || formatDateKey(new Date());
-      await DB.remove("zoneTaskStates", task.id);
-      state.zoneStates.delete(task.id);
-      await removeActivity("zone", completedDate, task.id);
-    }
-
-    renderZones();
-    renderHome();
-    renderHistory();
+    const summary = event.target.closest("[data-zone-summary]");
+    if (!summary) return;
+    const zoneId = summary.dataset.zoneSummary;
+    const visitedAt = new Date().toISOString();
+    state.settings.zoneVisits = Object.assign({}, state.settings.zoneVisits, { [zoneId]: visitedAt });
+    await DB.saveSettings({ zoneVisits: state.settings.zoneVisits });
+    const label = elements.zonesList.querySelector('[data-zone-last-visit="' + zoneId + '"]');
+    if (label) label.textContent = formatZoneVisitLabel(visitedAt);
   }
 
-  async function migrateLegacyZoneData() {
-    for (const zone of DATA.zones) {
-      for (let index = 0; index < zone.tasks.length; index += 1) {
-        const task = zone.tasks[index];
-        const legacyId = zone.id + ":" + index;
-        const legacyState = state.zoneStates.get(legacyId);
-
-        if (legacyState) {
-          if (!state.zoneStates.has(task.id)) {
-            const migratedState = Object.assign({}, legacyState, { id: task.id });
-            await DB.put("zoneTaskStates", migratedState);
-            state.zoneStates.set(task.id, migratedState);
-          }
-          await DB.remove("zoneTaskStates", legacyId);
-          state.zoneStates.delete(legacyId);
-        }
-
-        const legacyActivities = Array.from(state.activities.values()).filter(function (activity) {
-          return activity.type === "zone" && activity.refId === legacyId;
-        });
-
-        for (const activity of legacyActivities) {
-          const migratedId = activityId("zone", activity.date, task.id);
-          if (!state.activities.has(migratedId)) {
-            const migratedActivity = Object.assign({}, activity, {
-              id: migratedId,
-              refId: task.id,
-              title: task.categorie + " · " + task.titre
-            });
-            await DB.put("activities", migratedActivity);
-            state.activities.set(migratedId, migratedActivity);
-          }
-          await DB.remove("activities", activity.id);
-          state.activities.delete(activity.id);
-        }
-      }
-    }
+  function renderPrinciples() {
+    elements.principlesList.innerHTML = DATA.principles.map(function (principle, index) {
+      return [
+        '<article class="card principle-card', principle.featured ? " featured" : "", '">',
+        '<span class="principle-number">', String(index + 1).padStart(2, "0"), "</span>",
+        '<div><p class="card-kicker">Principe ', index + 1, "</p>",
+        "<h3>", escapeHtml(principle.title), "</h3>",
+        "<p>", escapeHtml(principle.description), "</p></div>",
+        principle.featured ? '<span class="principle-featured-badge"><svg><use href="#icon-spark"></use></svg>La philosophie centrale</span>' : "",
+        "</article>"
+      ].join("");
+    }).join("");
   }
 
   function renderRoutines() {
@@ -813,7 +889,7 @@
     const activities = Array.from(state.activities.values());
     elements.totalSteps.textContent = String(activities.length);
     elements.missionCount.textContent = String(activities.filter(function (item) { return item.type === "mission"; }).length);
-    elements.tipCount.textContent = String(activities.filter(function (item) { return item.type === "tip"; }).length);
+    elements.smallStepCount.textContent = String(activities.filter(function (item) { return item.type === "small-step"; }).length);
     renderCalendar(activities);
     renderHistoryDay(activities);
     renderFavorites();
@@ -826,15 +902,19 @@
     });
     elements.favoriteCount.textContent = favorites.length + " favori" + (favorites.length > 1 ? "s" : "");
     if (!favorites.length) {
-      elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucune mission favorite</h3><p>Ajoute une mission depuis l\'accueil pour la retrouver ici.</p></div>';
+      elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucun favori pour le moment</h3><p>Ajoute un Petit pas ou une mission depuis l\'accueil pour le retrouver ici.</p></div>';
       return;
     }
 
     elements.favoritesList.innerHTML = favorites.map(function (favorite) {
+      const isSmallStep = favorite.type === "small-step";
+      const meta = isSmallStep
+        ? '<small class="favorite-kind"><svg><use href="#icon-spark"></use></svg>Petit pas du parcours</small>'
+        : '<small><svg><use href="#icon-clock"></use></svg>' + escapeHtml(favorite.minutes || "") + ' min</small>';
       return [
-        '<article class="favorite-item" data-favorite-id="', favorite.id, '">',
+        '<article class="favorite-item', isSmallStep ? " small-step-favorite" : "", '" data-favorite-id="', favorite.id, '">',
         '<span class="favorite-item-icon"><svg><use href="#icon-heart"></use></svg></span>',
-        '<div><strong>', escapeHtml(favorite.title), '</strong><p>', escapeHtml(favorite.description), '</p><small><svg><use href="#icon-clock"></use></svg>', favorite.minutes, ' min</small></div>',
+        '<div><strong>', escapeHtml(favorite.title), '</strong><p>', escapeHtml(favorite.description), "</p>", meta, "</div>",
         '<button class="small-action favorite-remove" type="button" data-favorite-action="remove" aria-label="Retirer ', escapeHtml(favorite.title), ' des favoris"><svg><use href="#icon-trash"></use></svg></button>',
         "</article>"
       ].join("");
@@ -849,7 +929,7 @@
     state.favorites.delete(item.dataset.favoriteId);
     renderFavorites();
     renderHome();
-    showToast("Mission retirée des favoris.");
+    showToast("Favori retiré.");
   }
 
   function renderCalendar(activities) {
@@ -914,6 +994,7 @@
     const labels = {
       mission: "Mission du jour",
       tip: "Conseil lu",
+      "small-step": "Petit pas du parcours",
       zone: "Mini-tâche",
       routine: "Routine",
       timer: "Minuterie"
@@ -1258,18 +1339,21 @@
 
   function normalizeTimerState(savedState) {
     const saved = savedState && typeof savedState === "object" ? savedState : {};
-    const selectedMinutes = [2, 5, 10, 15, 30].includes(Number(saved.selectedMinutes))
-      ? Number(saved.selectedMinutes)
-      : DEFAULT_TIMER_STATE.selectedMinutes;
-    const durationMs = Number(saved.durationMs) > 0
-      ? Number(saved.durationMs)
-      : selectedMinutes * 60 * 1000;
     const statuses = ["idle", "running", "paused", "complete"];
     const status = statuses.includes(saved.status) ? saved.status : "idle";
-    const remainingMs = Math.max(0, Math.min(
-      Number.isFinite(Number(saved.remainingMs)) ? Number(saved.remainingMs) : durationMs,
-      durationMs
-    ));
+    const preserveExistingSession = status === "running" || status === "paused" || status === "complete";
+    const selectedMinutes = preserveExistingSession && Number(saved.selectedMinutes) > 0
+      ? Number(saved.selectedMinutes)
+      : 15;
+    const durationMs = preserveExistingSession && Number(saved.durationMs) > 0
+      ? Number(saved.durationMs)
+      : 15 * 60 * 1000;
+    const remainingMs = preserveExistingSession
+      ? Math.max(0, Math.min(
+        Number.isFinite(Number(saved.remainingMs)) ? Number(saved.remainingMs) : durationMs,
+        durationMs
+      ))
+      : durationMs;
 
     return {
       selectedMinutes: selectedMinutes,
@@ -1309,38 +1393,6 @@
   function closeTimerPanel() {
     elements.timerPanel.hidden = true;
     elements.timerFab.setAttribute("aria-expanded", "false");
-  }
-
-  function selectTimerPreset(event) {
-    if (state.timer.status === "running" || state.timer.status === "paused") return;
-    setTimerPreset(Number(event.currentTarget.dataset.timerMinutes));
-  }
-
-  function setTimerPreset(selectedMinutes) {
-    state.timer = {
-      selectedMinutes: selectedMinutes,
-      durationMs: selectedMinutes * 60 * 1000,
-      remainingMs: selectedMinutes * 60 * 1000,
-      status: "idle",
-      endAt: null,
-      startedAt: null,
-      completedAt: null
-    };
-    persistTimer();
-    renderTimer();
-  }
-
-  function openMissionTimer() {
-    const missionMinutes = getDailyContent().mission.minutes;
-    const presets = [2, 5, 10, 15, 30];
-    const nearestPreset = presets.reduce(function (closest, value) {
-      return Math.abs(value - missionMinutes) < Math.abs(closest - missionMinutes) ? value : closest;
-    }, presets[0]);
-
-    if (state.timer.status !== "running" && state.timer.status !== "paused") {
-      setTimerPreset(nearestPreset);
-    }
-    openTimerPanel();
   }
 
   async function handleTimerPrimaryAction() {
@@ -1383,9 +1435,9 @@
   async function resetTimer() {
     stopTimerTicker();
     state.timer = {
-      selectedMinutes: state.timer.selectedMinutes,
-      durationMs: state.timer.durationMs,
-      remainingMs: state.timer.durationMs,
+      selectedMinutes: 15,
+      durationMs: 15 * 60 * 1000,
+      remainingMs: 15 * 60 * 1000,
       status: "idle",
       endAt: null,
       startedAt: null,
@@ -1467,7 +1519,6 @@
       ? Math.max(0, Math.min(1, remainingMs / state.timer.durationMs))
       : 0;
     const status = state.timer.status;
-    const isActive = status === "running" || status === "paused";
     const displayTime = formatTimerTime(remainingMs);
 
     elements.timerTimeRemaining.textContent = displayTime;
@@ -1480,11 +1531,6 @@
     elements.timerFab.classList.toggle("complete", status === "complete");
     elements.timerMainView.hidden = status === "complete";
     elements.timerCompleteView.hidden = status !== "complete";
-
-    document.querySelectorAll("[data-timer-minutes]").forEach(function (button) {
-      button.classList.toggle("active", Number(button.dataset.timerMinutes) === state.timer.selectedMinutes);
-      button.disabled = isActive;
-    });
 
     const statusCopy = {
       idle: "Prête quand tu l'es",
@@ -1637,6 +1683,7 @@
     const todayKey = formatDateKey(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const daily = getDailyContent(now);
+    const currentSmallStep = getCurrentSmallStep();
     const notifications = [
       {
         enabled: state.settings.missionReminder,
@@ -1651,9 +1698,9 @@
         enabled: state.settings.tipReminder,
         time: state.settings.tipTime,
         lastKey: "lastTipNotification",
-        title: "Une idée douce pour aujourd'hui",
-        body: daily.tip.text,
-        tag: "tip-" + todayKey,
+        title: "Ton Petit pas t'attend",
+        body: currentSmallStep ? currentSmallStep.title : "Ton parcours est complété. Prends le temps de reconnaître le chemin.",
+        tag: "small-step-" + todayKey,
         allowed: true
       },
       {

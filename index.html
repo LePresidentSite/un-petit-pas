@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260614-timer-icon-mobile">
+  <link rel="stylesheet" href="./styles.css?v=20260615-petits-pas-v2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js" defer></script>
-  <script src="./data.js?v=20260613-daily-tips" defer></script>
+  <script src="./data.js?v=20260615-petits-pas-v2" defer></script>
   <script src="./db.js" defer></script>
-  <script src="./app.js?v=20260614-ambiance-radio-v5" defer></script>
+  <script src="./app.js?v=20260615-petits-pas-v2" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -147,10 +147,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <svg><use href="#icon-check"></use></svg>
                 <span>J'ai terminé</span>
               </button>
-              <button id="missionTimerButton" class="secondary-button">
-                <svg><use href="#icon-timer"></use></svg>
-                <span>Démarrer la minuterie</span>
-              </button>
               <button id="favoriteMissionButton" class="secondary-button favorite-button">
                 <svg><use href="#icon-heart"></use></svg>
                 <span>Ajouter aux favoris</span>
@@ -158,22 +154,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </article>
 
-          <button id="homeTimerButton" class="home-timer-cta" type="button">
-            <span class="home-timer-icon"><svg><use href="#icon-timer"></use></svg></span>
-            <span><small>Besoin d'un point de départ ?</small><strong>Je fais un petit pas</strong></span>
-            <svg class="home-timer-arrow"><use href="#icon-chevron"></use></svg>
-          </button>
-
-          <article class="card tip-card">
+          <article class="card tip-card small-step-card">
             <div class="card-heading compact">
               <div>
-                <p class="card-kicker">Conseil du jour</p>
-                <h2>À garder en tête</h2>
+                <p class="card-kicker">Petit pas du jour</p>
+                <h2 id="smallStepTitle"></h2>
               </div>
-              <span class="tip-number" id="tipNumber"></span>
+              <span class="tip-number" id="smallStepNumber"></span>
             </div>
-            <p id="dailyTip" class="tip-text"></p>
-            <button id="markTipButton" class="text-button">Marquer comme lu <svg><use href="#icon-chevron"></use></svg></button>
+            <p id="smallStepDescription" class="tip-text"></p>
+            <details id="smallStepDetailsPanel" class="small-step-details">
+              <summary>Découvrir ce petit pas <svg><use href="#icon-chevron"></use></svg></summary>
+              <div id="smallStepDetails"></div>
+            </details>
+            <div class="small-step-actions">
+              <button id="completeSmallStepButton" class="primary-button">
+                <svg><use href="#icon-check"></use></svg>
+                <span>J'ai fait ce petit pas</span>
+              </button>
+              <button id="favoriteSmallStepButton" class="secondary-button favorite-button">
+                <svg><use href="#icon-heart"></use></svg>
+                <span>Ajouter aux favoris</span>
+              </button>
+              <button id="smallStepRestartButton" class="secondary-button" hidden>
+                <svg><use href="#icon-reset"></use></svg>
+                <span>Recommencer le parcours</span>
+              </button>
+            </div>
           </article>
 
           <article class="card progress-card">
@@ -197,7 +204,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <p class="card-kicker">Zone de la semaine</p>
               <h2 id="weeklyZoneTitle"></h2>
               <p id="weeklyZoneDescription" class="muted"></p>
-              <button class="text-button" data-route="zones">Voir les mini-tâches <svg><use href="#icon-chevron"></use></svg></button>
+              <button class="text-button" data-route="zones">Consulter la zone <svg><use href="#icon-chevron"></use></svg></button>
+            </div>
+          </article>
+
+          <article class="card principles-preview-card">
+            <div class="principle-preview-icon"><svg><use href="#icon-spark"></use></svg></div>
+            <div>
+              <p class="card-kicker">Les 11 principes</p>
+              <h2>Un pas à la fois</h2>
+              <p>Des repères simples pour avancer sans pression et construire une méthode qui te ressemble.</p>
+              <button class="text-button" data-route="principles">Découvrir les principes <svg><use href="#icon-chevron"></use></svg></button>
             </div>
           </article>
         </div>
@@ -207,11 +224,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="section-intro">
           <div>
             <p class="eyebrow">Pièce par pièce</p>
-            <h2>Choisis un endroit léger</h2>
+            <h2>Les zones de la maison</h2>
           </div>
-          <p>Une seule mini-tâche compte déjà.</p>
+          <p>Ces listes sont des repères. Choisis seulement ce qui t'est utile.</p>
         </div>
         <div id="zonesList" class="zones-list"></div>
+      </section>
+
+      <section id="page-principles" class="page" data-page="principles">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Des repères, pas des règles</p>
+            <h2>Les 11 principes</h2>
+          </div>
+          <p>Prends ce qui t'aide et laisse le reste attendre.</p>
+        </div>
+        <div id="principlesList" class="principles-list"></div>
+        <button class="secondary-button principles-back-button" type="button" data-route="home">
+          <svg class="flip"><use href="#icon-chevron"></use></svg>
+          Retour à aujourd'hui
+        </button>
       </section>
 
       <section id="page-routines" class="page" data-page="routines">
@@ -320,7 +352,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="stats-grid">
           <article class="stat-card"><strong id="totalSteps">0</strong><span>petits pas</span></article>
           <article class="stat-card"><strong id="missionCount">0</strong><span>missions</span></article>
-          <article class="stat-card"><strong id="tipCount">0</strong><span>conseils lus</span></article>
+          <article class="stat-card"><strong id="smallStepCount">0</strong><span>Petits pas du parcours</span></article>
         </div>
         <article class="card calendar-card">
           <div class="calendar-header">
@@ -394,7 +426,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="setting-control"><span class="pro-control"><input id="missionTimeSetting" type="time" value="09:00"><span class="pro-mini">PRO</span></span><label class="switch"><input id="missionReminder" type="checkbox"><span></span></label></div>
           </div>
           <div class="setting-row">
-            <label for="tipReminder">Conseil du jour</label>
+            <label for="tipReminder">Petit pas du parcours</label>
             <div class="setting-control"><span class="pro-control"><input id="tipTimeSetting" type="time" value="12:30"><span class="pro-mini">PRO</span></span><label class="switch"><input id="tipReminder" type="checkbox"><span></span></label></div>
           </div>
           <div class="setting-row">
@@ -486,7 +518,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div><span><svg><use href="#icon-bell"></use></svg></span><strong>Rappels personnalisés</strong><p>Choisis les heures qui respectent réellement ton quotidien.</p></div>
             <div><span><svg><use href="#icon-history"></use></svg></span><strong>Historique complet</strong><p>Retrouve tous tes petits pas, sans limite de temps.</p></div>
             <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde toutes les missions que tu souhaites refaire.</p></div>
-            <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Zones complètes</strong><p>Accède à toutes les mini-tâches du programme d'entretien de la maison.</p></div>
+            <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Parcours sans limite</strong><p>Conserve autant de Petits pas favoris que tu le souhaites.</p></div>
             <div><span><svg><use href="#icon-spark"></use></svg></span><strong>Statistiques avancées</strong><p>Observe tes journées actives, séries et minutes consacrées.</p></div>
             <div><span><svg><use href="#icon-crown"></use></svg></span><strong>Nouveautés prioritaires</strong><p>Profite en premier des prochains outils de l'application.</p></div>
           </div>
@@ -617,7 +649,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="timer-panel-header">
         <div>
           <p class="card-kicker">Un moment pour avancer</p>
-          <h2 id="timerPanelTitle">Minuterie douce</h2>
+          <h2 id="timerPanelTitle">Minuterie 15 minutes</h2>
         </div>
         <button id="closeTimerButton" class="dialog-close timer-close" type="button" aria-label="Fermer la minuterie">×</button>
       </div>
@@ -629,18 +661,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <circle id="timerProgressCircle" class="timer-progress-value" cx="80" cy="80" r="69"></circle>
           </svg>
           <div class="timer-time-copy">
-            <strong id="timerTimeRemaining">05:00</strong>
+            <strong id="timerTimeRemaining">15:00</strong>
             <span id="timerStatusText">Prête quand tu l'es</span>
           </div>
         </div>
 
-        <div class="timer-presets" aria-label="Durées rapides">
-          <button class="timer-preset" type="button" data-timer-minutes="2"><span>2</span> min</button>
-          <button class="timer-preset active" type="button" data-timer-minutes="5"><span>5</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="10"><span>10</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="15"><span>15</span> min</button>
-          <button class="timer-preset" type="button" data-timer-minutes="30"><span>30</span> min</button>
-        </div>
+        <div class="timer-fixed-duration"><svg><use href="#icon-timer"></use></svg><span>15 minutes pour avancer, puis tu peux t'arrêter.</span></div>
 
         <div class="timer-controls">
           <button id="timerResetButton" class="timer-control secondary" type="button" aria-label="Réinitialiser la minuterie">

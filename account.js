@@ -10,7 +10,6 @@
   });
   const PRO_FEATURES = new Set([
     "advancedStats",
-    "completeZones",
     "customReminderTimes",
     "fullHistory",
     "unlimitedFavorites",

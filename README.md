@@ -8,12 +8,14 @@ Adresse technique de secours : <https://un-petit-pas.vercel.app>
 
 ## Fonctionnalités
 
-- Mission, conseil et citation différents chaque jour
-- Minuterie globale persistante avec modes 2, 5, 10, 15 et 30 minutes
+- Mission et pensée motivante différentes chaque jour
+- Parcours progressif de 31 Petits pas, repris automatiquement là où l'utilisateur s'est arrêté
+- Bibliothèque de 11 principes propres à Un Petit Pas
+- Minuterie globale persistante de 15 minutes
 - Pause, reprise, cercle de progression, son doux et écran de réussite
-- Banque de 365 conseils d'organisation
 - Cycle automatique de cinq zones hebdomadaires
-- Mini-tâches et progression par pièce
+- 86 références d'entretien regroupées dans des accordéons, sans durée ni pression de complétion
+- Indication de la zone active et de la dernière visite
 - Routines personnalisables avec réorganisation
 - Historique mensuel et compteur de petits pas
 - Rappels locaux personnalisables
@@ -50,7 +52,7 @@ Pour publier le projet sans exposer de secrets, consulter [docs/GITHUB.md](docs/
 
 Pour configurer Supabase, Stripe et Vercel pas à pas, consulter [docs/GUIDE_CONFIGURATION_PRODUCTION.md](docs/GUIDE_CONFIGURATION_PRODUCTION.md).
 
-Le plan gratuit comprend notamment la minuterie, les missions, les zones essentielles, trois tâches de routine personnalisées, trois missions favorites et sept jours d'historique détaillé. PRO déverrouille les routines et favoris illimités, les heures de rappel personnalisées, les zones complètes, l'historique complet et les statistiques avancées.
+Le plan gratuit comprend notamment la minuterie, les missions, le parcours des Petits pas, toutes les zones de référence, trois tâches de routine personnalisées, trois favoris de chaque type et sept jours d'historique détaillé. PRO déverrouille les routines et favoris illimités, les heures de rappel personnalisées, l'historique complet et les statistiques avancées.
 
 Tarifs configurés dans Stripe :
 

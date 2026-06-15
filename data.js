@@ -140,12 +140,12 @@
     { title: "Dégager une tablette", description: "Retire ce qui n'a plus sa place sur une tablette visible et remets seulement l'essentiel.", minutes: 10 },
     { title: "Ramasser le salon", description: "Prends un panier et rassemble les objets qui appartiennent à une autre pièce.", minutes: 7 },
     { title: "Rafraîchir le réfrigérateur", description: "Jette un aliment périmé et essuie une seule tablette. Cette petite victoire suffit.", minutes: 10 },
-    { title: "Room Rescue express", description: "Choisis la pièce qui te pèse le plus et range seulement ce qui est évident.", minutes: 5 },
+    { title: "Sauvetage express d'une pièce", description: "Choisis la pièce qui te pèse le plus et range seulement ce qui est évident.", minutes: 5 },
     { title: "Dégager une chaise", description: "Retire tout ce qui s'est accumulé sur une chaise et redonne-lui sa fonction.", minutes: 5 },
     { title: "Trier le courrier", description: "Fais trois piles : agir, garder, recycler. Ne traite rien d'autre pour l'instant.", minutes: 8 },
     { title: "Nettoyer un miroir", description: "Choisis le miroir le plus utilisé et essuie-le, sans ajouter d'autre tâche.", minutes: 5 },
     { title: "Rassembler les tasses", description: "Fais un petit tour et rapporte seulement les verres et les tasses à la cuisine.", minutes: 4 },
-    { title: "Dompter un Hot Spot", description: "Choisis une petite surface où les objets s'accumulent et replace cinq choses.", minutes: 5 },
+    { title: "Alléger un point d'accumulation", description: "Choisis une petite surface où les objets s'accumulent et replace cinq choses.", minutes: 5 },
     { title: "Préparer demain", description: "Dépose tes vêtements ou les essentiels de demain au même endroit.", minutes: 6 },
     { title: "Vider une poubelle", description: "Choisis une seule petite poubelle, vide-la et remets un sac propre.", minutes: 4 },
     { title: "Plier dix morceaux", description: "Plie ou suspends exactement dix vêtements, puis autorise-toi à arrêter.", minutes: 8 },
@@ -182,7 +182,7 @@
   const tipActions = [
     "Prépare les vêtements du lendemain avant de te coucher.",
     "Fais briller l'évier pour créer un point de départ visuel.",
-    "Gère un Hot Spot pendant seulement deux minutes.",
+    "Allège un point d'accumulation pendant seulement deux minutes.",
     "Utilise un minuteur visible plutôt que ta motivation.",
     "Désencombre avant d'acheter des contenants.",
     "Garde un panier pour les objets qui appartiennent ailleurs.",
@@ -264,14 +264,255 @@
   ];
 
   const tips = [];
-  tipActions.forEach(function (action, actionIndex) {
-    tipEndings.forEach(function (ending, endingIndex) {
-      tips.push({
-        id: "tip-" + String(actionIndex + 1).padStart(2, "0") + "-" + (endingIndex + 1),
-        text: action + " " + ending
-      });
+  for (let dayIndex = 0; dayIndex < 365; dayIndex += 1) {
+    const actionIndex = (dayIndex * 29) % tipActions.length;
+    const endingIndex = dayIndex % tipEndings.length;
+    tips.push({
+      id: "tip-" + String(actionIndex + 1).padStart(2, "0") + "-" + (endingIndex + 1),
+      text: tipActions[actionIndex] + " " + tipEndings[endingIndex]
     });
-  });
+  }
+
+  const leapDayTip = {
+    id: "tip-leap-day",
+    text: "Cette journée en plus n'a rien à prouver. Choisis un geste doux qui te fera du bien."
+  };
+
+  const smallSteps = [
+    {
+      id: "small-step-01",
+      title: "Faire briller son évier",
+      description: "Choisis l'évier comme premier point calme de la maison.",
+      details: "Vide l'évier, rince-le et essuie-le simplement. Il n'a pas besoin d'être parfait. Ce petit espace dégagé devient un repère visuel rassurant pour la suite.",
+      principleId: "principle-01"
+    },
+    {
+      id: "small-step-02",
+      title: "S'habiller de la tête aux pieds",
+      description: "Prépare-toi comme pour une journée qui mérite ton attention.",
+      details: "Choisis des vêtements confortables et termine ta préparation, chaussures comprises si cela t'aide. L'objectif est seulement d'envoyer à ton cerveau le signal que la journée peut commencer.",
+      principleId: "principle-02"
+    },
+    {
+      id: "small-step-03",
+      title: "Lire 10 minutes",
+      description: "Accorde dix minutes à une lecture qui te fait du bien.",
+      details: "Choisis quelques pages utiles, apaisantes ou inspirantes. Arrête-toi après dix minutes, même si tu n'as pas terminé. La régularité compte davantage que la quantité.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-04",
+      title: "Créer le post-it de la journée",
+      description: "Note une seule priorité visible pour aujourd'hui.",
+      details: "Écris l'action qui allégera le plus ta journée. Garde le post-it à un endroit facile à voir et considère tout le reste comme facultatif.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-05",
+      title: "Positiver",
+      description: "Remplace une critique par une phrase plus juste et plus douce.",
+      details: "Observe une pensée exigeante et reformule-la comme tu le ferais pour une personne que tu aimes. Tu n'as pas à tout réussir pour reconnaître ce que tu fais déjà.",
+      principleId: "principle-10"
+    },
+    {
+      id: "small-step-06",
+      title: "Apaiser un point d'accumulation pendant 2 minutes",
+      description: "Choisis un petit endroit où les objets s'accumulent.",
+      details: "Règle deux minutes et retire seulement ce qui est évident : déchets, vaisselle ou objets faciles à replacer. Lorsque le temps est écoulé, arrête-toi.",
+      principleId: "principle-09"
+    },
+    {
+      id: "small-step-07",
+      title: "Préparer les vêtements de demain",
+      description: "Enlève une décision à la journée de demain.",
+      details: "Choisis une tenue complète et place-la au même endroit. Une préparation imparfaite vaut mieux qu'une décision de plus à prendre au réveil.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-08",
+      title: "Débuter le journal de bord",
+      description: "Crée un endroit simple pour garder tes repères.",
+      details: "Utilise un cahier ou une note numérique. Inscris seulement ce que tu veux retrouver facilement : routines, idées utiles et petites victoires.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-09",
+      title: "Faire un sauvetage express d'une pièce",
+      description: "Redonne un peu d'air à une seule pièce.",
+      details: "Prends un panier, rassemble les objets qui appartiennent ailleurs et dégage un passage ou une surface. Il n'est pas nécessaire de tout replacer maintenant.",
+      principleId: "principle-09"
+    },
+    {
+      id: "small-step-10",
+      title: "Désencombrer 15 minutes",
+      description: "L'objectif n'est pas de terminer. L'objectif est d'avancer.",
+      details: "Le désordre ne s'est pas installé en une journée.\n\nRègle simplement la minuterie sur 15 minutes et choisis une petite zone.\n\nJette, donne ou range ce que tu peux pendant ces 15 minutes. Lorsque la minuterie sonne, arrête-toi.\n\nChaque séance est un petit pas vers une maison plus facile à entretenir.",
+      principleId: "principle-06",
+      timerMinutes: 15
+    },
+    {
+      id: "small-step-11",
+      title: "Continuer le journal de bord",
+      description: "Ajoute seulement une information qui pourra t'aider plus tard.",
+      details: "Complète ton journal avec une routine, une liste courte ou une observation. Il doit rester un outil vivant, pas un autre projet à réussir.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-12",
+      title: "Trier les courriels, magazines et courrier",
+      description: "Réduis une petite pile physique ou numérique.",
+      details: "Choisis un seul type de courrier et traite quelques éléments évidents. Supprime, recycle ou classe sans chercher à vider toute la pile.",
+      principleId: "principle-07"
+    },
+    {
+      id: "small-step-13",
+      title: "Visiter la zone en cours",
+      description: "Consulte la zone active et choisis ce qui te paraît utile.",
+      details: "Ouvre la zone de la semaine et parcours sa liste de référence. Tu peux choisir une seule idée, ou simplement prendre connaissance de la zone.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-14",
+      title: "Utiliser un calendrier",
+      description: "Dépose une information importante hors de ta mémoire.",
+      details: "Note un rendez-vous, une échéance ou un rappel dans ton calendrier. Un système extérieur peut alléger la charge mentale.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-15",
+      title: "Faire son lit",
+      description: "Crée une surface calme en quelques gestes.",
+      details: "Remonte simplement la couverture et replace les oreillers. Une version rapide suffit pour donner une sensation de départ.",
+      principleId: "principle-05"
+    },
+    {
+      id: "small-step-16",
+      title: "Lire un témoignage inspirant",
+      description: "Rappelle-toi que le changement peut être progressif.",
+      details: "Lis une histoire, une note ou un souvenir qui te redonne confiance. Garde seulement l'idée qui te semble réaliste pour toi.",
+      principleId: "principle-10"
+    },
+    {
+      id: "small-step-17",
+      title: "Se coucher à une heure raisonnable",
+      description: "Protège doucement l'énergie de demain.",
+      details: "Choisis une heure réaliste pour commencer à ralentir. Prépare une transition simple plutôt qu'une routine parfaite.",
+      principleId: "principle-08"
+    },
+    {
+      id: "small-step-18",
+      title: "Découvrir un principe Un Petit Pas",
+      description: "Choisis un principe et observe comment il peut t'aider.",
+      details: "Parcours la bibliothèque des principes. Tu n'as rien à appliquer immédiatement : laisse simplement une idée faire son chemin.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-19",
+      title: "Lire un autre témoignage inspirant",
+      description: "Cherche une preuve que les petits changements comptent.",
+      details: "Choisis un témoignage différent ou relis une ancienne réussite personnelle. Compare-toi seulement à ton propre chemin.",
+      principleId: "principle-10"
+    },
+    {
+      id: "small-step-20",
+      title: "Faire une brassée de lessive",
+      description: "Fais avancer une seule étape du linge.",
+      details: "Démarre, transfère, plie ou range une brassée. Une seule étape terminée est déjà une vraie avancée.",
+      principleId: "principle-05"
+    },
+    {
+      id: "small-step-21",
+      title: "Réfléchir à ce qui fonctionne pour moi",
+      description: "Observe ce qui t'aide réellement, sans jugement.",
+      details: "Note une habitude, un outil ou un moment de la journée qui facilite l'action. Ton système peut être différent de celui des autres.",
+      principleId: "principle-08"
+    },
+    {
+      id: "small-step-22",
+      title: "Faire le point sur mes habitudes",
+      description: "Regarde tes habitudes avec curiosité plutôt qu'avec pression.",
+      details: "Choisis une habitude qui t'aide et une autre qui pourrait être simplifiée. Aucun grand changement n'est requis aujourd'hui.",
+      principleId: "principle-06"
+    },
+    {
+      id: "small-step-23",
+      title: "Préparer le repas du lendemain",
+      description: "Facilite une décision alimentaire de demain.",
+      details: "Choisis le repas, sors un ingrédient ou écris une idée. Cette petite préparation peut suffire à réduire la fatigue décisionnelle.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-24",
+      title: "Garder les sanitaires frais",
+      description: "Fais un entretien rapide sans viser le grand ménage.",
+      details: "Essuie le lavabo, rafraîchis la toilette ou remplace une serviette. Choisis un seul geste visible.",
+      principleId: "principle-05"
+    },
+    {
+      id: "small-step-25",
+      title: "Être fière de moi",
+      description: "Reconnais consciemment un effort que tu as fait.",
+      details: "Nomme une action, même très petite, que tu as accomplie récemment. La fierté n'a pas besoin d'attendre un résultat parfait.",
+      principleId: "principle-10"
+    },
+    {
+      id: "small-step-26",
+      title: "Profiter de 15 minutes pour moi",
+      description: "Réserve quinze minutes à quelque chose qui te recharge.",
+      details: "Assieds-toi, marche, écoute de la musique ou ne fais rien. Ce temps n'a pas besoin d'être productif pour être utile.",
+      principleId: "principle-08",
+      timerMinutes: 15
+    },
+    {
+      id: "small-step-27",
+      title: "Planifier les repas",
+      description: "Prévois seulement quelques repères pour les prochains jours.",
+      details: "Choisis deux ou trois repas simples et vérifie ce que tu as déjà. Une liste incomplète peut tout de même beaucoup aider.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-28",
+      title: "Prendre soin de moi",
+      description: "Choisis un geste de soin accessible aujourd'hui.",
+      details: "Bois de l'eau, prends une douche, mange quelque chose ou repose-toi. Prendre soin de toi fait partie de l'entretien de la maison.",
+      principleId: "principle-08"
+    },
+    {
+      id: "small-step-29",
+      title: "M'accorder une heure pour moi",
+      description: "Crée un espace plus long pour souffler ou te retrouver.",
+      details: "Choisis une activité qui t'apaise et protège ce moment autant que possible. Tu peux aussi diviser cette heure en plusieurs petits moments.",
+      principleId: "principle-08"
+    },
+    {
+      id: "small-step-30",
+      title: "Planifier à l'avance",
+      description: "Prépare un seul détail qui facilitera la suite.",
+      details: "Regarde les prochains jours et choisis une chose à anticiper. Le but est de réduire une future friction, pas de tout prévoir.",
+      principleId: "principle-04"
+    },
+    {
+      id: "small-step-31",
+      title: "Faire le bilan et penser globalement",
+      description: "Regarde le chemin parcouru avec douceur.",
+      details: "Observe ce qui a changé, ce que tu veux garder et ce qui mérite d'être simplifié. Le parcours peut recommencer autrement, à ton rythme.",
+      principleId: "principle-06"
+    }
+  ];
+
+  const principles = [
+    { id: "principle-01", title: "Faire briller son évier", description: "Créer un petit point de calme visible qui aide à recommencer." },
+    { id: "principle-02", title: "S'habiller de la tête aux pieds", description: "Préparer son corps et son esprit à entrer doucement dans la journée." },
+    { id: "principle-03", title: "Faire ses routines", description: "S'appuyer sur quelques repères simples plutôt que sur la motivation." },
+    { id: "principle-04", title: "Se concentrer sur l'essentiel", description: "Choisir ce qui compte maintenant et laisser le reste attendre." },
+    { id: "principle-05", title: "Ranger au fur et à mesure", description: "Profiter des petits moments pour éviter qu'une tâche devienne trop lourde." },
+    { id: "principle-06", title: "Un pas à la fois", description: "Avancer par une seule action réaliste, sans exiger de tout terminer.", featured: true },
+    { id: "principle-07", title: "Ne pas accumuler", description: "Laisser partir ce qui ne sert plus afin de préserver de l'espace." },
+    { id: "principle-08", title: "Prendre soin de soi", description: "Considérer son énergie et son bien-être comme une priorité légitime." },
+    { id: "principle-09", title: "Travailler rapidement", description: "Utiliser un temps court pour commencer sans transformer l'action en marathon." },
+    { id: "principle-10", title: "Sourire", description: "Inviter un peu de douceur dans les gestes ordinaires." },
+    { id: "principle-11", title: "Rire de soi et de la vie", description: "Relâcher la perfection et garder de la légèreté lorsque tout ne se passe pas comme prévu." }
+  ];
 
   function zoneTask(id, titre, duree, categorie) {
     return { id: id, titre: titre, duree: duree, categorie: categorie };
@@ -543,11 +784,162 @@
     { id: "living", name: "Salon", description: "On apaise la pièce où la vie se rassemble.", color: "#eee4d4" }
   ];
 
+  function referenceTask(id, titre, categorie) {
+    return { id: id, titre: titre, categorie: categorie };
+  }
+
+  const referenceZones = [
+    {
+      id: "entry",
+      number: 1,
+      name: "Entrées et salle à manger",
+      short: "Z1",
+      description: "Des repères pour rendre les arrivées, les départs et les repas plus légers.",
+      sections: ["Entrée principale", "Entrée secondaire", "Salle à manger"],
+      tasks: [
+        referenceTask("zone1_ref_001", "Balayer le porche", "Entrée principale"),
+        referenceTask("zone1_ref_002", "Vider les mangeoires à oiseaux", "Entrée principale"),
+        referenceTask("zone1_ref_003", "Essuyer les chaises", "Entrée principale"),
+        referenceTask("zone1_ref_004", "Essuyer la table", "Entrée principale"),
+        referenceTask("zone1_ref_005", "Rempoter les plantes", "Entrée principale"),
+        referenceTask("zone1_ref_006", "Se départir de ce que l'on ne veut plus", "Entrée principale"),
+        referenceTask("zone1_ref_007", "Balayer le porche", "Entrée secondaire"),
+        referenceTask("zone1_ref_008", "Nettoyer la table de rempotage", "Entrée secondaire"),
+        referenceTask("zone1_ref_009", "Nettoyer la table de pique-nique", "Entrée secondaire"),
+        referenceTask("zone1_ref_010", "Jeter les déchets", "Entrée secondaire"),
+        referenceTask("zone1_ref_011", "Sortir la récupération", "Entrée secondaire"),
+        referenceTask("zone1_ref_012", "Vérifier et nettoyer le BBQ", "Entrée secondaire"),
+        referenceTask("zone1_ref_013", "Nettoyer les bols du chien", "Entrée secondaire"),
+        referenceTask("zone1_ref_014", "Épousseter le rebord des fenêtres", "Salle à manger"),
+        referenceTask("zone1_ref_015", "Recycler les magazines devenus inutiles", "Salle à manger"),
+        referenceTask("zone1_ref_016", "Nettoyer la rampe", "Salle à manger"),
+        referenceTask("zone1_ref_017", "Épousseter la porte avant", "Salle à manger"),
+        referenceTask("zone1_ref_018", "Remplir les mangeoires à oiseaux", "Salle à manger"),
+        referenceTask("zone1_ref_019", "Rempoter les plantes", "Salle à manger"),
+        referenceTask("zone1_ref_020", "Ranger le vaisselier ou nettoyer les verres", "Salle à manger"),
+        referenceTask("zone1_ref_021", "Épousseter le ventilateur de plafond", "Salle à manger")
+      ]
+    },
+    {
+      id: "kitchen",
+      number: 2,
+      name: "Cuisine",
+      short: "Z2",
+      description: "Une liste de référence pour entretenir la pièce la plus sollicitée.",
+      sections: ["Cuisine"],
+      tasks: [
+        referenceTask("zone2_ref_001", "Vider le réfrigérateur et le nettoyer à fond", "Cuisine"),
+        referenceTask("zone2_ref_002", "Nettoyer le micro-ondes à l'intérieur et à l'extérieur", "Cuisine"),
+        referenceTask("zone2_ref_003", "Nettoyer la cuisinière et le four", "Cuisine"),
+        referenceTask("zone2_ref_004", "Laver les contenants de farine et de sucre ainsi que les petits objets décoratifs", "Cuisine"),
+        referenceTask("zone2_ref_005", "Ranger les tiroirs et les armoires", "Cuisine"),
+        referenceTask("zone2_ref_006", "Effacer les marques de doigts sur les murs", "Cuisine"),
+        referenceTask("zone2_ref_007", "Laver l'intérieur des fenêtres", "Cuisine"),
+        referenceTask("zone2_ref_008", "Nettoyer le ventilateur", "Cuisine"),
+        referenceTask("zone2_ref_009", "Laver les portes d'armoires", "Cuisine"),
+        referenceTask("zone2_ref_010", "Laver les luminaires", "Cuisine"),
+        referenceTask("zone2_ref_011", "Nettoyer l'égouttoir sous le réfrigérateur", "Cuisine"),
+        referenceTask("zone2_ref_012", "Nettoyer sous l'évier et retirer les vieux chiffons", "Cuisine")
+      ]
+    },
+    {
+      id: "bathroom",
+      number: 3,
+      name: "Salle de bains et autre pièce",
+      short: "Z3",
+      description: "Des idées pour les espaces de soin et une pièce supplémentaire de la maison.",
+      sections: ["Salle de bains", "Autre pièce"],
+      tasks: [
+        referenceTask("zone3_ref_001", "Laver les tapis de bain", "Salle de bains"),
+        referenceTask("zone3_ref_002", "Récurer ou cirer le plancher", "Salle de bains"),
+        referenceTask("zone3_ref_003", "Ranger les tiroirs et les armoires", "Salle de bains"),
+        referenceTask("zone3_ref_004", "Nettoyer la douche et enlever les moisissures", "Salle de bains"),
+        referenceTask("zone3_ref_005", "Laver la porte de douche", "Salle de bains"),
+        referenceTask("zone3_ref_006", "Nettoyer la pharmacie et vérifier les médicaments", "Salle de bains"),
+        referenceTask("zone3_ref_007", "Nettoyer le pèse-personne", "Salle de bains"),
+        referenceTask("zone3_ref_008", "Jeter les bouteilles vides", "Salle de bains"),
+        referenceTask("zone3_ref_009", "Polir les meubles", "Autre pièce"),
+        referenceTask("zone3_ref_010", "Ranger les tiroirs et les garde-robes", "Autre pièce"),
+        referenceTask("zone3_ref_011", "Enlever les toiles d'araignée", "Autre pièce"),
+        referenceTask("zone3_ref_012", "Laver le couvre-matelas", "Autre pièce"),
+        referenceTask("zone3_ref_013", "Retourner le matelas", "Autre pièce"),
+        referenceTask("zone3_ref_014", "Laver les rideaux", "Autre pièce"),
+        referenceTask("zone3_ref_015", "Laver la fenêtre", "Autre pièce"),
+        referenceTask("zone3_ref_016", "Nettoyer la fenêtre en saillie", "Autre pièce"),
+        referenceTask("zone3_ref_017", "Laver le bain", "Autre pièce"),
+        referenceTask("zone3_ref_018", "Nettoyer le dessus de la machine à coudre", "Autre pièce"),
+        referenceTask("zone3_ref_019", "Ranger la bibliothèque", "Autre pièce"),
+        referenceTask("zone3_ref_020", "Ranger le meuble d'ordinateur", "Autre pièce"),
+        referenceTask("zone3_ref_021", "Ranger la garde-robe", "Autre pièce"),
+        referenceTask("zone3_ref_022", "Retirer les objets qui ne vont pas dans cette pièce", "Autre pièce"),
+        referenceTask("zone3_ref_023", "Fertiliser les plantes", "Autre pièce")
+      ]
+    },
+    {
+      id: "bedroom",
+      number: 4,
+      name: "Chambre parentale",
+      short: "Z4",
+      description: "Des repères pour protéger le repos et alléger l'espace personnel.",
+      sections: ["Chambre", "Armoire, penderie ou dressing"],
+      tasks: [
+        referenceTask("zone4_ref_001", "Laver les tapis", "Chambre"),
+        referenceTask("zone4_ref_002", "Polir les meubles", "Chambre"),
+        referenceTask("zone4_ref_003", "Nettoyer le bureau", "Chambre"),
+        referenceTask("zone4_ref_004", "Enlever les toiles d'araignée", "Chambre"),
+        referenceTask("zone4_ref_005", "Laver le couvre-matelas", "Chambre"),
+        referenceTask("zone4_ref_006", "Retourner le matelas", "Chambre"),
+        referenceTask("zone4_ref_007", "Vider les poubelles", "Chambre"),
+        referenceTask("zone4_ref_008", "Laver les fenêtres", "Chambre"),
+        referenceTask("zone4_ref_009", "Retirer quelques livres de la bibliothèque", "Chambre"),
+        referenceTask("zone4_ref_010", "Ranger les tiroirs", "Chambre"),
+        referenceTask("zone4_ref_011", "Nettoyer sous le lit", "Chambre"),
+        referenceTask("zone4_ref_012", "Ranger les étagères du haut", "Armoire, penderie ou dressing"),
+        referenceTask("zone4_ref_013", "Ranger les souliers", "Armoire, penderie ou dressing"),
+        referenceTask("zone4_ref_014", "Descendre les valises au sous-sol", "Armoire, penderie ou dressing"),
+        referenceTask("zone4_ref_015", "Épousseter les casiers à souliers", "Armoire, penderie ou dressing")
+      ]
+    },
+    {
+      id: "living",
+      number: 5,
+      name: "Salon",
+      short: "Z5",
+      description: "Des idées pour garder la pièce commune accueillante et respirable.",
+      sections: ["Salon"],
+      tasks: [
+        referenceTask("zone5_ref_001", "Nettoyer sous les coussins", "Salon"),
+        referenceTask("zone5_ref_002", "Polir les meubles", "Salon"),
+        referenceTask("zone5_ref_003", "Ranger les garde-robes et les tiroirs", "Salon"),
+        referenceTask("zone5_ref_004", "Nettoyer les objets décoratifs et les étagères", "Salon"),
+        referenceTask("zone5_ref_005", "Enlever les toiles d'araignée", "Salon"),
+        referenceTask("zone5_ref_006", "Effacer les marques de doigts sur les murs", "Salon"),
+        referenceTask("zone5_ref_007", "Déplacer les meubles et passer l'aspirateur", "Salon"),
+        referenceTask("zone5_ref_008", "Laver les fenêtres", "Salon"),
+        referenceTask("zone5_ref_009", "Nettoyer le téléphone", "Salon"),
+        referenceTask("zone5_ref_010", "Laver le tapis", "Salon"),
+        referenceTask("zone5_ref_011", "Nettoyer le foyer", "Salon"),
+        referenceTask("zone5_ref_012", "Ranger la bibliothèque", "Salon"),
+        referenceTask("zone5_ref_013", "Nettoyer les tables de bout", "Salon"),
+        referenceTask("zone5_ref_014", "Fertiliser les plantes", "Salon"),
+        referenceTask("zone5_ref_015", "Retoucher la peinture sur les portes françaises", "Salon")
+      ]
+    }
+  ];
+
+  const referenceWeeklyZones = [
+    { id: "entry", name: "Entrées et salle à manger", description: "On facilite les arrivées, les départs et les repas.", color: "#dce9df" },
+    { id: "kitchen", name: "Cuisine", description: "On redonne un peu d'air aux surfaces les plus utilisées.", color: "#f3e2cf" },
+    { id: "bathroom", name: "Salle de bains et autre pièce", description: "On crée de la fraîcheur dans les espaces de soin et la pièce supplémentaire.", color: "#dfe9ed" },
+    { id: "bedroom", name: "Chambre parentale", description: "On protège le repos avec quelques gestes simples.", color: "#e7e1ee" },
+    { id: "living", name: "Salon", description: "On apaise la pièce où la vie se rassemble.", color: "#eee4d4" }
+  ];
+
   const defaultRoutines = [
     { id: "default-morning-1", routine: "morning", title: "Boire un verre d'eau", duration: "1 min", order: 0 },
     { id: "default-morning-2", routine: "morning", title: "Faire le lit simplement", duration: "3 min", order: 1 },
     { id: "default-morning-3", routine: "morning", title: "Dégager l'évier", duration: "5 min", order: 2 },
-    { id: "default-afternoon-1", routine: "afternoon", title: "Faire un Room Rescue", duration: "5 min", order: 0 },
+    { id: "default-afternoon-1", routine: "afternoon", title: "Faire un sauvetage express d'une pièce", duration: "5 min", order: 0 },
     { id: "default-afternoon-2", routine: "afternoon", title: "Ranger cinq objets", duration: "3 min", order: 1 },
     { id: "default-afternoon-3", routine: "afternoon", title: "Vérifier le panier de linge", duration: "2 min", order: 2 },
     { id: "default-evening-1", routine: "evening", title: "Préparer les vêtements de demain", duration: "4 min", order: 0 },
@@ -558,9 +950,12 @@
   window.APP_DATA = {
     quotes: quotes,
     missions: missions,
-    tips: tips.slice(0, 365),
-    zones: zones,
-    weeklyZones: weeklyZones,
+    tips: tips,
+    leapDayTip: leapDayTip,
+    smallSteps: smallSteps,
+    principles: principles,
+    zones: referenceZones,
+    weeklyZones: referenceWeeklyZones,
     defaultRoutines: defaultRoutines
   };
 })();
