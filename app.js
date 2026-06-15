@@ -48,6 +48,12 @@
   };
   const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v2";
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+  const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "relax"]);
+  const FREE_REMINDER_TIMES = Object.freeze({
+    missionTime: "09:00",
+    tipTime: "12:30",
+    zoneTime: "18:00"
+  });
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -105,6 +111,11 @@
     ambianceAttemptToken: 0,
     ambiancePlaybackTimer: null,
     ambianceActiveService: null,
+    cloudSyncReady: false,
+    cloudSyncInProgress: false,
+    cloudSyncTimer: null,
+    cloudSyncUserId: null,
+    cloudSyncStatus: "local",
     account: {
       ready: false,
       cloudEnabled: false,
@@ -112,7 +123,7 @@
       subscription: null,
       isPro: false,
       pricing: { founderActive: true, founderRemaining: 100, founderLimit: 100 },
-      limits: { customRoutineTasks: 3, favorites: 3, historyDays: 7, zoneTasksPerSection: 6 }
+      limits: { customRoutineTasks: 3, favorites: 3, historyDays: 7, activeReminders: 1, freeRadioCategories: 2 }
     }
   };
 
@@ -132,10 +143,10 @@
       await restoreTimer();
       setupInstallPrompt();
       setupServiceWorker();
+      await initializeAccount();
       startNotificationWatcher();
       scheduleDailyRefresh();
       showApp();
-      initializeAccount();
       handlePaymentReturn();
     } catch (error) {
       console.error(error);
@@ -170,7 +181,7 @@
       "favoriteMissionButton", "favoritesList", "favoriteCount",
       "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
       "signOutButton", "accountPlanLabel", "accountSettingsStatus",
-      "accountSettingsEmail", "createAccountButton", "loginAccountButton",
+      "accountSettingsEmail", "cloudSyncStatus", "createAccountButton", "loginAccountButton",
       "upgradeMonthlyButton", "upgradeYearlyButton", "upgradePrimaryButton",
       "upgradeLifetimeButton", "founderOfferPanel", "founderCounter",
       "founderOfferBadge", "lifetimePricingCard", "lifetimeRegularPrice",
@@ -227,6 +238,9 @@
     elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
     elements.zonesList.addEventListener("click", handleZoneClick);
     elements.zonesList.addEventListener("change", handleZoneTaskChange);
+    [elements.missionReminder, elements.tipReminder, elements.zoneReminder].forEach(function (input) {
+      input.addEventListener("change", handleReminderToggle);
+    });
     elements.routineTaskList.addEventListener("click", handleRoutineListClick);
     elements.addRoutineTaskButton.addEventListener("click", function () { openRoutineDialog(); });
     elements.routineTaskForm.addEventListener("submit", saveRoutineTask);
@@ -261,6 +275,7 @@
     elements.accountResetPassword.addEventListener("click", resetAccountPassword);
     elements.closeAccountDialog.addEventListener("click", function () { elements.accountDialog.close(); });
     window.addEventListener("unpetitpas:account-change", handleAccountChange);
+    window.addEventListener("unpetitpas:local-data-change", scheduleCloudBackup);
     document.addEventListener("visibilitychange", handleAppResume);
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("hashchange", navigateFromHash);
@@ -359,6 +374,7 @@
     renderHistory();
     renderSettings();
     renderAccountUi();
+    renderAmbianceSelection();
     renderTimer();
     navigate(state.route, false);
   }
@@ -574,12 +590,9 @@
       return;
     }
 
-    const smallStepFavoriteCount = Array.from(state.favorites.values()).filter(function (favorite) {
-      return favorite.type === "small-step";
-    }).length;
-    if (!canUse("unlimitedFavorites") && smallStepFavoriteCount >= state.account.limits.favorites) {
+    if (!canUse("unlimitedFavorites") && state.favorites.size >= state.account.limits.favorites) {
       navigate("pro");
-      showToast("La version gratuite permet de garder trois Petits pas favoris.");
+      showToast("La version gratuite permet de garder trois favoris au total.");
       return;
     }
 
@@ -610,12 +623,9 @@
       return;
     }
 
-    const missionFavoriteCount = Array.from(state.favorites.values()).filter(function (favorite) {
-      return !favorite.type || favorite.type === "mission";
-    }).length;
-    if (!canUse("unlimitedFavorites") && missionFavoriteCount >= state.account.limits.favorites) {
+    if (!canUse("unlimitedFavorites") && state.favorites.size >= state.account.limits.favorites) {
       navigate("pro");
-      showToast("La version gratuite permet de garder trois missions favorites.");
+      showToast("La version gratuite permet de garder trois favoris au total.");
       return;
     }
 
@@ -638,6 +648,20 @@
     const currentWeeklyZone = getDailyContent().weeklyZone;
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
       const isCurrent = currentWeeklyZone.id === zone.id;
+      const isAvailable = isCurrent || canUse("allZones");
+      if (!isAvailable) {
+        return [
+          '<article class="card zone-card zone-overview zone-locked">',
+          '<button class="zone-overview-summary zone-locked-button" type="button" data-zone-locked="', zone.id, '">',
+          '<span class="zone-icon">', zone.short, "</span>",
+          "<div><h3>", escapeHtml(zone.name), "</h3>",
+          '<p class="zone-visit-label">Disponible avec PRO</p></div>',
+          '<span class="zone-pro-badge"><svg><use href="#icon-lock"></use></svg>PRO</span>',
+          '<svg class="zone-overview-chevron"><use href="#icon-chevron"></use></svg>',
+          "</button>",
+          "</article>"
+        ].join("");
+      }
       const sections = zone.sections.map(function (section) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
         const tasks = sectionTasks.map(function (task) {
@@ -726,6 +750,12 @@
   }
 
   async function handleZoneClick(event) {
+    const lockedZone = event.target.closest("[data-zone-locked]");
+    if (lockedZone) {
+      navigate("pro");
+      showToast("La version gratuite donne accès à la zone active de la semaine.");
+      return;
+    }
     const summary = event.target.closest("[data-zone-summary]");
     if (!summary) return;
     const zoneId = summary.dataset.zoneSummary;
@@ -1119,6 +1149,7 @@
   }
 
   function renderSettings() {
+    applyFreeReminderLimits(false);
     elements.missionReminder.checked = Boolean(state.settings.missionReminder);
     elements.missionTimeSetting.value = state.settings.missionTime;
     elements.tipReminder.checked = Boolean(state.settings.tipReminder);
@@ -1136,6 +1167,49 @@
       badge.hidden = customTimesEnabled;
     });
     renderNotificationStatus();
+  }
+
+  function handleReminderToggle(event) {
+    if (canUse("multipleReminders") || !event.target.checked) return;
+    [elements.missionReminder, elements.tipReminder, elements.zoneReminder].forEach(function (input) {
+      if (input !== event.target) input.checked = false;
+    });
+    showToast("La version gratuite permet un rappel actif à la fois.");
+  }
+
+  function applyFreeReminderLimits(persist) {
+    if (canUse("multipleReminders")) return false;
+    const enabledKeys = ["missionReminder", "tipReminder", "zoneReminder"];
+    const firstEnabled = enabledKeys.find(function (key) { return Boolean(state.settings[key]); });
+    let changed = false;
+
+    enabledKeys.forEach(function (key) {
+      const nextValue = key === firstEnabled;
+      if (state.settings[key] !== nextValue) {
+        state.settings[key] = nextValue;
+        changed = true;
+      }
+    });
+    Object.keys(FREE_REMINDER_TIMES).forEach(function (key) {
+      if (state.settings[key] !== FREE_REMINDER_TIMES[key]) {
+        state.settings[key] = FREE_REMINDER_TIMES[key];
+        changed = true;
+      }
+    });
+
+    if (changed && persist) {
+      DB.saveSettings({
+        missionReminder: state.settings.missionReminder,
+        missionTime: state.settings.missionTime,
+        tipReminder: state.settings.tipReminder,
+        tipTime: state.settings.tipTime,
+        zoneReminder: state.settings.zoneReminder,
+        zoneTime: state.settings.zoneTime
+      }).catch(function (error) {
+        console.warn("Limites de rappel impossibles à enregistrer :", error);
+      });
+    }
+    return changed;
   }
 
   async function initializeAccount() {
@@ -1162,11 +1236,17 @@
     state.account = Object.assign({}, state.account, snapshot, {
       limits: Object.assign({}, state.account.limits, snapshot.limits || {})
     });
+    if (state.ambianceCategory && !isRadioCategoryAvailable(state.ambianceCategory)) {
+      stopAmbiance();
+    }
+    applyFreeReminderLimits(true);
     renderAccountUi();
     renderZones();
     renderRoutines();
     renderHistory();
     renderSettings();
+    renderAmbianceSelection();
+    initializeCloudSync();
   }
 
   function renderAccountUi() {
@@ -1181,6 +1261,11 @@
     elements.accountSettingsEmail.textContent = user
       ? user.email
       : cloudEnabled ? "Crée un compte gratuitement pour préparer ton accès PRO." : "Tes données restent sur cet appareil.";
+    if (elements.cloudSyncStatus) {
+      elements.cloudSyncStatus.textContent = isPro
+        ? cloudSyncStatusText()
+        : "Sauvegarde locale uniquement. La synchronisation entre appareils est incluse avec PRO.";
+    }
     elements.accountSettingsButton.textContent = user ? (isPro ? "Voir les avantages PRO" : "Découvrir PRO") : "Créer un compte";
     elements.manageSubscriptionButton.hidden = !isPro || hasLifetimeAccess;
     elements.signOutButton.hidden = !user;
@@ -1197,6 +1282,130 @@
     renderFounderOffer();
 
     if (elements.accountDialog.open) renderAccountDialog();
+  }
+
+  function cloudSyncStatusText() {
+    if (state.cloudSyncStatus === "syncing") return "Synchronisation infonuagique en cours…";
+    if (state.cloudSyncStatus === "synced") return "Sauvegarde infonuagique active sur tes appareils.";
+    if (state.cloudSyncStatus === "error") return "Sauvegarde infonuagique à configurer dans Supabase.";
+    return "Préparation de la sauvegarde infonuagique…";
+  }
+
+  async function initializeCloudSync() {
+    const user = state.account.user;
+    if (!state.account.isPro || !user || !ACCOUNT || !ACCOUNT.loadCloudBackup) {
+      state.cloudSyncReady = false;
+      state.cloudSyncUserId = null;
+      state.cloudSyncStatus = "local";
+      if (state.cloudSyncTimer) window.clearTimeout(state.cloudSyncTimer);
+      return;
+    }
+    if (state.cloudSyncInProgress || state.cloudSyncUserId === user.id && state.cloudSyncReady) return;
+
+    state.cloudSyncInProgress = true;
+    state.cloudSyncReady = false;
+    state.cloudSyncUserId = user.id;
+    state.cloudSyncStatus = "syncing";
+    renderAccountUi();
+
+    try {
+      const [remoteBackup, localPayload] = await Promise.all([
+        ACCOUNT.loadCloudBackup(),
+        DB.exportData()
+      ]);
+      let payload = localPayload;
+
+      if (remoteBackup && remoteBackup.payload) {
+        const localHasUnsavedChanges = Boolean(localPayload.settings.cloudDirty);
+        const firstSyncWithLocalData = !localPayload.settings.cloudLastSyncedAt &&
+          hasMeaningfulLocalData(localPayload);
+        if (localHasUnsavedChanges) {
+          payload = localPayload;
+        } else {
+          payload = firstSyncWithLocalData
+            ? mergeBackupPayload(remoteBackup.payload, localPayload)
+            : remoteBackup.payload;
+          await DB.importData(payload);
+          await loadState();
+          renderAll();
+        }
+      }
+
+      const saved = await ACCOUNT.saveCloudBackup(payload);
+      state.settings.cloudLastSyncedAt = saved.updated_at;
+      state.settings.cloudDirty = false;
+      await DB.saveSettings({ cloudLastSyncedAt: saved.updated_at, cloudDirty: false });
+      state.cloudSyncReady = true;
+      state.cloudSyncStatus = "synced";
+    } catch (error) {
+      console.warn("Synchronisation infonuagique indisponible :", error);
+      state.cloudSyncReady = false;
+      state.cloudSyncStatus = "error";
+    } finally {
+      state.cloudSyncInProgress = false;
+      renderAccountUi();
+    }
+  }
+
+  function scheduleCloudBackup() {
+    if (state.cloudSyncInProgress || !state.account.isPro) return;
+    if (!state.settings.cloudDirty) {
+      state.settings.cloudDirty = true;
+      DB.saveSettings({ cloudDirty: true }).catch(function (error) {
+        console.warn("État de sauvegarde impossible à enregistrer :", error);
+      });
+    }
+    if (!state.cloudSyncReady) return;
+    state.cloudSyncStatus = "syncing";
+    renderAccountUi();
+    if (state.cloudSyncTimer) window.clearTimeout(state.cloudSyncTimer);
+    state.cloudSyncTimer = window.setTimeout(uploadCloudBackup, 1200);
+  }
+
+  async function uploadCloudBackup() {
+    if (!state.cloudSyncReady || state.cloudSyncInProgress || !state.account.isPro) return;
+    state.cloudSyncInProgress = true;
+    try {
+      const payload = await DB.exportData();
+      const saved = await ACCOUNT.saveCloudBackup(payload);
+      state.settings.cloudLastSyncedAt = saved.updated_at;
+      state.settings.cloudDirty = false;
+      await DB.saveSettings({ cloudLastSyncedAt: saved.updated_at, cloudDirty: false });
+      state.cloudSyncStatus = "synced";
+    } catch (error) {
+      console.warn("Sauvegarde infonuagique impossible :", error);
+      state.cloudSyncStatus = "error";
+    } finally {
+      state.cloudSyncInProgress = false;
+      renderAccountUi();
+    }
+  }
+
+  function hasMeaningfulLocalData(payload) {
+    const settings = payload.settings || {};
+    return Boolean(
+      (payload.activities || []).length ||
+      (payload.routineChecks || []).length ||
+      (payload.zoneTaskStates || []).length ||
+      (payload.favorites || []).length ||
+      (payload.routineTasks || []).some(function (task) { return !String(task.id).startsWith("default-"); }) ||
+      settings.firstName ||
+      settings.smallStepProgress && Number(settings.smallStepProgress.currentIndex) > 0
+    );
+  }
+
+  function mergeBackupPayload(remotePayload, localPayload) {
+    const merged = {
+      version: 1,
+      settings: Object.assign({}, remotePayload.settings || {}, localPayload.settings || {})
+    };
+    ["activities", "routineTasks", "zoneTaskStates", "routineChecks", "favorites"].forEach(function (name) {
+      const rows = new Map();
+      (remotePayload[name] || []).forEach(function (row) { rows.set(row.id, row); });
+      (localPayload[name] || []).forEach(function (row) { rows.set(row.id, row); });
+      merged[name] = Array.from(rows.values());
+    });
+    return merged;
   }
 
   function renderFounderOffer() {
@@ -1663,15 +1872,27 @@
   }
 
   async function saveSettings() {
+    const reminderInputs = [
+      { enabled: elements.missionReminder.checked, reminderKey: "missionReminder", timeKey: "missionTime", value: elements.missionTimeSetting.value },
+      { enabled: elements.tipReminder.checked, reminderKey: "tipReminder", timeKey: "tipTime", value: elements.tipTimeSetting.value },
+      { enabled: elements.zoneReminder.checked, reminderKey: "zoneReminder", timeKey: "zoneTime", value: elements.zoneTimeSetting.value }
+    ];
+    if (!canUse("multipleReminders")) {
+      const firstEnabledIndex = reminderInputs.findIndex(function (item) { return item.enabled; });
+      reminderInputs.forEach(function (item, index) {
+        item.enabled = index === firstEnabledIndex;
+        item.value = FREE_REMINDER_TIMES[item.timeKey];
+      });
+    }
     const nextSettings = {
       firstName: elements.firstNameSetting.value.trim(),
       reduceMotion: elements.reduceMotionSetting.checked,
-      missionReminder: elements.missionReminder.checked,
-      missionTime: elements.missionTimeSetting.value,
-      tipReminder: elements.tipReminder.checked,
-      tipTime: elements.tipTimeSetting.value,
-      zoneReminder: elements.zoneReminder.checked,
-      zoneTime: elements.zoneTimeSetting.value
+      missionReminder: reminderInputs[0].enabled,
+      missionTime: reminderInputs[0].value,
+      tipReminder: reminderInputs[1].enabled,
+      tipTime: reminderInputs[1].value,
+      zoneReminder: reminderInputs[2].enabled,
+      zoneTime: reminderInputs[2].value
     };
 
     Object.assign(state.settings, nextSettings);
@@ -2029,6 +2250,11 @@
   async function selectRadioCategory(categoryId, forceRefresh) {
     const category = RADIO_CATEGORIES[categoryId];
     if (!category) return;
+    if (!isRadioCategoryAvailable(categoryId)) {
+      navigate("pro");
+      showToast("Cette ambiance est incluse avec PRO.");
+      return;
+    }
 
     resetAmbiancePlayback();
     state.ambianceCategory = categoryId;
@@ -2262,13 +2488,24 @@
   function renderAmbianceSelection() {
     document.querySelectorAll("[data-radio-category]").forEach(function (button) {
       const active = button.dataset.radioCategory === state.ambianceCategory;
+      const available = isRadioCategoryAvailable(button.dataset.radioCategory);
       button.classList.toggle("active", active);
       button.classList.toggle("loading", active && state.ambianceLoading);
+      button.classList.toggle("pro-locked", !available);
       button.setAttribute("aria-pressed", String(active));
+      button.setAttribute(
+        "aria-label",
+        RADIO_CATEGORIES[button.dataset.radioCategory].name + (available ? "" : " — inclus avec PRO")
+      );
+      button.title = available ? "" : "Cette ambiance est incluse avec PRO.";
     });
     document.querySelectorAll("[data-music-service]").forEach(function (button) {
       button.classList.toggle("active", button.dataset.musicService === state.ambianceActiveService);
     });
+  }
+
+  function isRadioCategoryAvailable(categoryId) {
+    return FREE_RADIO_CATEGORIES.has(categoryId) || canUse("premiumAmbiance");
   }
 
   function updateMiniPlayer() {

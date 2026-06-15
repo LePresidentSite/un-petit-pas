@@ -6,12 +6,17 @@
     customRoutineTasks: 3,
     favorites: 3,
     historyDays: 7,
-    zoneTasksPerSection: 6
+    activeReminders: 1,
+    freeRadioCategories: 2
   });
   const PRO_FEATURES = new Set([
     "advancedStats",
+    "allZones",
+    "cloudBackup",
     "customReminderTimes",
     "fullHistory",
+    "multipleReminders",
+    "premiumAmbiance",
     "unlimitedFavorites",
     "unlimitedRoutines"
   ]);
@@ -201,6 +206,33 @@
     return state.pricing;
   }
 
+  async function loadCloudBackup() {
+    requireCloud();
+    requireUser();
+    const result = await client
+      .from("user_backups")
+      .select("payload,updated_at")
+      .eq("user_id", state.user.id)
+      .maybeSingle();
+    if (result.error) throw result.error;
+    return result.data || null;
+  }
+
+  async function saveCloudBackup(payload) {
+    requireCloud();
+    requireUser();
+    const result = await client
+      .from("user_backups")
+      .upsert({
+        user_id: state.user.id,
+        payload: payload
+      }, { onConflict: "user_id" })
+      .select("updated_at")
+      .single();
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
   async function callFunction(name, body) {
     const sessionResult = await client.auth.getSession();
     const session = sessionResult.data.session;
@@ -259,6 +291,8 @@
     startCheckout: startCheckout,
     openCustomerPortal: openCustomerPortal,
     loadPricingStatus: loadPricingStatus,
+    loadCloudBackup: loadCloudBackup,
+    saveCloudBackup: saveCloudBackup,
     limits: FREE_LIMITS
   };
 })();

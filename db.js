@@ -3,6 +3,13 @@
 
   const DATABASE_NAME = "un-petit-pas";
   const DATABASE_VERSION = 2;
+  const DATA_STORES = [
+    "activities",
+    "routineTasks",
+    "zoneTaskStates",
+    "routineChecks",
+    "favorites"
+  ];
   let databasePromise;
 
   function requestToPromise(request) {
@@ -77,15 +84,27 @@
   }
 
   async function put(name, value) {
-    return requestToPromise((await store(name, "readwrite")).put(value));
+    const result = await requestToPromise((await store(name, "readwrite")).put(value));
+    emitLocalChange(name);
+    return result;
   }
 
   async function remove(name, key) {
-    return requestToPromise((await store(name, "readwrite")).delete(key));
+    const result = await requestToPromise((await store(name, "readwrite")).delete(key));
+    emitLocalChange(name);
+    return result;
   }
 
   async function clear(name) {
-    return requestToPromise((await store(name, "readwrite")).clear());
+    const result = await requestToPromise((await store(name, "readwrite")).clear());
+    emitLocalChange(name);
+    return result;
+  }
+
+  function emitLocalChange(storeName) {
+    window.dispatchEvent(new CustomEvent("unpetitpas:local-data-change", {
+      detail: { store: storeName }
+    }));
   }
 
   async function seedRoutines(defaultTasks) {
@@ -106,6 +125,37 @@
     await Promise.all(Object.keys(values).map(function (key) {
       return put("settings", { key: key, value: values[key] });
     }));
+  }
+
+  async function exportData() {
+    const collections = await Promise.all(DATA_STORES.map(function (name) {
+      return getAll(name);
+    }));
+    const settings = await getSettings({});
+    const payload = {
+      version: 1,
+      settings: settings
+    };
+    DATA_STORES.forEach(function (name, index) {
+      payload[name] = collections[index];
+    });
+    return payload;
+  }
+
+  async function importData(payload) {
+    if (!payload || typeof payload !== "object") throw new Error("Sauvegarde infonuagique invalide.");
+    await Promise.all(DATA_STORES.map(function (name) { return clear(name); }));
+    await clear("settings");
+
+    const settings = payload.settings && typeof payload.settings === "object"
+      ? payload.settings
+      : {};
+    await saveSettings(settings);
+
+    for (const name of DATA_STORES) {
+      const rows = Array.isArray(payload[name]) ? payload[name] : [];
+      await Promise.all(rows.map(function (row) { return put(name, row); }));
+    }
   }
 
   async function clearUserData() {
@@ -129,6 +179,8 @@
     seedRoutines: seedRoutines,
     getSettings: getSettings,
     saveSettings: saveSettings,
+    exportData: exportData,
+    importData: importData,
     clearUserData: clearUserData
   };
 })();

@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260615-zones-checkboxes">
+  <link rel="stylesheet" href="./styles.css?v=20260615-pro-limits-v2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
-  <script src="./account.js" defer></script>
+  <script src="./account.js?v=20260615-pro-limits-v2" defer></script>
   <script src="./data.js?v=20260615-petits-pas-v2" defer></script>
-  <script src="./db.js" defer></script>
-  <script src="./app.js?v=20260615-zones-checkboxes" defer></script>
+  <script src="./db.js?v=20260615-cloud-sync-v2" defer></script>
+  <script src="./app.js?v=20260615-pro-limits-v2" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -402,6 +402,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <p class="account-plan-label" id="accountPlanLabel">Mode local gratuit</p>
               <h3 id="accountSettingsStatus">Mon compte</h3>
               <p id="accountSettingsEmail">Tes données restent sur cet appareil.</p>
+              <p id="cloudSyncStatus" class="cloud-sync-status">Sauvegarde locale uniquement. La synchronisation entre appareils est incluse avec PRO.</p>
             </div>
           </div>
           <div class="account-settings-actions">
@@ -433,6 +434,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <label for="zoneReminder">Zone de la semaine</label>
             <div class="setting-control"><span class="pro-control"><input id="zoneTimeSetting" type="time" value="18:00"><span class="pro-mini">PRO</span></span><label class="switch"><input id="zoneReminder" type="checkbox"><span></span></label></div>
           </div>
+          <p class="setting-note">Gratuit : un rappel actif à une heure fixe. PRO : plusieurs rappels et heures personnalisées.</p>
           <button id="enableNotificationsButton" class="secondary-button full-width"><svg><use href="#icon-bell"></use></svg>Autoriser les notifications</button>
           <p id="notificationStatus" class="setting-note"></p>
         </article>
@@ -514,13 +516,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div><p class="eyebrow">Ce que PRO ajoute</p><h2>Des outils qui s'adaptent à toi</h2></div>
           </div>
           <div class="benefit-grid">
-            <div><span><svg><use href="#icon-routines"></use></svg></span><strong>Routines illimitées</strong><p>Crée autant de tâches personnalisées que nécessaire.</p></div>
-            <div><span><svg><use href="#icon-bell"></use></svg></span><strong>Rappels personnalisés</strong><p>Choisis les heures qui respectent réellement ton quotidien.</p></div>
+            <div><span><svg><use href="#icon-routines"></use></svg></span><strong>Tâches personnalisées illimitées</strong><p>Enrichis librement tes routines du matin, de l'après-midi et du soir.</p></div>
+            <div><span><svg><use href="#icon-bell"></use></svg></span><strong>Plusieurs rappels personnalisés</strong><p>Active plusieurs rappels et choisis les heures qui respectent ton quotidien.</p></div>
+            <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Toutes les zones</strong><p>Consulte les cinq zones en tout temps, sans attendre leur semaine active.</p></div>
             <div><span><svg><use href="#icon-history"></use></svg></span><strong>Historique complet</strong><p>Retrouve tous tes petits pas, sans limite de temps.</p></div>
-            <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde toutes les missions que tu souhaites refaire.</p></div>
-            <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Parcours sans limite</strong><p>Conserve autant de Petits pas favoris que tu le souhaites.</p></div>
+            <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde toutes les missions et tous les Petits pas que tu souhaites retrouver.</p></div>
+            <div><span><svg><use href="#icon-music"></use></svg></span><strong>Toutes les ambiances</strong><p>Déverrouille Hits du moment, Années 80, Instrumentale et les futurs favoris musicaux.</p></div>
+            <div><span><svg><use href="#icon-download"></use></svg></span><strong>Sauvegarde infonuagique</strong><p>Synchronise et restaure tes données sur tes appareils connectés.</p></div>
             <div><span><svg><use href="#icon-spark"></use></svg></span><strong>Statistiques avancées</strong><p>Observe tes journées actives, séries et minutes consacrées.</p></div>
-            <div><span><svg><use href="#icon-crown"></use></svg></span><strong>Nouveautés prioritaires</strong><p>Profite en premier des prochains outils de l'application.</p></div>
           </div>
         </article>
 
@@ -531,11 +534,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="comparison-table" role="table" aria-label="Comparaison Gratuit et PRO">
             <div class="comparison-row comparison-head" role="row"><span role="columnheader">Fonction</span><strong role="columnheader">Gratuit</strong><strong role="columnheader">PRO</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Minuterie et missions quotidiennes</span><strong role="cell">Inclus</strong><strong role="cell">Inclus</strong></div>
-            <div class="comparison-row" role="row"><span role="cell">Zones de la maison</span><strong role="cell">Essentiel</strong><strong role="cell">Complet</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Zones de la maison</span><strong role="cell">Zone active</strong><strong role="cell">5 zones</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Tâches de routine personnalisées</span><strong role="cell">3</strong><strong role="cell">Illimitées</strong></div>
-            <div class="comparison-row" role="row"><span role="cell">Heures de rappel</span><strong role="cell">Fixes</strong><strong role="cell">Personnalisées</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Rappels</span><strong role="cell">1 à heure fixe</strong><strong role="cell">Multiples et personnalisés</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Historique détaillé</span><strong role="cell">7 jours</strong><strong role="cell">Complet</strong></div>
-            <div class="comparison-row" role="row"><span role="cell">Missions favorites</span><strong role="cell">3</strong><strong role="cell">Illimitées</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Favoris</span><strong role="cell">3 au total</strong><strong role="cell">Illimités</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Ambiances intégrées</span><strong role="cell">2 catégories</strong><strong role="cell">Toutes</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Sauvegarde des données</span><strong role="cell">Locale</strong><strong role="cell">Infonuagique et multiappareil</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Statistiques avancées</span><strong role="cell">—</strong><strong role="cell">Incluses</strong></div>
           </div>
           <button id="upgradePrimaryButton" class="primary-button pro-main-cta" type="button">Essayer l'annuel 45 jours</button>
@@ -584,7 +589,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <summary><span class="about-footer-icon"><svg><use href="#icon-shield"></use></svg></span><span>Politique de confidentialité</span><svg class="about-chevron"><use href="#icon-chevron"></use></svg></summary>
             <div class="about-disclosure-content">
               <p><strong>Un Petit Pas respecte votre vie privée.</strong> Les routines, progressions, réglages et historiques sont enregistrés localement sur votre appareil avec IndexedDB.</p>
-              <p>Le compte est facultatif. Si vous choisissez de vous connecter, Supabase gère l'identité et le statut d'abonnement; Stripe traite les paiements PRO. Les clés de paiement ne sont jamais enregistrées dans l'application.</p>
+              <p>Le compte est facultatif. Si vous choisissez de vous connecter, Supabase gère l'identité et le statut d'abonnement; Stripe traite les paiements PRO. Pour les membres PRO, Supabase conserve aussi une sauvegarde chiffrée des données de l'application afin de permettre la synchronisation et la restauration entre appareils. Les clés de paiement ne sont jamais enregistrées dans l'application.</p>
             </div>
           </details>
 
