@@ -11610,10 +11610,6 @@ body {
 }
 
 .zone-reference-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 0.7rem;
   padding: 0.75rem 0.25rem;
   color: #415d78;
   line-height: 1.45;
@@ -11624,12 +11620,66 @@ body {
   border-bottom: 0;
 }
 
-.zone-reference-item > span:first-child {
-  width: 8px;
-  height: 8px;
-  margin-top: 0.4rem;
-  border-radius: 50%;
-  background: var(--growth);
+.zone-reference-check {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.zone-reference-check input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zone-reference-checkmark {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  margin-top: 0.05rem;
+  border: 1.5px solid rgba(95, 122, 91, 0.5);
+  border-radius: 8px;
+  color: transparent;
+  background: rgba(255, 255, 255, 0.85);
+  place-items: center;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.zone-reference-checkmark svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.zone-reference-check:hover .zone-reference-checkmark {
+  border-color: var(--growth-dark);
+  transform: translateY(-1px);
+}
+
+.zone-reference-check input:focus-visible + .zone-reference-checkmark {
+  outline: 3px solid rgba(207, 227, 238, 0.9);
+  outline-offset: 3px;
+}
+
+.zone-reference-item.done .zone-reference-checkmark {
+  border-color: var(--growth-dark);
+  color: #fff;
+  background: var(--growth-dark);
+}
+
+.zone-reference-item.done .zone-reference-task-title {
+  color: #66766d;
+  text-decoration: line-through;
+  text-decoration-color: rgba(95, 122, 91, 0.45);
+}
+
+.zone-reference-check input:disabled + .zone-reference-checkmark {
+  opacity: 0.65;
 }
 
 .timer-fixed-duration {

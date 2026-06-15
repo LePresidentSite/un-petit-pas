@@ -226,6 +226,7 @@
     elements.favoriteSmallStepButton.addEventListener("click", toggleCurrentSmallStepFavorite);
     elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
     elements.zonesList.addEventListener("click", handleZoneClick);
+    elements.zonesList.addEventListener("change", handleZoneTaskChange);
     elements.routineTaskList.addEventListener("click", handleRoutineListClick);
     elements.addRoutineTaskButton.addEventListener("click", function () { openRoutineDialog(); });
     elements.routineTaskForm.addEventListener("submit", saveRoutineTask);
@@ -640,10 +641,15 @@
       const sections = zone.sections.map(function (section) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
         const tasks = sectionTasks.map(function (task) {
+          const done = isZoneTaskDone(task.id);
           return [
-            '<li class="zone-reference-item">',
-            '<span aria-hidden="true"></span>',
-            '<span>', escapeHtml(task.titre), "</span>",
+            '<li class="zone-reference-item', done ? " done" : "", '">',
+            '<label class="zone-reference-check">',
+            '<input type="checkbox" data-zone-task-id="', task.id, '"', done ? " checked" : "",
+            ' aria-label="', done ? "Décocher " : "Cocher ", escapeHtml(task.titre), '">',
+            '<span class="zone-reference-checkmark" aria-hidden="true"><svg><use href="#icon-check"></use></svg></span>',
+            '<span class="zone-reference-task-title">', escapeHtml(task.titre), "</span>",
+            "</label>",
             "</li>"
           ].join("");
         }).join("");
@@ -672,6 +678,51 @@
         "</details>"
       ].join("");
     }).join("");
+  }
+
+  function isZoneTaskDone(taskId) {
+    const row = state.zoneStates.get(taskId);
+    return Boolean(row && row.completed);
+  }
+
+  async function handleZoneTaskChange(event) {
+    const checkbox = event.target.closest("[data-zone-task-id]");
+    if (!checkbox) return;
+
+    const taskId = checkbox.dataset.zoneTaskId;
+    const task = DATA.zones
+      .flatMap(function (zone) { return zone.tasks; })
+      .find(function (item) { return item.id === taskId; });
+    if (!task) return;
+
+    const completed = checkbox.checked;
+    const item = checkbox.closest(".zone-reference-item");
+    checkbox.disabled = true;
+
+    try {
+      if (completed) {
+        const row = {
+          id: taskId,
+          completed: true,
+          updatedAt: new Date().toISOString()
+        };
+        await DB.put("zoneTaskStates", row);
+        state.zoneStates.set(taskId, row);
+      } else {
+        await DB.remove("zoneTaskStates", taskId);
+        state.zoneStates.delete(taskId);
+      }
+
+      item.classList.toggle("done", completed);
+      checkbox.setAttribute("aria-label", (completed ? "Décocher " : "Cocher ") + task.titre);
+    } catch (error) {
+      checkbox.checked = !completed;
+      item.classList.toggle("done", !completed);
+      console.error("Impossible d'enregistrer la case de zone :", error);
+      showToast("La case n'a pas pu être enregistrée.");
+    } finally {
+      checkbox.disabled = false;
+    }
   }
 
   async function handleZoneClick(event) {
