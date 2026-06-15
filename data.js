@@ -935,6 +935,101 @@
     { id: "living", name: "Salon", description: "On apaise la pièce où la vie se rassemble.", color: "#eee4d4" }
   ];
 
+  const weeklyPrograms = [
+    {
+      id: "blessing",
+      title: "Bénédiction hebdomadaire",
+      shortTitle: "Bénédiction",
+      description: "Un rafraîchissement rapide de la maison, sans chercher le grand ménage.",
+      duration: "Environ 1 h",
+      tasks: [
+        { id: "blessing-01", title: "Trier et jeter les vieux magazines et catalogues" },
+        { id: "blessing-02", title: "Changer les draps" },
+        { id: "blessing-03", title: "Vider toutes les poubelles de la maison" },
+        { id: "blessing-04", title: "Passer l'aspirateur dans les chambres et les pièces de vie" },
+        { id: "blessing-05", title: "Passer la serpillière dans la cuisine et la salle de bain" },
+        { id: "blessing-06", title: "Nettoyer les miroirs" },
+        { id: "blessing-07", title: "Nettoyer les portes" }
+      ]
+    },
+    {
+      id: "personal",
+      title: "Journée personnelle",
+      shortTitle: "Personnelle",
+      description: "Une journée pour les besoins personnels et ce qui te fait du bien.",
+      duration: "À ton rythme",
+      tasks: [
+        { id: "personal-01", title: "Faire les courses" },
+        { id: "personal-02", title: "Arroser les plantes" },
+        { id: "personal-03", title: "Prendre du temps pour soi" },
+        { id: "personal-04", title: "Effectuer des rendez-vous personnels" }
+      ]
+    },
+    {
+      id: "zone",
+      title: "Journée zone et organisation",
+      shortTitle: "Zone et organisation",
+      description: "Un moment pour la zone active et les repères qui allègent la maison.",
+      duration: "À ton rythme",
+      tasks: [
+        { id: "zone-day-01", title: "Travailler dans la zone active" },
+        { id: "zone-day-02", title: "Trier et classer les papiers" },
+        { id: "zone-day-03", title: "Mettre à jour le journal de bord" },
+        { id: "zone-day-04", title: "Organiser les documents importants" }
+      ]
+    },
+    {
+      id: "daily-management",
+      title: "Journée gestion du quotidien",
+      shortTitle: "Gestion du quotidien",
+      description: "Quelques tâches pratiques pour soutenir le reste de la semaine.",
+      duration: "À ton rythme",
+      tasks: [
+        { id: "daily-management-01", title: "Faire les courses" },
+        { id: "daily-management-02", title: "Faire le repassage" },
+        { id: "daily-management-03", title: "S'occuper de la gestion de la maison" },
+        { id: "daily-management-04", title: "Faire de petites tâches administratives" }
+      ]
+    },
+    {
+      id: "administrative",
+      title: "Journée administrative",
+      shortTitle: "Administrative",
+      description: "Rassembler les décisions et les papiers pour libérer l'esprit.",
+      duration: "À ton rythme",
+      tasks: [
+        { id: "administrative-01", title: "Traiter le courrier" },
+        { id: "administrative-02", title: "Vérifier le budget" },
+        { id: "administrative-03", title: "Classer les documents" },
+        { id: "administrative-04", title: "Faire la gestion administrative" },
+        { id: "administrative-05", title: "Nettoyer et vider le réfrigérateur" }
+      ]
+    },
+    {
+      id: "family",
+      title: "Journée famille et plaisir",
+      shortTitle: "Famille et plaisir",
+      description: "Une journée pour les liens, le repos et les moments agréables.",
+      duration: "À ton rythme",
+      tasks: [
+        { id: "family-01", title: "Prévoir une activité familiale" },
+        { id: "family-02", title: "Profiter d'un loisir" },
+        { id: "family-03", title: "Faire une sortie" },
+        { id: "family-04", title: "Prendre du repos" },
+        { id: "family-05", title: "Créer un moment agréable" }
+      ]
+    }
+  ];
+
+  const defaultWeeklyProgramSchedule = {
+    blessing: 1,
+    personal: 2,
+    zone: 3,
+    "daily-management": 4,
+    administrative: 5,
+    family: 6
+  };
+
   const defaultRoutines = [
     { id: "default-v2-morning-1", routine: "morning", title: "S'habiller et se chausser", duration: "5 min", order: 0 },
     { id: "default-v2-morning-2", routine: "morning", title: "Faire le lit", duration: "3 min", order: 1 },
@@ -953,6 +1048,8 @@
     principles: principles,
     zones: referenceZones,
     weeklyZones: referenceWeeklyZones,
+    weeklyPrograms: weeklyPrograms,
+    defaultWeeklyProgramSchedule: defaultWeeklyProgramSchedule,
     defaultRoutines: defaultRoutines
   };
 })();

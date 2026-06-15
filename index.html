@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260615-routines-v3">
+  <link rel="stylesheet" href="./styles.css?v=20260615-weekly-program-v1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js?v=20260615-pro-limits-v2" defer></script>
-  <script src="./data.js?v=20260615-routines-v3" defer></script>
+  <script src="./data.js?v=20260615-weekly-program-v1" defer></script>
   <script src="./db.js?v=20260615-routines-v3" defer></script>
-  <script src="./app.js?v=20260615-pro-limits-v2" defer></script>
+  <script src="./app.js?v=20260615-weekly-program-v1" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -136,22 +136,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <article class="card mission-card">
             <div class="card-heading">
               <div>
-                <p class="card-kicker">Mission du jour</p>
+                <p class="card-kicker">Programme du jour</p>
                 <h2 id="missionTitle"></h2>
               </div>
               <span class="time-pill"><svg><use href="#icon-clock"></use></svg><span id="missionTime"></span></span>
             </div>
             <p id="missionDescription" class="mission-description"></p>
-            <div class="mission-actions">
-              <button id="completeMissionButton" class="primary-button">
-                <svg><use href="#icon-check"></use></svg>
-                <span>J'ai terminé</span>
-              </button>
-              <button id="favoriteMissionButton" class="secondary-button favorite-button">
-                <svg><use href="#icon-heart"></use></svg>
-                <span>Ajouter aux favoris</span>
-              </button>
-            </div>
+            <div id="weeklyProgramTaskList" class="weekly-program-task-list"></div>
+            <form id="weeklyTaskForm" class="weekly-task-form">
+              <label class="sr-only" for="weeklyTaskInput">Ajouter une tâche pour aujourd'hui</label>
+              <input id="weeklyTaskInput" class="text-input" type="text" maxlength="90" placeholder="Ajouter une tâche pour aujourd'hui">
+              <button class="secondary-button" type="submit"><svg><use href="#icon-plus"></use></svg>Ajouter</button>
+            </form>
           </article>
 
           <article class="card tip-card small-step-card">
@@ -359,7 +355,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="stats-grid">
           <article class="stat-card"><strong id="totalSteps">0</strong><span>petits pas</span></article>
-          <article class="stat-card"><strong id="missionCount">0</strong><span>missions</span></article>
+          <article class="stat-card"><strong id="missionCount">0</strong><span>journées complétées</span></article>
           <article class="stat-card"><strong id="smallStepCount">0</strong><span>Petits pas du parcours</span></article>
         </div>
         <article class="card calendar-card">
@@ -425,13 +421,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <span class="pro-price-mini">4,99 $<small>/mois</small></span>
           <svg><use href="#icon-chevron"></use></svg>
         </button>
+        <article class="card settings-card weekly-schedule-card">
+          <div class="settings-title">
+            <span class="settings-icon sage"><svg><use href="#icon-history"></use></svg></span>
+            <div><h3>Mon programme hebdomadaire</h3><p>Choisis le jour qui convient à chaque catégorie.</p></div>
+          </div>
+          <div id="weeklyScheduleList" class="weekly-schedule-list"></div>
+          <p id="weeklyFreeDayNote" class="setting-note"></p>
+          <button id="resetWeeklyScheduleButton" class="secondary-button full-width" type="button"><svg><use href="#icon-reset"></use></svg>Revenir à la configuration par défaut</button>
+        </article>
         <article class="card settings-card">
           <div class="settings-title">
             <span class="settings-icon"><svg><use href="#icon-bell"></use></svg></span>
             <div><h3>Rappels doux</h3><p>Choisis seulement ce qui t'aide.</p></div>
           </div>
           <div class="setting-row">
-            <label for="missionReminder">Mission du jour</label>
+            <label for="missionReminder">Programme du jour</label>
             <div class="setting-control"><span class="pro-control"><input id="missionTimeSetting" type="time" value="09:00"><span class="pro-mini">PRO</span></span><label class="switch"><input id="missionReminder" type="checkbox"><span></span></label></div>
           </div>
           <div class="setting-row">
@@ -528,7 +533,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div><span><svg><use href="#icon-bell"></use></svg></span><strong>Plusieurs rappels personnalisés</strong><p>Active plusieurs rappels et choisis les heures qui respectent ton quotidien.</p></div>
             <div><span><svg><use href="#icon-zones"></use></svg></span><strong>Toutes les zones</strong><p>Consulte les cinq zones en tout temps, sans attendre leur semaine active.</p></div>
             <div><span><svg><use href="#icon-history"></use></svg></span><strong>Historique complet</strong><p>Retrouve tous tes petits pas, sans limite de temps.</p></div>
-            <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde toutes les missions et tous les Petits pas que tu souhaites retrouver.</p></div>
+            <div><span><svg><use href="#icon-heart"></use></svg></span><strong>Favoris illimités</strong><p>Garde tous les Petits pas que tu souhaites retrouver.</p></div>
             <div><span><svg><use href="#icon-music"></use></svg></span><strong>Toutes les ambiances</strong><p>Déverrouille Hits du moment, Années 80, Instrumentale et les futurs favoris musicaux.</p></div>
             <div><span><svg><use href="#icon-download"></use></svg></span><strong>Sauvegarde infonuagique</strong><p>Synchronise et restaure tes données sur tes appareils connectés.</p></div>
             <div><span><svg><use href="#icon-spark"></use></svg></span><strong>Statistiques avancées</strong><p>Observe tes journées actives, séries et minutes consacrées.</p></div>
@@ -541,7 +546,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="comparison-table" role="table" aria-label="Comparaison Gratuit et PRO">
             <div class="comparison-row comparison-head" role="row"><span role="columnheader">Fonction</span><strong role="columnheader">Gratuit</strong><strong role="columnheader">PRO</strong></div>
-            <div class="comparison-row" role="row"><span role="cell">Minuterie et missions quotidiennes</span><strong role="cell">Inclus</strong><strong role="cell">Inclus</strong></div>
+            <div class="comparison-row" role="row"><span role="cell">Minuterie et programme hebdomadaire</span><strong role="cell">Inclus</strong><strong role="cell">Inclus</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Zones de la maison</span><strong role="cell">Zone active</strong><strong role="cell">5 zones</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Tâches de routine personnalisées</span><strong role="cell">3</strong><strong role="cell">Illimitées</strong></div>
             <div class="comparison-row" role="row"><span role="cell">Rappels</span><strong role="cell">1 à heure fixe</strong><strong role="cell">Multiples et personnalisés</strong></div>

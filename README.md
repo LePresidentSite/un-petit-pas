@@ -52,7 +52,7 @@ Pour publier le projet sans exposer de secrets, consulter [docs/GITHUB.md](docs/
 
 Pour configurer Supabase, Stripe et Vercel pas à pas, consulter [docs/GUIDE_CONFIGURATION_PRODUCTION.md](docs/GUIDE_CONFIGURATION_PRODUCTION.md).
 
-Le plan gratuit comprend notamment la minuterie, les missions, le parcours des Petits pas, la zone active de la semaine, trois tâches de routine personnalisées, trois favoris au total, un rappel fixe, deux catégories Ambiance et sept jours d'historique détaillé. PRO déverrouille les cinq zones, les tâches et favoris illimités, plusieurs rappels personnalisés, toutes les ambiances, l'historique complet, les statistiques avancées et la sauvegarde infonuagique multiappareil.
+Le plan gratuit comprend notamment la minuterie, le programme hebdomadaire personnalisable, le parcours des Petits pas, la zone active de la semaine, trois tâches de routine personnalisées, trois favoris au total, un rappel fixe, deux catégories Ambiance et sept jours d'historique détaillé. PRO déverrouille les cinq zones, les tâches et favoris illimités, plusieurs rappels personnalisés, toutes les ambiances, l'historique complet, les statistiques avancées et la sauvegarde infonuagique multiappareil.
 
 La synchronisation PRO utilise la table `public.user_backups` définie dans `supabase/schema.sql`. Les données restent toujours disponibles localement dans IndexedDB; Supabase conserve un instantané de restauration uniquement pour les comptes dont le statut est `active` ou `trialing`.
 

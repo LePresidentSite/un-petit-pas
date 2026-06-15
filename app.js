@@ -54,6 +54,15 @@
     tipTime: "12:30",
     zoneTime: "18:00"
   });
+  const WEEKDAY_NAMES = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const FREE_DAY_PROGRAM = Object.freeze({
+    id: "free-day",
+    title: "Journée libre",
+    shortTitle: "Journée libre",
+    description: "Aucune catégorie n'est prévue aujourd'hui. Tu peux te reposer ou ajouter une tâche qui t'aiderait.",
+    duration: "Sans obligation",
+    tasks: []
+  });
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -79,6 +88,9 @@
     lastZoneNotification: "",
     smallStepProgress: { currentIndex: 0, cycle: 1, finished: false },
     zoneVisits: {},
+    weeklyProgramSchedule: Object.assign({}, DATA.defaultWeeklyProgramSchedule),
+    weeklyProgramOverrides: {},
+    weeklyProgramChecks: {},
     timerState: Object.assign({}, DEFAULT_TIMER_STATE)
   };
 
@@ -158,7 +170,9 @@
     [
       "app", "splash", "todayLabel", "pageTitle", "dailyQuote", "dailyProgressRing",
       "dailyProgressValue", "progressTitle", "progressCaption", "missionTitle",
-      "missionTime", "missionDescription", "completeMissionButton", "smallStepNumber",
+      "missionTime", "missionDescription", "weeklyProgramTaskList", "weeklyTaskForm",
+      "weeklyTaskInput", "weeklyScheduleList", "weeklyFreeDayNote",
+      "resetWeeklyScheduleButton", "smallStepNumber",
       "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
       "completeSmallStepButton", "favoriteSmallStepButton",
       "smallStepRestartButton", "weeklyZoneVisual", "weeklyZoneTitle",
@@ -177,8 +191,7 @@
       "timerProgressCircle", "timerTimeRemaining", "timerStatusText",
       "timerResetButton", "timerPrimaryButton", "timerPrimaryIcon",
       "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
-      "accountButton",
-      "favoriteMissionButton", "favoritesList", "favoriteCount",
+      "accountButton", "favoritesList", "favoriteCount",
       "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
       "signOutButton", "accountPlanLabel", "accountSettingsStatus",
       "accountSettingsEmail", "cloudSyncStatus", "createAccountButton", "loginAccountButton",
@@ -208,6 +221,9 @@
     state.settings = await DB.getSettings(DEFAULT_SETTINGS);
     state.settings.smallStepProgress = normalizeSmallStepProgress(state.settings.smallStepProgress);
     state.settings.zoneVisits = normalizeZoneVisits(state.settings.zoneVisits);
+    state.settings.weeklyProgramSchedule = normalizeWeeklyProgramSchedule(state.settings.weeklyProgramSchedule);
+    state.settings.weeklyProgramOverrides = normalizeWeeklyProgramOverrides(state.settings.weeklyProgramOverrides);
+    state.settings.weeklyProgramChecks = normalizeWeeklyProgramChecks(state.settings.weeklyProgramChecks);
     state.timer = normalizeTimerState(state.settings.timerState);
     state.settings.timerState = Object.assign({}, state.timer);
     state.routineTasks = await DB.seedRoutines(DATA.defaultRoutines);
@@ -232,7 +248,11 @@
 
   function bindEvents() {
     document.addEventListener("click", handleDocumentClick);
-    elements.completeMissionButton.addEventListener("click", completeMission);
+    elements.weeklyProgramTaskList.addEventListener("change", handleWeeklyProgramTaskToggle);
+    elements.weeklyProgramTaskList.addEventListener("click", handleWeeklyProgramTaskClick);
+    elements.weeklyTaskForm.addEventListener("submit", addWeeklyProgramTask);
+    elements.weeklyScheduleList.addEventListener("change", changeWeeklyProgramDay);
+    elements.resetWeeklyScheduleButton.addEventListener("click", resetWeeklyProgramSchedule);
     elements.completeSmallStepButton.addEventListener("click", completeCurrentSmallStep);
     elements.favoriteSmallStepButton.addEventListener("click", toggleCurrentSmallStepFavorite);
     elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
@@ -258,7 +278,6 @@
     elements.timerPrimaryButton.addEventListener("click", handleTimerPrimaryAction);
     elements.timerResetButton.addEventListener("click", resetTimer);
     elements.timerDoneButton.addEventListener("click", acknowledgeTimerCompletion);
-    elements.favoriteMissionButton.addEventListener("click", toggleDailyMissionFavorite);
     elements.favoritesList.addEventListener("click", handleFavoriteClick);
     elements.accountButton.addEventListener("click", handleAccountButton);
     elements.accountSettingsButton.addEventListener("click", handleAccountSettingsButton);
@@ -412,6 +431,90 @@
     }, {});
   }
 
+  function normalizeWeeklyProgramSchedule(savedSchedule) {
+    const defaults = Object.assign({}, DATA.defaultWeeklyProgramSchedule);
+    if (!savedSchedule || typeof savedSchedule !== "object" || Array.isArray(savedSchedule)) return defaults;
+
+    const normalized = {};
+    const usedDays = new Set();
+    DATA.weeklyPrograms.forEach(function (program) {
+      const day = Number(savedSchedule[program.id]);
+      if (Number.isInteger(day) && day >= 0 && day <= 6 && !usedDays.has(day)) {
+        normalized[program.id] = day;
+        usedDays.add(day);
+      }
+    });
+
+    DATA.weeklyPrograms.forEach(function (program) {
+      if (Object.prototype.hasOwnProperty.call(normalized, program.id)) return;
+      const preferredDay = defaults[program.id];
+      if (!usedDays.has(preferredDay)) {
+        normalized[program.id] = preferredDay;
+        usedDays.add(preferredDay);
+        return;
+      }
+      const availableDay = WEEKDAY_NAMES.findIndex(function (_name, day) { return !usedDays.has(day); });
+      normalized[program.id] = availableDay;
+      usedDays.add(availableDay);
+    });
+    return normalized;
+  }
+
+  function normalizeWeeklyProgramOverrides(savedOverrides) {
+    if (!savedOverrides || typeof savedOverrides !== "object" || Array.isArray(savedOverrides)) return {};
+    return Object.keys(savedOverrides).reduce(function (result, dateKey) {
+      const value = savedOverrides[dateKey];
+      if (!value || typeof value !== "object") return result;
+      result[dateKey] = {
+        removed: Array.isArray(value.removed) ? value.removed.filter(Boolean) : [],
+        custom: Array.isArray(value.custom)
+          ? value.custom.filter(function (task) { return task && task.id && task.title; })
+          : []
+      };
+      return result;
+    }, {});
+  }
+
+  function normalizeWeeklyProgramChecks(savedChecks) {
+    if (!savedChecks || typeof savedChecks !== "object" || Array.isArray(savedChecks)) return {};
+    return Object.keys(savedChecks).reduce(function (result, dateKey) {
+      const value = savedChecks[dateKey];
+      if (!value || typeof value !== "object") return result;
+      result[dateKey] = Object.keys(value).reduce(function (checks, taskId) {
+        if (value[taskId]) checks[taskId] = true;
+        return checks;
+      }, {});
+      return result;
+    }, {});
+  }
+
+  function getWeeklyProgramForDate(date) {
+    const day = date.getDay();
+    return DATA.weeklyPrograms.find(function (program) {
+      return state.settings.weeklyProgramSchedule[program.id] === day;
+    }) || FREE_DAY_PROGRAM;
+  }
+
+  function getWeeklyProgramTasks(date) {
+    const dateKey = formatDateKey(date);
+    const program = getWeeklyProgramForDate(date);
+    const override = state.settings.weeklyProgramOverrides[dateKey] || { removed: [], custom: [] };
+    const removed = new Set(override.removed || []);
+    return program.tasks
+      .filter(function (task) { return !removed.has(task.id); })
+      .map(function (task) { return Object.assign({ custom: false }, task); })
+      .concat((override.custom || []).map(function (task) {
+        return Object.assign({ custom: true }, task);
+      }));
+  }
+
+  function isWeeklyProgramComplete(date) {
+    const dateKey = formatDateKey(date);
+    const tasks = getWeeklyProgramTasks(date);
+    const checks = state.settings.weeklyProgramChecks[dateKey] || {};
+    return tasks.length > 0 && tasks.every(function (task) { return Boolean(checks[task.id]); });
+  }
+
   function getCurrentSmallStep() {
     const journey = state.settings.smallStepProgress;
     if (!journey || journey.finished) return null;
@@ -445,8 +548,6 @@
     const tipSelection = getDailyTip(contentDate);
     return {
       quote: DATA.quotes[dayNumber % DATA.quotes.length],
-      mission: DATA.missions[dayNumber % DATA.missions.length],
-      missionIndex: dayNumber % DATA.missions.length,
       tip: tipSelection.tip,
       tipIndex: tipSelection.index,
       tipLabel: tipSelection.label,
@@ -458,13 +559,12 @@
   function renderHome() {
     const daily = getDailyContent();
     const todayKey = formatDateKey(state.today);
-    const missionRef = "mission-" + daily.missionIndex;
-    const missionDone = hasActivity("mission", todayKey, missionRef);
+    const weeklyProgram = getWeeklyProgramForDate(state.today);
+    const weeklyTasks = getWeeklyProgramTasks(state.today);
+    const missionDone = isWeeklyProgramComplete(state.today);
     const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && activity.type === "small-step";
     });
-    const missionFavoriteId = "mission-" + daily.missionIndex;
-    const missionFavorite = state.favorites.has(missionFavoriteId);
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && !["mission", "tip", "small-step"].includes(activity.type);
     });
@@ -473,20 +573,13 @@
     const currentStep = getCurrentSmallStep();
 
     elements.dailyQuote.textContent = daily.quote;
-    elements.missionTitle.textContent = daily.mission.title;
-    elements.missionTime.textContent = daily.mission.minutes + " min";
-    elements.missionDescription.textContent = daily.mission.description;
+    elements.missionTitle.textContent = weeklyProgram.title;
+    elements.missionTime.textContent = weeklyProgram.duration;
+    elements.missionDescription.textContent = weeklyProgram.description;
+    renderWeeklyProgramTasks(weeklyTasks, todayKey);
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
-
-    elements.completeMissionButton.classList.toggle("completed", missionDone);
-    elements.completeMissionButton.disabled = missionDone;
-    elements.completeMissionButton.querySelector("span").textContent = missionDone ? "Mission terminée" : "J'ai terminé";
-
-    elements.favoriteMissionButton.classList.toggle("completed", missionFavorite);
-    elements.favoriteMissionButton.setAttribute("aria-pressed", String(missionFavorite));
-    elements.favoriteMissionButton.querySelector("span").textContent = missionFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
 
     if (currentStep) {
       const favoriteId = "small-step:" + currentStep.id;
@@ -532,14 +625,116 @@
     }
   }
 
-  async function completeMission() {
-    const daily = getDailyContent();
-    const refId = "mission-" + daily.missionIndex;
-    const todayKey = formatDateKey(state.today);
-    await addActivity("mission", todayKey, refId, daily.mission.title);
+  function renderWeeklyProgramTasks(tasks, dateKey) {
+    const checks = state.settings.weeklyProgramChecks[dateKey] || {};
+    if (!tasks.length) {
+      elements.weeklyProgramTaskList.innerHTML = '<div class="weekly-program-empty"><strong>Une journée sans liste imposée</strong><p>Ajoute seulement une tâche si cela peut vraiment t’aider aujourd’hui.</p></div>';
+      return;
+    }
+
+    elements.weeklyProgramTaskList.innerHTML = tasks.map(function (task) {
+      const checked = Boolean(checks[task.id]);
+      return [
+        '<div class="weekly-program-task', checked ? " completed" : "", '" data-weekly-task-id="', escapeHtml(task.id), '">',
+        '<label class="weekly-program-check">',
+        '<input type="checkbox" data-weekly-task-check="', escapeHtml(task.id), '"', checked ? " checked" : "", ">",
+        '<span class="weekly-program-checkmark"><svg><use href="#icon-check"></use></svg></span>',
+        '<span>', escapeHtml(task.title), "</span>",
+        "</label>",
+        '<button class="weekly-program-remove" type="button" data-weekly-task-remove="', escapeHtml(task.id), '" aria-label="Retirer ', escapeHtml(task.title), ' pour aujourd\'hui"><svg><use href="#icon-trash"></use></svg></button>',
+        "</div>"
+      ].join("");
+    }).join("");
+  }
+
+  async function handleWeeklyProgramTaskToggle(event) {
+    const checkbox = event.target.closest("[data-weekly-task-check]");
+    if (!checkbox) return;
+    const dateKey = formatDateKey(state.today);
+    const checks = Object.assign({}, state.settings.weeklyProgramChecks[dateKey] || {});
+    if (checkbox.checked) checks[checkbox.dataset.weeklyTaskCheck] = true;
+    else delete checks[checkbox.dataset.weeklyTaskCheck];
+    state.settings.weeklyProgramChecks = Object.assign({}, state.settings.weeklyProgramChecks, {
+      [dateKey]: checks
+    });
+    await DB.saveSettings({ weeklyProgramChecks: state.settings.weeklyProgramChecks });
+    await syncWeeklyProgramActivity();
     renderHome();
     renderHistory();
-    showToast("C'est fait. Ce petit pas compte vraiment.");
+  }
+
+  async function handleWeeklyProgramTaskClick(event) {
+    const button = event.target.closest("[data-weekly-task-remove]");
+    if (!button) return;
+    const taskId = button.dataset.weeklyTaskRemove;
+    const dateKey = formatDateKey(state.today);
+    const override = state.settings.weeklyProgramOverrides[dateKey] || { removed: [], custom: [] };
+    const isCustom = (override.custom || []).some(function (task) { return task.id === taskId; });
+    const nextOverride = {
+      removed: isCustom
+        ? (override.removed || []).slice()
+        : Array.from(new Set((override.removed || []).concat(taskId))),
+      custom: (override.custom || []).filter(function (task) { return task.id !== taskId; })
+    };
+    state.settings.weeklyProgramOverrides = Object.assign({}, state.settings.weeklyProgramOverrides, {
+      [dateKey]: nextOverride
+    });
+    const checks = Object.assign({}, state.settings.weeklyProgramChecks[dateKey] || {});
+    delete checks[taskId];
+    state.settings.weeklyProgramChecks = Object.assign({}, state.settings.weeklyProgramChecks, {
+      [dateKey]: checks
+    });
+    await DB.saveSettings({
+      weeklyProgramOverrides: state.settings.weeklyProgramOverrides,
+      weeklyProgramChecks: state.settings.weeklyProgramChecks
+    });
+    await syncWeeklyProgramActivity();
+    renderHome();
+    renderHistory();
+    showToast("Tâche retirée pour aujourd'hui.");
+  }
+
+  async function addWeeklyProgramTask(event) {
+    event.preventDefault();
+    const title = elements.weeklyTaskInput.value.trim();
+    if (!title) return;
+    const dateKey = formatDateKey(state.today);
+    const override = state.settings.weeklyProgramOverrides[dateKey] || { removed: [], custom: [] };
+    const task = { id: "weekly-custom-" + createId(), title: title };
+    state.settings.weeklyProgramOverrides = Object.assign({}, state.settings.weeklyProgramOverrides, {
+      [dateKey]: {
+        removed: (override.removed || []).slice(),
+        custom: (override.custom || []).concat(task)
+      }
+    });
+    elements.weeklyTaskInput.value = "";
+    await DB.saveSettings({ weeklyProgramOverrides: state.settings.weeklyProgramOverrides });
+    await syncWeeklyProgramActivity();
+    renderHome();
+    renderHistory();
+    showToast("Tâche ajoutée pour aujourd'hui.");
+  }
+
+  async function syncWeeklyProgramActivity() {
+    const dateKey = formatDateKey(state.today);
+    const program = getWeeklyProgramForDate(state.today);
+    const refId = "weekly-program-" + program.id;
+    const obsoleteActivities = Array.from(state.activities.values()).filter(function (activity) {
+      return activity.type === "mission" &&
+        activity.date === dateKey &&
+        String(activity.refId).startsWith("weekly-program-") &&
+        activity.refId !== refId;
+    });
+    await Promise.all(obsoleteActivities.map(function (activity) {
+      return removeActivity(activity.type, activity.date, activity.refId);
+    }));
+    if (isWeeklyProgramComplete(state.today)) {
+      if (!hasActivity("mission", dateKey, refId)) {
+        await addActivity("mission", dateKey, refId, program.title);
+      }
+    } else if (hasActivity("mission", dateKey, refId)) {
+      await removeActivity("mission", dateKey, refId);
+    }
   }
 
   async function completeCurrentSmallStep() {
@@ -609,39 +804,6 @@
     renderHome();
     renderFavorites();
     showToast("Petit pas ajouté aux favoris.");
-  }
-
-  async function toggleDailyMissionFavorite() {
-    const daily = getDailyContent();
-    const id = "mission-" + daily.missionIndex;
-    if (state.favorites.has(id)) {
-      await DB.remove("favorites", id);
-      state.favorites.delete(id);
-      renderHome();
-      renderFavorites();
-      showToast("Mission retirée des favoris.");
-      return;
-    }
-
-    if (!canUse("unlimitedFavorites") && state.favorites.size >= state.account.limits.favorites) {
-      navigate("pro");
-      showToast("La version gratuite permet de garder trois favoris au total.");
-      return;
-    }
-
-    const favorite = {
-      id: id,
-      type: "mission",
-      title: daily.mission.title,
-      description: daily.mission.description,
-      minutes: daily.mission.minutes,
-      savedAt: new Date().toISOString()
-    };
-    await DB.put("favorites", favorite);
-    state.favorites.set(id, favorite);
-    renderHome();
-    renderFavorites();
-    showToast("Mission ajoutée aux favoris.");
   }
 
   function renderZones() {
@@ -983,7 +1145,7 @@
     });
     elements.favoriteCount.textContent = favorites.length + " favori" + (favorites.length > 1 ? "s" : "");
     if (!favorites.length) {
-      elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucun favori pour le moment</h3><p>Ajoute un Petit pas ou une mission depuis l\'accueil pour le retrouver ici.</p></div>';
+      elements.favoritesList.innerHTML = '<div class="empty-state"><h3>Aucun favori pour le moment</h3><p>Ajoute un Petit pas depuis l\'accueil pour le retrouver ici.</p></div>';
       return;
     }
 
@@ -1073,7 +1235,7 @@
     }
 
     const labels = {
-      mission: "Mission du jour",
+      mission: "Programme hebdomadaire",
       tip: "Conseil lu",
       "small-step": "Petit pas du parcours",
       zone: "Mini-tâche",
@@ -1150,6 +1312,7 @@
 
   function renderSettings() {
     applyFreeReminderLimits(false);
+    renderWeeklyProgramSchedule();
     elements.missionReminder.checked = Boolean(state.settings.missionReminder);
     elements.missionTimeSetting.value = state.settings.missionTime;
     elements.tipReminder.checked = Boolean(state.settings.tipReminder);
@@ -1167,6 +1330,59 @@
       badge.hidden = customTimesEnabled;
     });
     renderNotificationStatus();
+  }
+
+  function renderWeeklyProgramSchedule() {
+    elements.weeklyScheduleList.innerHTML = DATA.weeklyPrograms.map(function (program) {
+      const selectedDay = state.settings.weeklyProgramSchedule[program.id];
+      const options = WEEKDAY_NAMES.map(function (name, day) {
+        return '<option value="' + day + '"' + (day === selectedDay ? " selected" : "") + ">" + name + "</option>";
+      }).join("");
+      return [
+        '<label class="weekly-schedule-row">',
+        '<span><strong>', escapeHtml(program.shortTitle), '</strong><small>', escapeHtml(program.description), "</small></span>",
+        '<select class="weekly-day-select" data-weekly-program-day="', program.id, '">', options, "</select>",
+        "</label>"
+      ].join("");
+    }).join("");
+
+    const assignedDays = new Set(Object.values(state.settings.weeklyProgramSchedule));
+    const freeDay = WEEKDAY_NAMES.find(function (_name, day) { return !assignedDays.has(day); });
+    elements.weeklyFreeDayNote.textContent = freeDay
+      ? freeDay + " reste une journée libre, sans liste imposée."
+      : "";
+  }
+
+  async function changeWeeklyProgramDay(event) {
+    const select = event.target.closest("[data-weekly-program-day]");
+    if (!select) return;
+    const programId = select.dataset.weeklyProgramDay;
+    const newDay = Number(select.value);
+    const previousDay = state.settings.weeklyProgramSchedule[programId];
+    const occupyingProgramId = Object.keys(state.settings.weeklyProgramSchedule).find(function (id) {
+      return id !== programId && state.settings.weeklyProgramSchedule[id] === newDay;
+    });
+    const nextSchedule = Object.assign({}, state.settings.weeklyProgramSchedule, {
+      [programId]: newDay
+    });
+    if (occupyingProgramId) nextSchedule[occupyingProgramId] = previousDay;
+    state.settings.weeklyProgramSchedule = normalizeWeeklyProgramSchedule(nextSchedule);
+    await DB.saveSettings({ weeklyProgramSchedule: state.settings.weeklyProgramSchedule });
+    await syncWeeklyProgramActivity();
+    renderWeeklyProgramSchedule();
+    renderHome();
+    renderHistory();
+    showToast("Programme hebdomadaire mis à jour.");
+  }
+
+  async function resetWeeklyProgramSchedule() {
+    state.settings.weeklyProgramSchedule = Object.assign({}, DATA.defaultWeeklyProgramSchedule);
+    await DB.saveSettings({ weeklyProgramSchedule: state.settings.weeklyProgramSchedule });
+    await syncWeeklyProgramActivity();
+    renderWeeklyProgramSchedule();
+    renderHome();
+    renderHistory();
+    showToast("Configuration par défaut restaurée.");
   }
 
   function handleReminderToggle(event) {
@@ -1955,15 +2171,16 @@
     const todayKey = formatDateKey(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const daily = getDailyContent(now);
+    const weeklyProgram = getWeeklyProgramForDate(now);
     const currentSmallStep = getCurrentSmallStep();
     const notifications = [
       {
         enabled: state.settings.missionReminder,
         time: state.settings.missionTime,
         lastKey: "lastMissionNotification",
-        title: "Ton petit pas du jour",
-        body: daily.mission.title + " · " + daily.mission.minutes + " minutes",
-        tag: "mission-" + todayKey,
+        title: "Ton programme du jour",
+        body: weeklyProgram.title + " · avance à ton rythme.",
+        tag: "weekly-program-" + todayKey,
         allowed: true
       },
       {
