@@ -936,15 +936,12 @@
   ];
 
   const defaultRoutines = [
-    { id: "default-morning-1", routine: "morning", title: "Boire un verre d'eau", duration: "1 min", order: 0 },
-    { id: "default-morning-2", routine: "morning", title: "Faire le lit simplement", duration: "3 min", order: 1 },
-    { id: "default-morning-3", routine: "morning", title: "Dégager l'évier", duration: "5 min", order: 2 },
-    { id: "default-afternoon-1", routine: "afternoon", title: "Faire un sauvetage express d'une pièce", duration: "5 min", order: 0 },
-    { id: "default-afternoon-2", routine: "afternoon", title: "Ranger cinq objets", duration: "3 min", order: 1 },
-    { id: "default-afternoon-3", routine: "afternoon", title: "Vérifier le panier de linge", duration: "2 min", order: 2 },
-    { id: "default-evening-1", routine: "evening", title: "Préparer les vêtements de demain", duration: "4 min", order: 0 },
-    { id: "default-evening-2", routine: "evening", title: "Faire une tournée des tasses", duration: "3 min", order: 1 },
-    { id: "default-evening-3", routine: "evening", title: "Fermer la cuisine", duration: "5 min", order: 2 }
+    { id: "default-v2-morning-1", routine: "morning", title: "S'habiller et se chausser", duration: "5 min", order: 0 },
+    { id: "default-v2-morning-2", routine: "morning", title: "Faire le lit", duration: "3 min", order: 1 },
+    { id: "default-v2-morning-3", routine: "morning", title: "Prendre 5 minutes pour ranger", duration: "5 min", order: 2 },
+    { id: "default-v2-evening-1", routine: "evening", title: "Préparer ses vêtements pour le lendemain", duration: "5 min", order: 0 },
+    { id: "default-v2-evening-2", routine: "evening", title: "Nettoyer et faire briller l'évier", duration: "5 min", order: 1 },
+    { id: "default-v2-evening-3", routine: "evening", title: "Ranger ce qui traîne", duration: "5 min", order: 2 }
   ];
 
   window.APP_DATA = {

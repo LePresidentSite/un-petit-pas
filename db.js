@@ -10,6 +10,7 @@
     "routineChecks",
     "favorites"
   ];
+  const ROUTINE_DEFAULTS_VERSION = 2;
   let databasePromise;
 
   function requestToPromise(request) {
@@ -109,9 +110,39 @@
 
   async function seedRoutines(defaultTasks) {
     const current = await getAll("routineTasks");
-    if (current.length) return current;
-    await Promise.all(defaultTasks.map(function (task) { return put("routineTasks", task); }));
-    return defaultTasks.slice();
+    const settings = await getSettings({});
+    const installedVersion = Number(settings.routineDefaultsVersion) || 0;
+
+    if (!current.length) {
+      await Promise.all(defaultTasks.map(function (task) { return put("routineTasks", task); }));
+      await saveSettings({
+        routineDefaultsVersion: ROUTINE_DEFAULTS_VERSION,
+        cloudDirty: true
+      });
+      return defaultTasks.slice();
+    }
+
+    if (installedVersion >= ROUTINE_DEFAULTS_VERSION) return current;
+
+    const customTasks = current.filter(function (task) {
+      return !String(task.id).startsWith("default-");
+    });
+    const formerDefaults = current.filter(function (task) {
+      return String(task.id).startsWith("default-");
+    });
+
+    await Promise.all(formerDefaults.map(function (task) {
+      return remove("routineTasks", task.id);
+    }));
+    await Promise.all(defaultTasks.map(function (task) {
+      return put("routineTasks", task);
+    }));
+    await saveSettings({
+      routineDefaultsVersion: ROUTINE_DEFAULTS_VERSION,
+      cloudDirty: true
+    });
+
+    return customTasks.concat(defaultTasks);
   }
 
   async function getSettings(defaults) {

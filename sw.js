@@ -1,14 +1,14 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v56";
+const CACHE_VERSION = "un-petit-pas-v57";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260615-pro-limits-v2",
+  "./styles.css?v=20260615-routines-v3",
   "./config.js",
   "./account.js?v=20260615-pro-limits-v2",
-  "./data.js?v=20260615-petits-pas-v2",
-  "./db.js?v=20260615-cloud-sync-v2",
+  "./data.js?v=20260615-routines-v3",
+  "./db.js?v=20260615-routines-v3",
   "./app.js?v=20260615-pro-limits-v2",
   "./assets/caroline-portrait-v2.jpg?v=20260611",
   "./assets/foret-about.jpg?v=20260611",

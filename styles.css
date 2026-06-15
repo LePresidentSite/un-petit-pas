@@ -1702,6 +1702,57 @@ svg {
 
 }
 
+.routine-golden-rule {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(239, 203, 104, 0.52);
+  border-radius: 22px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(239, 203, 104, 0.3), transparent 34%),
+    linear-gradient(135deg, rgba(247, 246, 243, 0.98), rgba(217, 230, 216, 0.9));
+  box-shadow: 0 12px 30px rgba(23, 65, 107, 0.1);
+}
+
+.routine-golden-rule-icon {
+  display: grid;
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 16px;
+  color: #72591d;
+  background: var(--mustard);
+  box-shadow: 0 8px 22px rgba(239, 203, 104, 0.3);
+}
+
+.routine-golden-rule-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.routine-golden-rule .eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--sage-dark);
+}
+
+.routine-golden-rule h3 {
+  margin: 0;
+  color: #2f4f6f;
+  font-family: var(--font-display);
+  font-size: clamp(1.08rem, 2vw, 1.3rem);
+}
+
+.routine-golden-rule p:last-child {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 
 
 .routine-tabs {
