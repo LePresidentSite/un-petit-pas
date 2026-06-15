@@ -10,6 +10,8 @@ L'application reste utilisable localement et hors ligne sans compte. Les comptes
 4. Ajouter l'URL publique de l'application dans les URL de redirection Auth.
 5. Déployer les trois Edge Functions du dossier `supabase/functions`.
 
+Le schéma crée aussi la table `public.user_backups`, utilisée pour la sauvegarde et la synchronisation PRO. Ses règles RLS autorisent uniquement le propriétaire connecté dont l'abonnement est `active` ou `trialing` à lire ou modifier sa sauvegarde. Les comptes gratuits continuent d'utiliser seulement IndexedDB sur leur appareil.
+
 ## 2. Stripe
 
 Créer un produit **Un Petit Pas PRO** avec deux prix récurrents :
