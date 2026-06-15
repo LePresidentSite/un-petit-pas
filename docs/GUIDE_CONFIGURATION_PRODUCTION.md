@@ -157,7 +157,7 @@ Noter cette valeur dans la fiche.
 
 ## 4. Exécuter `schema.sql`
 
-Cette opération crée les tables nécessaires aux abonnements et à l'offre Fondateur.
+Cette opération crée les tables nécessaires aux abonnements, à l'offre Fondateur et à la sauvegarde infonuagique PRO.
 
 ### Copier le fichier SQL
 
@@ -193,17 +193,20 @@ Le résultat normal est un message comme **Success. No rows returned**. Ce n'est
 ### Vérifier les tables
 
 1. Ouvrir **Table Editor** dans le menu gauche.
-2. Vérifier que ces deux tables apparaissent dans le schéma `public` :
+2. Vérifier que ces trois tables apparaissent dans le schéma `public` :
 
 ```text
 subscriptions
 founder_reservations
+user_backups
 ```
 
 3. Ouvrir `subscriptions`.
 4. Vérifier que des colonnes comme `user_id`, `status`, `plan` et `stripe_customer_id` sont visibles.
 5. Ouvrir `founder_reservations`.
 6. Vérifier que des colonnes comme `user_id`, `status`, `expires_at` et `paid_at` sont visibles.
+7. Ouvrir `user_backups`.
+8. Vérifier que les colonnes `user_id`, `payload`, `created_at` et `updated_at` sont visibles.
 
 Les tables sont vides à cette étape, ce qui est normal.
 
@@ -215,10 +218,11 @@ Dans **SQL Editor**, créer une nouvelle requête et exécuter :
 select
   to_regclass('public.subscriptions') as subscriptions,
   to_regclass('public.founder_reservations') as founder_reservations,
+  to_regclass('public.user_backups') as user_backups,
   to_regprocedure('public.reserve_founder_access(uuid)') as founder_function;
 ```
 
-Les trois colonnes doivent retourner un nom et non `null`.
+Les quatre colonnes doivent retourner un nom et non `null`.
 
 ---
 
