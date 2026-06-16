@@ -63,6 +63,8 @@
     duration: "Sans obligation",
     tasks: []
   });
+  const DAILY_DECLUTTER_REF = "daily-declutter-15";
+  const DAILY_DECLUTTER_TITLE = "Désencombrement 15 minutes";
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -172,6 +174,7 @@
       "dailyProgressValue", "progressTitle", "progressCaption", "missionTitle",
       "missionTime", "missionDescription", "weeklyProgramTaskList", "weeklyTaskForm",
       "weeklyTaskInput", "weeklyScheduleList", "weeklyFreeDayNote",
+      "declutterCard", "declutterCheckbox", "declutterTimerButton",
       "resetWeeklyScheduleButton", "smallStepNumber",
       "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
       "completeSmallStepButton", "favoriteSmallStepButton",
@@ -253,6 +256,8 @@
     elements.weeklyTaskForm.addEventListener("submit", addWeeklyProgramTask);
     elements.weeklyScheduleList.addEventListener("change", changeWeeklyProgramDay);
     elements.resetWeeklyScheduleButton.addEventListener("click", resetWeeklyProgramSchedule);
+    elements.declutterCheckbox.addEventListener("change", toggleDailyDeclutter);
+    elements.declutterTimerButton.addEventListener("click", openDailyDeclutterTimer);
     elements.completeSmallStepButton.addEventListener("click", completeCurrentSmallStep);
     elements.favoriteSmallStepButton.addEventListener("click", toggleCurrentSmallStepFavorite);
     elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
@@ -565,10 +570,11 @@
     const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && activity.type === "small-step";
     });
+    const declutterDone = hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
-      return activity.date === todayKey && !["mission", "tip", "small-step"].includes(activity.type);
+      return activity.date === todayKey && !["mission", "tip", "small-step", "declutter"].includes(activity.type);
     });
-    const progress = Math.round(([missionDone, smallStepDone, otherStepDone].filter(Boolean).length / 3) * 100);
+    const progress = Math.round(([missionDone, smallStepDone, declutterDone, otherStepDone].filter(Boolean).length / 4) * 100);
     const journey = state.settings.smallStepProgress;
     const currentStep = getCurrentSmallStep();
 
@@ -577,6 +583,8 @@
     elements.missionTime.textContent = weeklyProgram.duration;
     elements.missionDescription.textContent = weeklyProgram.description;
     renderWeeklyProgramTasks(weeklyTasks, todayKey);
+    elements.declutterCheckbox.checked = declutterDone;
+    elements.declutterCard.classList.toggle("completed", declutterDone);
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
@@ -623,6 +631,27 @@
       elements.progressTitle.textContent = "Un pas à la fois";
       elements.progressCaption.textContent = "Rien ne presse.";
     }
+  }
+
+  async function toggleDailyDeclutter(event) {
+    const todayKey = formatDateKey(state.today);
+    if (event.target.checked) {
+      await addActivity("declutter", todayKey, DAILY_DECLUTTER_REF, DAILY_DECLUTTER_TITLE);
+      showToast("C'est noté. Un petit espace de plus.");
+    } else {
+      await removeActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
+      showToast("C'est décoché pour aujourd'hui.");
+    }
+    renderHome();
+    renderHistory();
+  }
+
+  async function openDailyDeclutterTimer() {
+    if (state.timer.status === "complete") {
+      await resetTimer();
+    }
+    openTimerPanel();
+    showToast("Minuterie de 15 minutes prête pour ton désencombrement.");
   }
 
   function renderWeeklyProgramTasks(tasks, dateKey) {
@@ -1238,6 +1267,7 @@
       mission: "Programme hebdomadaire",
       tip: "Conseil lu",
       "small-step": "Petit pas du parcours",
+      declutter: "Désencombrement quotidien",
       zone: "Mini-tâche",
       routine: "Routine",
       timer: "Minuterie"

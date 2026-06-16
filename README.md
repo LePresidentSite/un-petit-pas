@@ -10,6 +10,7 @@ Adresse technique de secours : <https://un-petit-pas.vercel.app>
 
 - Mission et pensée motivante différentes chaque jour
 - Parcours progressif de 31 Petits pas, repris automatiquement là où l'utilisateur s'est arrêté
+- Désencombrement quotidien de 15 minutes avec coche datée et accès direct à la minuterie
 - Bibliothèque de 11 principes propres à Un Petit Pas
 - Minuterie globale persistante de 15 minutes
 - Pause, reprise, cercle de progression, son doux et écran de réussite

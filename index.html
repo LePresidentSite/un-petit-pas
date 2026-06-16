@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260615-weekly-program-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260615-declutter-v1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js?v=20260615-pro-limits-v2" defer></script>
   <script src="./data.js?v=20260615-weekly-program-v1" defer></script>
   <script src="./db.js?v=20260615-routines-v3" defer></script>
-  <script src="./app.js?v=20260615-weekly-program-v1" defer></script>
+  <script src="./app.js?v=20260615-declutter-v1" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -148,6 +148,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <input id="weeklyTaskInput" class="text-input" type="text" maxlength="90" placeholder="Ajouter une tâche pour aujourd'hui">
               <button class="secondary-button" type="submit"><svg><use href="#icon-plus"></use></svg>Ajouter</button>
             </form>
+          </article>
+
+          <article id="declutterCard" class="card declutter-card">
+            <div class="declutter-header">
+              <span class="declutter-icon" aria-hidden="true"><svg><use href="#icon-spark"></use></svg></span>
+              <div>
+                <p class="card-kicker">Activité quotidienne</p>
+                <h2>🧹 Désencombrement 15 minutes</h2>
+              </div>
+            </div>
+            <div class="declutter-copy">
+              <p>Le désordre ne s'est pas installé en une journée. Il n'a pas besoin de disparaître aujourd'hui.</p>
+              <p>Réglez simplement un minuteur sur 15 minutes. Choisissez une petite zone, idéalement dans la zone active.</p>
+              <p>Jetez, donnez ou rangez ce que vous pouvez pendant ces 15 minutes. Lorsque le minuteur sonne, arrêtez-vous. Même si ce n'est pas terminé.</p>
+              <p>L'objectif n'est pas de finir. L'objectif est d'avancer.</p>
+              <p>Chaque séance de 15 minutes est un petit pas vers une maison plus facile à entretenir.</p>
+            </div>
+            <div class="declutter-actions">
+              <label class="declutter-check">
+                <input id="declutterCheckbox" type="checkbox">
+                <span class="declutter-checkmark"><svg><use href="#icon-check"></use></svg></span>
+                <span>J'ai fait mes 15 minutes aujourd'hui</span>
+              </label>
+              <button id="declutterTimerButton" class="secondary-button" type="button">
+                <svg><use href="#icon-timer"></use></svg>
+                <span>Ouvrir la minuterie 15 minutes</span>
+              </button>
+            </div>
           </article>
 
           <article class="card tip-card small-step-card">
