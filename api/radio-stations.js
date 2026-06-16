@@ -7,6 +7,8 @@ const RADIO_BROWSER_HOSTS = [
 
 const CATEGORY_QUERIES = {
   "quebec-pop": [
+    { countrycode: "CA", state: "Quebec", language: "french", name: "Rouge" },
+    { countrycode: "CA", state: "Quebec", language: "french", name: "CHOC" },
     { countrycode: "CA", state: "Quebec", language: "french", tag: "pop" },
     { countrycode: "CA", state: "Quebec", language: "french" },
     { countrycode: "CA", language: "french", tag: "pop" }
@@ -48,6 +50,12 @@ const CATEGORY_QUERIES = {
     { tag: "easy listening" },
     { tag: "80s 90s" }
   ],
+  "rythme-fm": [
+    { countrycode: "CA", name: "Rythme" },
+    { name: "Rythme 100,1" },
+    { name: "Rythme Mauricie" },
+    { countrycode: "CA", language: "french", tag: "adult pop" }
+  ],
   instrumental: [
     { countrycode: "CA", tag: "instrumental" },
     { tag: "instrumental" },
@@ -78,7 +86,10 @@ module.exports = async function handler(req, res) {
   try {
     const collected = [];
 
-    const minimumCandidates = category === "quebec-pop" ? 3 : category === "rock-detente" ? Infinity : 6;
+    const minimumCandidates = category === "quebec-pop"
+      ? 6
+      : category === "rock-detente" ? Infinity
+        : category === "rythme-fm" ? 1 : 6;
     for (const query of queries) {
       const stations = await searchWithFallback(query);
       collected.push(...stations);
@@ -170,7 +181,9 @@ function normalizeStations(stations, category) {
     .map(function (station) {
       return {
         stationuuid: String(station.stationuuid || ""),
-        name: category === "rock-detente" ? "Souvenirs Rock Détente" : cleanStationName(station.name),
+        name: category === "rock-detente"
+          ? "Pop québécoise"
+          : category === "rythme-fm" ? "Souvenirs soft pop" : cleanStationName(station.name),
         sourceName: cleanStationName(station.name),
         url: String(station.url_resolved || station.url || ""),
         favicon: String(station.favicon || ""),
@@ -215,7 +228,9 @@ function scoreStation(station, category) {
   if (haystack.includes("quebec") || haystack.includes("québec")) score += 45;
   if (haystack.includes("french") || haystack.includes("français")) score += 18;
   if (category === "quebec-pop" && haystack.includes("pop")) score += 24;
+  if (category === "quebec-pop" && /rouge/.test(haystack)) score += 145;
   if (category === "quebec-pop" && /(choc|viva|kiss|mix|hit)/.test(haystack)) score += 32;
+  if (category === "quebec-pop" && /english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 120;
   if (category === "quebec-pop" && /(yesterday|classic|punk|rock)/.test(haystack)) score -= 28;
   if (category === "hits" && (haystack.includes("hits") || haystack.includes("top 40"))) score += 20;
   if (category === "hits" && /(kiss|mix|hit|top)/.test(haystack)) score += 28;
@@ -245,6 +260,14 @@ function scoreStation(station, category) {
     if (/(classic rock|rock ballads|hard rock|heavy metal|metal|punk)/.test(haystack)) score -= 36;
     if (/(dance|eurodance|disco|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel|punk)/.test(haystack)) score -= 72;
   }
+  if (category === "rythme-fm") {
+    if (/rythme/.test(haystack)) score += 220;
+    if (/(canada|quebec|québec)/.test(haystack)) score += 70;
+    if (/(french|français|francophone|francais)/.test(haystack)) score += 70;
+    if (/(adult pop|adult contemporary|pop)/.test(haystack)) score += 35;
+    if (/english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 160;
+    if (/(hard rock|heavy metal|metal|punk|dance|techno|house|hip-hop|rap|country|sports|news|talk)/.test(haystack)) score -= 90;
+  }
   if (category === "instrumental" && /(instrumental|classical|piano)/.test(haystack)) score += 20;
 
   return score;
@@ -255,6 +278,10 @@ function isCategoryCompatible(station, category) {
   if (category === "rock-detente") {
     return /(soft|love|lovesongs|romantic|ballad|baladas|adult contemporary|adulte contemporain|easy listening|80s|90s|2000s|classic hits|oldies|pop|rouge|rythme|plaisir|retrosouvenirs|retro souvenirs|wow-fm)/.test(haystack)
       && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel)/.test(haystack);
+  }
+  if (category === "rythme-fm") {
+    return /rythme/.test(haystack)
+      && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk)/.test(haystack);
   }
   if (category !== "hits") return true;
   return !/(country|classic rock|heavy metal|oldies|retro|70s|80s|90s)/.test(haystack);
