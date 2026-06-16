@@ -21,7 +21,7 @@
     hits: { name: "Hits du moment", icon: "🎵" },
     "80s": { name: "Années 80", icon: "🎵" },
     relax: { name: "Détente", icon: "🎵" },
-    "rock-detente": { name: "Souvenirs Rock Détente", icon: "💙", meta: "Soft rock, ballades et souvenirs doux" },
+    "rock-detente": { name: "Souvenirs Rock Détente", icon: "💙", meta: "Ballades soft francophones et souvenirs québécois" },
     instrumental: { name: "Instrumentale", icon: "🎵" }
   };
   const MUSIC_SERVICES = {
@@ -47,7 +47,7 @@
       webUrl: "https://music.amazon.ca/"
     }
   };
-  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v2";
+  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v3";
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "relax"]);
   const FREE_REMINDER_TIMES = Object.freeze({

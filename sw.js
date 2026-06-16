@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v61";
+const CACHE_VERSION = "un-petit-pas-v62";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "./account.js?v=20260615-pro-limits-v2",
   "./data.js?v=20260615-weekly-program-v1",
   "./db.js?v=20260615-routines-v3",
-  "./app.js?v=20260615-rock-detente-v1",
+  "./app.js?v=20260615-rock-detente-fr-v1",
   "./assets/caroline-portrait-v2.jpg?v=20260611",
   "./assets/foret-about.jpg?v=20260611",
   "./assets/brand/logo-symbol.svg",
