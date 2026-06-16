@@ -26,8 +26,21 @@ const CATEGORY_QUERIES = {
     { countrycode: "CA", tag: "ambient" }
   ],
   "rock-detente": [
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "soft adult contemporary" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "adult contemporary" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "adulte contemporain" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "80s" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "90s" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "classic hits" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "pop" },
+    { countrycode: "CA", state: "Quebec", language: "french" },
+    { countrycode: "CA", language: "french", tag: "adult contemporary" },
+    { countrycode: "CA", language: "french", tag: "soft" },
+    { countrycode: "CA", name: "Rouge" },
+    { countrycode: "CA", name: "Plaisir" },
+    { countrycode: "CA", name: "Rythme" },
+    { countrycode: "CA", name: "RetroSouvenirs" },
     { tag: "love songs", language: "french" },
-    { tag: "love songs", language: "english" },
     { tag: "love songs" },
     { tag: "soft pop" },
     { tag: "soft rock" },
@@ -65,7 +78,7 @@ module.exports = async function handler(req, res) {
   try {
     const collected = [];
 
-    const minimumCandidates = category === "quebec-pop" ? 3 : category === "rock-detente" ? 8 : 6;
+    const minimumCandidates = category === "quebec-pop" ? 3 : category === "rock-detente" ? Infinity : 6;
     for (const query of queries) {
       const stations = await searchWithFallback(query);
       collected.push(...stations);
@@ -212,14 +225,25 @@ function scoreStation(station, category) {
   if (category === "80s" && haystack.includes("heavy metal")) score -= 24;
   if (category === "relax" && /(relax|chill|easy listening|lounge)/.test(haystack)) score += 20;
   if (category === "rock-detente") {
+    if (/(quebec|québec)/.test(haystack)) score += 95;
+    if (/(canada|canadien|canadienne)/.test(haystack)) score += 42;
+    if (/(french|français|francophone|francais)/.test(haystack)) score += 82;
+    if (/english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 300;
+    if (/rouge/.test(haystack)) score += 170;
+    if (/(plaisir|ckld|cfda|chrm)/.test(haystack)) score += 145;
+    if (/(retrosouvenirs|retro souvenirs)/.test(haystack)) score += 132;
+    if (/rythme/.test(haystack)) score += 118;
+    if (/(wow-fm|choa|cjlm|cfix)/.test(haystack)) score += 76;
+    if (/(la radio des hits|\bhits\b)/.test(haystack) && !/classic hits/.test(haystack)) score -= 62;
+    if (/(soft adult contemporary|adulte contemporain|adult contemporary|hot adult contemporary)/.test(haystack)) score += 70;
     if (/(love songs|lovesongs|romantic|ballad|baladas|romántica|romantique)/.test(haystack)) score += 58;
     if (/(soft rock|soft pop|soft adult contemporary|adult contemporary|hot adult contemporary|easy listening)/.test(haystack)) score += 48;
     if (/(80s|80's|90s|90's|2000s|70s80s90s|70s.*80s.*90s|classic hits|oldies)/.test(haystack)) score += 26;
-    if (/(french|france|français|quebec|québec|canada|english)/.test(haystack)) score += 16;
+    if (/france/.test(haystack)) score += 12;
     if (/(only music|no ads|commercial-free)/.test(haystack)) score += 18;
-    if (/(heart|love.radio|love radio|radio love|soft pop)/.test(haystack)) score += 22;
+    if (/(heart|love.radio|love radio|radio love|soft pop)/.test(haystack)) score += 6;
     if (/(classic rock|rock ballads|hard rock|heavy metal|metal|punk)/.test(haystack)) score -= 36;
-    if (/(dance|eurodance|disco|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel)/.test(haystack)) score -= 48;
+    if (/(dance|eurodance|disco|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel|punk)/.test(haystack)) score -= 72;
   }
   if (category === "instrumental" && /(instrumental|classical|piano)/.test(haystack)) score += 20;
 
@@ -229,7 +253,7 @@ function scoreStation(station, category) {
 function isCategoryCompatible(station, category) {
   const haystack = [station.name, station.tags].join(" ").toLowerCase();
   if (category === "rock-detente") {
-    return /(soft|love|lovesongs|romantic|ballad|baladas|adult contemporary|easy listening|80s|90s|2000s|classic hits|oldies)/.test(haystack)
+    return /(soft|love|lovesongs|romantic|ballad|baladas|adult contemporary|adulte contemporain|easy listening|80s|90s|2000s|classic hits|oldies|pop|rouge|rythme|plaisir|retrosouvenirs|retro souvenirs|wow-fm)/.test(haystack)
       && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel)/.test(haystack);
   }
   if (category !== "hits") return true;
