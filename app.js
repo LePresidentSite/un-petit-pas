@@ -21,6 +21,7 @@
     hits: { name: "Hits du moment", icon: "🎵" },
     "80s": { name: "Années 80", icon: "🎵" },
     relax: { name: "Détente", icon: "🎵" },
+    "rock-detente": { name: "Souvenirs Rock Détente", icon: "💙", meta: "Soft rock, ballades et souvenirs doux" },
     instrumental: { name: "Instrumentale", icon: "🎵" }
   };
   const MUSIC_SERVICES = {
@@ -2620,7 +2621,7 @@
     player.load();
     player.src = station.url;
 
-    setAmbianceStatus("Connexion à " + station.name + "…", radioCategoryName(), "loading");
+    setAmbianceStatus("Connexion à " + station.name + "…", radioCategoryMeta(), "loading");
     elements["mp-title"].textContent = station.name;
     elements["mp-subtitle"].textContent = "Connexion en cours";
     elements["mp-icon"].textContent = RADIO_CATEGORIES[state.ambianceCategory].icon;
@@ -2642,7 +2643,7 @@
       const station = currentAmbianceStation();
       setAmbianceStatus(
         station ? station.name : "Station prête",
-        radioCategoryName() + " · Appuie sur Écouter",
+        radioCategoryMeta() + " · Appuie sur Écouter",
         "paused"
       );
       renderAmbianceSelection();
@@ -2658,7 +2659,7 @@
     state.ambianceLoading = false;
     state.ambiancePlaying = true;
     const station = currentAmbianceStation();
-    setAmbianceStatus(station ? station.name : "Station en lecture", radioCategoryName(), "playing");
+    setAmbianceStatus(station ? station.name : "Station en lecture", radioCategoryMeta(), "playing");
     renderAmbianceSelection();
     updateMiniPlayer();
     if (station && station.stationuuid) registerRadioClick(station.stationuuid);
@@ -2668,7 +2669,7 @@
     if (!state.ambianceCategory || state.ambianceLoading) return;
     state.ambiancePlaying = false;
     const station = currentAmbianceStation();
-    if (station) setAmbianceStatus(station.name, radioCategoryName() + " · En pause", "paused");
+    if (station) setAmbianceStatus(station.name, radioCategoryMeta() + " · En pause", "paused");
     updateMiniPlayer();
   }
 
@@ -2724,6 +2725,11 @@
     return category ? category.name : "Radio";
   }
 
+  function radioCategoryMeta() {
+    const category = RADIO_CATEGORIES[state.ambianceCategory];
+    return category ? category.meta || category.name : "Radio";
+  }
+
   function setAmbianceStatus(name, meta, tone) {
     elements["ambiance-active-name"].textContent = name;
     elements["ambiance-active-meta"].textContent = meta;
@@ -2761,7 +2767,7 @@
       elements["mp-title"].textContent = station.name;
       elements["mp-subtitle"].textContent = state.ambianceLoading
         ? "Connexion en cours"
-        : radioCategoryName();
+        : radioCategoryMeta();
     }
     elements["mp-play-icon-use"].setAttribute(
       "href",
