@@ -56,6 +56,12 @@ const CATEGORY_QUERIES = {
     { name: "Rythme Mauricie" },
     { countrycode: "CA", language: "french", tag: "adult pop" }
   ],
+  classical: [
+    { countrycode: "CA", language: "french", name: "ICI Musique" },
+    { countrycode: "CA", tag: "classical" },
+    { language: "french", tag: "classical" },
+    { tag: "classical" }
+  ],
   instrumental: [
     { countrycode: "CA", tag: "instrumental" },
     { tag: "instrumental" },
@@ -63,7 +69,7 @@ const CATEGORY_QUERIES = {
   ]
 };
 
-const USER_AGENT = "UnPetitPas/1.2 (contact@unpetitpas.net)";
+const USER_AGENT = "UnPetitPas/1.3 (contact@unpetitpas.net)";
 const SUPPORTED_CODECS = new Set(["MP3", "AAC", "AAC+", "OGG", "OPUS"]);
 
 module.exports = async function handler(req, res) {
@@ -183,7 +189,7 @@ function normalizeStations(stations, category) {
         stationuuid: String(station.stationuuid || ""),
         name: category === "rock-detente"
           ? "Pop québécoise"
-          : category === "rythme-fm" ? "Souvenirs soft pop" : cleanStationName(station.name),
+          : category === "rythme-fm" ? "Rythme FM" : cleanStationName(station.name),
         sourceName: cleanStationName(station.name),
         url: String(station.url_resolved || station.url || ""),
         favicon: String(station.favicon || ""),
@@ -268,6 +274,7 @@ function scoreStation(station, category) {
     if (/english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 160;
     if (/(hard rock|heavy metal|metal|punk|dance|techno|house|hip-hop|rap|country|sports|news|talk)/.test(haystack)) score -= 90;
   }
+  if (category === "classical" && /(classical|classique|symphon|baroque|piano|orchestra|orchestre)/.test(haystack)) score += 28;
   if (category === "instrumental" && /(instrumental|classical|piano)/.test(haystack)) score += 20;
 
   return score;
