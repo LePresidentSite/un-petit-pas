@@ -7,7 +7,7 @@
     favorites: 3,
     historyDays: 7,
     activeReminders: 1,
-    freeRadioCategories: 2
+    freeRadioCategories: 4
   });
   const PRO_FEATURES = new Set([
     "advancedStats",

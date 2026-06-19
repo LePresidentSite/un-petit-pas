@@ -1929,7 +1929,7 @@ svg {
 
   display: grid;
 
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 
   gap: 0.35rem;
 
@@ -12474,6 +12474,95 @@ body {
   }
 
   .declutter-actions .secondary-button {
+    justify-content: center;
+  }
+}
+
+.routine-declutter-card,
+.routine-detail-card {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(65, 93, 120, 0.12);
+  border-radius: 22px;
+  background: var(--surface-solid);
+  box-shadow: 0 12px 32px rgba(34, 62, 82, 0.08);
+}
+
+.routine-declutter-card.done {
+  border-color: rgba(105, 129, 95, 0.28);
+  background: rgba(225, 234, 220, 0.72);
+}
+
+.routine-declutter-card h3,
+.routine-detail-card h3 {
+  margin: 0.25rem 0 0.45rem;
+}
+
+.routine-declutter-card p,
+.routine-detail-card p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.routine-declutter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.routine-detail-card ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding-left: 1.3rem;
+}
+
+.routine-detail-card li {
+  padding-left: 0.2rem;
+  line-height: 1.5;
+}
+
+.routine-closing-message {
+  display: block;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  color: #43584a;
+  background: var(--sage-light);
+  line-height: 1.5;
+}
+
+.account-delete-link {
+  color: #8a4b4b;
+  text-decoration: none;
+}
+
+.account-delete-link:hover {
+  text-decoration: underline;
+}
+
+@media (min-width: 760px) {
+  .routine-declutter-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .routine-tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .routine-declutter-actions,
+  .routine-declutter-actions .primary-button,
+  .routine-declutter-actions .secondary-button {
+    width: 100%;
+  }
+
+  .routine-declutter-actions .primary-button,
+  .routine-declutter-actions .secondary-button {
     justify-content: center;
   }
 }

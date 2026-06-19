@@ -1031,6 +1031,21 @@
   };
 
   const defaultRoutines = [
+    {
+      id: "default-daily-laundry",
+      routine: "daily",
+      title: "Une lessive à la fois",
+      duration: "quotidien",
+      order: 0,
+      description: "Le but n'est pas de faire toute la lessive d'un coup, mais d'éviter l'accumulation grâce à une petite habitude quotidienne.",
+      steps: [
+        "Une lessive par jour — Lance une seule machine selon ton horaire et tes besoins.",
+        "Le transfert rapide — Dès la fin du cycle, transfère le linge au sèche-linge ou sur l'étendoir.",
+        "Le pliage immédiat — Plie ou suspends les vêtements dès qu'ils sont secs.",
+        "Le rangement direct — Range immédiatement chaque vêtement à sa place."
+      ],
+      closingMessage: "Une petite lessive terminée aujourd'hui évite une montagne demain."
+    },
     { id: "default-v2-morning-1", routine: "morning", title: "S'habiller et se chausser", duration: "5 min", order: 0 },
     { id: "default-v2-morning-2", routine: "morning", title: "Faire le lit", duration: "3 min", order: 1 },
     { id: "default-v2-morning-3", routine: "morning", title: "Prendre 5 minutes pour ranger", duration: "5 min", order: 2 },

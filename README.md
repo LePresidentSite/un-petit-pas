@@ -11,6 +11,7 @@ Adresse technique de secours : <https://un-petit-pas.vercel.app>
 - Mission et pensée motivante différentes chaque jour
 - Parcours progressif de 31 Petits pas, repris automatiquement là où l'utilisateur s'est arrêté
 - Désencombrement quotidien de 15 minutes avec coche datée et accès direct à la minuterie
+- Routine quotidienne détaillée « Une lessive à la fois », en plus des routines matin, après-midi et soir
 - Bibliothèque de 11 principes propres à Un Petit Pas
 - Minuterie globale persistante de 15 minutes
 - Pause, reprise, cercle de progression, son doux et écran de réussite
@@ -20,6 +21,7 @@ Adresse technique de secours : <https://un-petit-pas.vercel.app>
 - Routines personnalisables avec réorganisation
 - Historique mensuel et compteur de petits pas
 - Rappels locaux personnalisables
+- Radios Ambiance avec bascule de station et reconnexion automatique après une coupure réseau
 - Stockage IndexedDB, cache hors ligne et installation PWA
 - Mise en page adaptative pour téléphone, tablette et ordinateur
 - Identité scandinave premium avec navigation inférieure fixe
@@ -53,7 +55,7 @@ Pour publier le projet sans exposer de secrets, consulter [docs/GITHUB.md](docs/
 
 Pour configurer Supabase, Stripe et Vercel pas à pas, consulter [docs/GUIDE_CONFIGURATION_PRODUCTION.md](docs/GUIDE_CONFIGURATION_PRODUCTION.md).
 
-Le plan gratuit comprend notamment la minuterie, le programme hebdomadaire personnalisable, le parcours des Petits pas, la zone active de la semaine, trois tâches de routine personnalisées, trois favoris au total, un rappel fixe, deux catégories Ambiance et sept jours d'historique détaillé. PRO déverrouille les cinq zones, les tâches et favoris illimités, plusieurs rappels personnalisés, toutes les ambiances, l'historique complet, les statistiques avancées et la sauvegarde infonuagique multiappareil.
+Le plan gratuit comprend notamment la minuterie, le programme hebdomadaire personnalisable, le parcours des Petits pas, la zone active de la semaine, trois tâches de routine personnalisées, trois favoris au total, un rappel fixe, quatre catégories Ambiance et sept jours d'historique détaillé. PRO déverrouille les cinq zones, les tâches et favoris illimités, plusieurs rappels personnalisés, toutes les autres ambiances, l'historique complet, les statistiques avancées et la sauvegarde infonuagique multiappareil.
 
 La synchronisation PRO utilise la table `public.user_backups` définie dans `supabase/schema.sql`. Les données restent toujours disponibles localement dans IndexedDB; Supabase conserve un instantané de restauration uniquement pour les comptes dont le statut est `active` ou `trialing`.
 
@@ -69,3 +71,5 @@ Le premier abonnement mensuel ou annuel comprend 45 jours d'essai PRO. Les accè
 ## Données et notifications
 
 Les routines et progressions restent dans IndexedDB sur l'appareil. Lorsqu'un compte est activé, Supabase conserve l'identité et le statut d'abonnement; Stripe traite les paiements. Les rappels utilisent l'API Notifications du navigateur et sont vérifiés lorsque l'application est ouverte ou autorisée à rester active en arrière-plan par le système. Une planification garantie lorsque l'application est complètement fermée nécessiterait un service de notifications poussées.
+
+La section Ambiance conserve l'intention de lecture tant que l'utilisateur ne met pas la radio en pause ou ne l'arrête pas. En cas de flux interrompu, elle essaie les autres relais, puis recommence automatiquement avec un délai progressif de 1 à 30 secondes. Le retour du réseau déclenche une reprise immédiate. La Media Session du navigateur fournit aussi les commandes lecture, pause et arrêt sur les appareils compatibles. Comme toute application web, la lecture ne peut toutefois pas continuer si le navigateur ou la PWA est fermé de force par le système.

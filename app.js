@@ -18,11 +18,12 @@
 
   const RADIO_CATEGORIES = {
     "quebec-pop": { name: "Pop québécoise", icon: "🎵" },
+    "rythme-fm": { name: "Souvenirs Rock Détente", icon: "💙", meta: "Rythme FM · soft pop francophone" },
+    classical: { name: "Musique classique", icon: "🎼", meta: "Classique et instrumental" },
+    relax: { name: "Détente", icon: "🎵" },
     hits: { name: "Hits du moment", icon: "🎵" },
     "80s": { name: "Années 80", icon: "🎵" },
-    relax: { name: "Détente", icon: "🎵" },
     "rock-detente": { name: "Pop québécoise", icon: "🎵", meta: "Pop francophone du Québec" },
-    "rythme-fm": { name: "Souvenirs soft pop", icon: "💙", meta: "Rythme 100,1 Mauricie · soft pop francophone" },
     instrumental: { name: "Instrumentale", icon: "🎵" }
   };
   const MUSIC_SERVICES = {
@@ -50,7 +51,9 @@
   };
   const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v5";
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
-  const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "relax"]);
+  const RADIO_RECONNECT_INITIAL_DELAY = 1000;
+  const RADIO_RECONNECT_MAX_DELAY = 30000;
+  const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "rythme-fm", "classical", "relax"]);
   const FREE_REMINDER_TIMES = Object.freeze({
     missionTime: "09:00",
     tipTime: "12:30",
@@ -126,6 +129,9 @@
     ambianceCandidateIndex: -1,
     ambianceAttemptToken: 0,
     ambiancePlaybackTimer: null,
+    ambianceReconnectTimer: null,
+    ambianceRetryAttempt: 0,
+    ambianceWantsPlayback: false,
     ambianceActiveService: null,
     cloudSyncReady: false,
     cloudSyncInProgress: false,
@@ -139,7 +145,7 @@
       subscription: null,
       isPro: false,
       pricing: { founderActive: true, founderRemaining: 100, founderLimit: 100 },
-      limits: { customRoutineTasks: 3, favorites: 3, historyDays: 7, activeReminders: 1, freeRadioCategories: 2 }
+      limits: { customRoutineTasks: 3, favorites: 3, historyDays: 7, activeReminders: 1, freeRadioCategories: 4 }
     }
   };
 
@@ -150,6 +156,7 @@
   async function init() {
     cacheElements();
     bindEvents();
+    setupAmbianceMediaSession();
 
     try {
       await DB.open();
@@ -198,7 +205,7 @@
       "timerPrimaryLabel", "timerCompleteView", "timerDoneButton",
       "accountButton", "favoritesList", "favoriteCount",
       "accountButtonLabel", "accountSettingsButton", "manageSubscriptionButton",
-      "signOutButton", "accountPlanLabel", "accountSettingsStatus",
+      "signOutButton", "deleteAccountLink", "accountPlanLabel", "accountSettingsStatus",
       "accountSettingsEmail", "cloudSyncStatus", "createAccountButton", "loginAccountButton",
       "upgradeMonthlyButton", "upgradeYearlyButton", "upgradePrimaryButton",
       "upgradeLifetimeButton", "founderOfferPanel", "founderCounter",
@@ -304,6 +311,8 @@
     window.addEventListener("unpetitpas:local-data-change", scheduleCloudBackup);
     document.addEventListener("visibilitychange", handleAppResume);
     window.addEventListener("pageshow", handleAppResume);
+    window.addEventListener("online", handleAmbianceNetworkAvailable);
+    window.addEventListener("offline", handleAmbianceNetworkLost);
     window.addEventListener("hashchange", navigateFromHash);
 
     elements["mp-playpause"].addEventListener("click", toggleAmbiance);
@@ -985,9 +994,10 @@
     const completed = tasks.filter(function (task) {
       return state.routineChecks.has(todayKey + ":" + task.id);
     }).length;
-    const names = { morning: "du matin", afternoon: "de l'après-midi", evening: "du soir" };
+    const names = { daily: "quotidienne", morning: "du matin", afternoon: "de l'après-midi", evening: "du soir" };
     const percent = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
     const routineIcons = {
+      daily: "#icon-routines",
       morning: "#icon-spark",
       afternoon: "#icon-clock",
       evening: "#icon-moon"
@@ -1004,12 +1014,12 @@
       "</div>"
     ].join("");
 
-    if (!tasks.length) {
+    if (!tasks.length && state.activeRoutine !== "daily") {
       elements.routineTaskList.innerHTML = '<div class="empty-state"><h3>Une routine toute légère</h3><p>Ajoute une première tâche quand tu es prête ou prêt.</p></div>';
       return;
     }
 
-    elements.routineTaskList.innerHTML = tasks.map(function (task, index) {
+    const taskItems = tasks.map(function (task, index) {
       const done = state.routineChecks.has(todayKey + ":" + task.id);
       return [
         '<article class="routine-item', done ? " done" : "", '" data-task-id="', task.id, '">',
@@ -1026,6 +1036,41 @@
         "</div></article>"
       ].join("");
     }).join("");
+
+    const declutterDone = hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
+    const dailyDeclutter = state.activeRoutine === "daily"
+      ? [
+        '<article class="routine-declutter-card', declutterDone ? " done" : "", '">',
+        '<div><p class="card-kicker">Désencombrement quotidien</p>',
+        '<h3>Désencombrement 15 minutes</h3>',
+        "<p>Choisis une petite zone. Lorsque le minuteur sonne, arrête-toi : l'objectif est d'avancer, pas de finir.</p></div>",
+        '<div class="routine-declutter-actions">',
+        '<button class="primary-button" type="button" data-routine-declutter-action="toggle">',
+        declutterDone ? "Fait aujourd'hui" : "Cocher",
+        "</button>",
+        '<button class="secondary-button" type="button" data-routine-declutter-action="timer"><svg><use href="#icon-timer"></use></svg>15 minutes</button>',
+        "</div></article>"
+      ].join("")
+      : "";
+
+    const detailItems = tasks.filter(function (task) {
+      return task.description;
+    }).map(function (task) {
+      const steps = Array.isArray(task.steps)
+        ? '<ul>' + task.steps.map(function (step) { return "<li>" + escapeHtml(step) + "</li>"; }).join("") + "</ul>"
+        : "";
+      return [
+        '<article class="routine-detail-card">',
+        '<p class="card-kicker">Détail de routine</p>',
+        "<h3>", escapeHtml(task.title), "</h3>",
+        "<p>", escapeHtml(task.description), "</p>",
+        steps,
+        task.closingMessage ? '<strong class="routine-closing-message">' + escapeHtml(task.closingMessage) + "</strong>" : "",
+        "</article>"
+      ].join("");
+    }).join("");
+
+    elements.routineTaskList.innerHTML = taskItems + dailyDeclutter + detailItems;
   }
 
   function getRoutineTasks(routine) {
@@ -1050,6 +1095,16 @@
   }
 
   async function handleRoutineListClick(event) {
+    const declutterAction = event.target.closest("[data-routine-declutter-action]");
+    if (declutterAction) {
+      if (declutterAction.dataset.routineDeclutterAction === "timer") {
+        await openDailyDeclutterTimer();
+      } else {
+        await toggleRoutineDeclutter();
+      }
+      return;
+    }
+
     const actionButton = event.target.closest("[data-routine-action]");
     const item = event.target.closest("[data-task-id]");
     if (!actionButton || !item) return;
@@ -1062,6 +1117,20 @@
     if (action === "edit") openRoutineDialog(task);
     if (action === "delete") await deleteRoutineTask(task);
     if (action === "up" || action === "down") await moveRoutineTask(task, action);
+  }
+
+  async function toggleRoutineDeclutter() {
+    const todayKey = formatDateKey(state.today);
+    if (hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF)) {
+      await removeActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
+      showToast("C'est décoché pour aujourd'hui.");
+    } else {
+      await addActivity("declutter", todayKey, DAILY_DECLUTTER_REF, DAILY_DECLUTTER_TITLE);
+      showToast("C'est noté. Un petit espace de plus.");
+    }
+    renderHome();
+    renderRoutines();
+    renderHistory();
   }
 
   async function toggleRoutineTask(task) {
@@ -1517,6 +1586,7 @@
     elements.accountSettingsButton.textContent = user ? (isPro ? "Voir les avantages PRO" : "Découvrir PRO") : "Créer un compte";
     elements.manageSubscriptionButton.hidden = !isPro || hasLifetimeAccess;
     elements.signOutButton.hidden = !user;
+    elements.deleteAccountLink.hidden = !user;
     elements.createAccountButton.hidden = Boolean(user);
     elements.loginAccountButton.hidden = Boolean(user);
 
@@ -2419,7 +2489,10 @@
 
   function handleAppResume() {
     updateTimer();
-    if (document.visibilityState === "visible") syncCurrentDay();
+    if (document.visibilityState === "visible") {
+      syncCurrentDay();
+      resumeAmbianceAfterBackground();
+    }
   }
 
   function syncCurrentDay() {
@@ -2506,6 +2579,8 @@
     }
 
     resetAmbiancePlayback();
+    state.ambianceWantsPlayback = true;
+    state.ambianceRetryAttempt = 0;
     state.ambianceCategory = categoryId;
     state.ambianceActiveService = null;
     state.ambianceLoading = true;
@@ -2519,24 +2594,30 @@
       tryRadioCandidate(0);
     } catch (error) {
       console.warn("Radio unavailable:", error);
-      state.ambianceLoading = false;
-      setAmbianceStatus(
-        "Aucune station disponible pour le moment",
-        "Réessaie dans quelques instants. Tes autres outils restent accessibles.",
-        "error"
-      );
-      renderAmbianceSelection();
+      scheduleAmbianceReconnect();
     }
   }
 
   function toggleAmbiance() {
     const player = elements["global-audio-player"];
-    if (state.ambiancePlaying) {
+    if (state.ambianceWantsPlayback && (state.ambiancePlaying || state.ambianceLoading)) {
+      state.ambianceWantsPlayback = false;
+      state.ambianceLoading = false;
+      clearAmbiancePlaybackTimer();
+      clearAmbianceReconnectTimer();
       player.pause();
+      handleAmbiancePause();
       return;
     }
 
-    if (!state.ambianceCategory || !player.src) return;
+    if (!state.ambianceCategory) return;
+    state.ambianceWantsPlayback = true;
+    if (!player.src || player.error) {
+      scheduleAmbianceReconnect(true);
+      return;
+    }
+
+    clearAmbianceReconnectTimer();
     state.ambianceLoading = true;
     updateMiniPlayer();
     scheduleAmbianceFailover(state.ambianceAttemptToken, 10000);
@@ -2598,15 +2679,8 @@
   function tryRadioCandidate(index) {
     const station = state.ambianceCandidates[index];
     if (!station) {
-      state.ambianceLoading = false;
       state.ambiancePlaying = false;
-      setAmbianceStatus(
-        "Les stations proposées ne répondent pas",
-        "Nous avons essayé plusieurs relais. Tu peux relancer la recherche.",
-        "error"
-      );
-      renderAmbianceSelection();
-      elements["mini-player"].classList.add("hidden");
+      scheduleAmbianceReconnect();
       return;
     }
 
@@ -2628,17 +2702,22 @@
     elements["mp-icon"].textContent = RADIO_CATEGORIES[state.ambianceCategory].icon;
     elements["mini-player"].classList.remove("hidden");
     updateMiniPlayer();
+    updateAmbianceMediaSession();
     scheduleAmbianceFailover(token, 10000);
 
-    player.play().catch(function (error) {
-      handleAmbiancePlayRejection(error, token);
-    });
+    if (state.ambianceWantsPlayback) {
+      player.play().catch(function (error) {
+        handleAmbiancePlayRejection(error, token);
+      });
+    }
   }
 
   function handleAmbiancePlayRejection(error, token) {
     if (token !== state.ambianceAttemptToken || !state.ambianceCategory) return;
     if (error && error.name === "NotAllowedError") {
       clearAmbiancePlaybackTimer();
+      clearAmbianceReconnectTimer();
+      state.ambianceWantsPlayback = false;
       state.ambianceLoading = false;
       state.ambiancePlaying = false;
       const station = currentAmbianceStation();
@@ -2657,12 +2736,15 @@
   function handleAmbiancePlaying() {
     if (!state.ambianceCategory) return;
     clearAmbiancePlaybackTimer();
+    clearAmbianceReconnectTimer();
+    state.ambianceRetryAttempt = 0;
     state.ambianceLoading = false;
     state.ambiancePlaying = true;
     const station = currentAmbianceStation();
     setAmbianceStatus(station ? station.name : "Station en lecture", radioCategoryMeta(), "playing");
     renderAmbianceSelection();
     updateMiniPlayer();
+    updateAmbianceMediaSession();
     if (station && station.stationuuid) registerRadioClick(station.stationuuid);
   }
 
@@ -2670,21 +2752,29 @@
     if (!state.ambianceCategory || state.ambianceLoading) return;
     state.ambiancePlaying = false;
     const station = currentAmbianceStation();
-    if (station) setAmbianceStatus(station.name, radioCategoryMeta() + " · En pause", "paused");
+    const category = RADIO_CATEGORIES[state.ambianceCategory];
+    setAmbianceStatus(
+      station ? station.name : category.name,
+      radioCategoryMeta() + " · En pause",
+      "paused"
+    );
     updateMiniPlayer();
+    updateAmbianceMediaSession();
   }
 
   function handleAmbiancePlaybackError() {
-    if (!state.ambianceCategory) return;
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback) return;
     advanceToNextStation(state.ambianceAttemptToken);
   }
 
   function handleAmbianceStalled() {
-    if (!state.ambianceCategory || !state.ambianceLoading && !state.ambiancePlaying) return;
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback) return;
+    if (!state.ambianceLoading && !state.ambiancePlaying) return;
     scheduleAmbianceFailover(state.ambianceAttemptToken, 8000);
   }
 
   function scheduleAmbianceFailover(token, delay) {
+    if (!state.ambianceWantsPlayback) return;
     clearAmbiancePlaybackTimer();
     state.ambiancePlaybackTimer = window.setTimeout(function () {
       advanceToNextStation(token);
@@ -2692,7 +2782,7 @@
   }
 
   function advanceToNextStation(token) {
-    if (token !== state.ambianceAttemptToken || !state.ambianceCategory) return;
+    if (token !== state.ambianceAttemptToken || !state.ambianceCategory || !state.ambianceWantsPlayback) return;
     clearAmbiancePlaybackTimer();
     tryRadioCandidate(state.ambianceCandidateIndex + 1);
   }
@@ -2701,6 +2791,9 @@
     const player = elements["global-audio-player"];
     ++state.ambianceAttemptToken;
     clearAmbiancePlaybackTimer();
+    clearAmbianceReconnectTimer();
+    state.ambianceWantsPlayback = false;
+    state.ambianceRetryAttempt = 0;
     state.ambianceLoading = false;
     state.ambiancePlaying = false;
     player.pause();
@@ -2708,6 +2801,7 @@
     player.load();
     elements["mini-player"].classList.add("hidden");
     elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
+    updateAmbianceMediaSession();
   }
 
   function clearAmbiancePlaybackTimer() {
@@ -2715,6 +2809,108 @@
       window.clearTimeout(state.ambiancePlaybackTimer);
       state.ambiancePlaybackTimer = null;
     }
+  }
+
+  function scheduleAmbianceReconnect(immediate) {
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback) return;
+
+    ++state.ambianceAttemptToken;
+    clearAmbiancePlaybackTimer();
+    clearAmbianceReconnectTimer();
+    state.ambianceLoading = true;
+    state.ambiancePlaying = false;
+
+    const delay = immediate
+      ? 0
+      : Math.min(
+        RADIO_RECONNECT_INITIAL_DELAY * Math.pow(2, Math.min(state.ambianceRetryAttempt, 5)),
+        RADIO_RECONNECT_MAX_DELAY
+      );
+    state.ambianceRetryAttempt = Math.min(state.ambianceRetryAttempt + 1, 6);
+
+    const offline = navigator.onLine === false;
+    setAmbianceStatus(
+      offline ? "Connexion interrompue" : "Reconnexion automatique…",
+      offline
+        ? "La lecture reprendra dès que le réseau sera disponible."
+        : "Nouvelle tentative dans " + Math.max(1, Math.ceil(delay / 1000)) + " s.",
+      "loading"
+    );
+    elements["mini-player"].classList.remove("hidden");
+    renderAmbianceSelection();
+    updateMiniPlayer();
+    updateAmbianceMediaSession();
+
+    const categoryId = state.ambianceCategory;
+    const token = state.ambianceAttemptToken;
+    state.ambianceReconnectTimer = window.setTimeout(async function () {
+      state.ambianceReconnectTimer = null;
+      if (
+        token !== state.ambianceAttemptToken ||
+        categoryId !== state.ambianceCategory ||
+        !state.ambianceWantsPlayback
+      ) {
+        return;
+      }
+
+      if (navigator.onLine === false) {
+        scheduleAmbianceReconnect();
+        return;
+      }
+
+      try {
+        const candidates = await loadRadioCandidates(categoryId, true);
+        if (
+          token !== state.ambianceAttemptToken ||
+          categoryId !== state.ambianceCategory ||
+          !state.ambianceWantsPlayback
+        ) {
+          return;
+        }
+        state.ambianceCandidates = candidates;
+        state.ambianceCandidateIndex = -1;
+        if (!candidates.length) throw new Error("Aucune station compatible");
+        tryRadioCandidate(0);
+      } catch (error) {
+        console.warn("Radio reconnect failed:", error);
+        if (token === state.ambianceAttemptToken && state.ambianceWantsPlayback) {
+          scheduleAmbianceReconnect();
+        }
+      }
+    }, delay);
+  }
+
+  function clearAmbianceReconnectTimer() {
+    if (state.ambianceReconnectTimer) {
+      window.clearTimeout(state.ambianceReconnectTimer);
+      state.ambianceReconnectTimer = null;
+    }
+  }
+
+  function handleAmbianceNetworkLost() {
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback) return;
+    scheduleAmbianceReconnect();
+  }
+
+  function handleAmbianceNetworkAvailable() {
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback || state.ambiancePlaying) return;
+    scheduleAmbianceReconnect(true);
+  }
+
+  function resumeAmbianceAfterBackground() {
+    if (!state.ambianceCategory || !state.ambianceWantsPlayback || state.ambiancePlaying) return;
+    const player = elements["global-audio-player"];
+    if (!player.src || player.error) {
+      scheduleAmbianceReconnect(true);
+      return;
+    }
+
+    state.ambianceLoading = true;
+    updateMiniPlayer();
+    scheduleAmbianceFailover(state.ambianceAttemptToken, 10000);
+    player.play().catch(function (error) {
+      handleAmbiancePlayRejection(error, state.ambianceAttemptToken);
+    });
   }
 
   function currentAmbianceStation() {
@@ -2770,15 +2966,60 @@
         ? "Connexion en cours"
         : radioCategoryMeta();
     }
-    elements["mp-play-icon-use"].setAttribute(
-      "href",
-      state.ambiancePlaying ? "#icon-pause" : "#icon-play"
-    );
+    const playbackActive = state.ambiancePlaying ||
+      (state.ambianceLoading && state.ambianceWantsPlayback);
+    elements["mp-play-icon-use"].setAttribute("href", playbackActive ? "#icon-pause" : "#icon-play");
     elements["mp-playpause"].setAttribute(
       "aria-label",
-      state.ambiancePlaying ? "Mettre la radio en pause" : "Reprendre la radio"
+      playbackActive ? "Mettre la radio en pause" : "Reprendre la radio"
     );
-    elements["mp-playpause"].disabled = state.ambianceLoading;
+    elements["mp-playpause"].disabled = !state.ambianceCategory;
+  }
+
+  function setupAmbianceMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+    const actions = {
+      play: function () {
+        if (!state.ambianceWantsPlayback) toggleAmbiance();
+      },
+      pause: function () {
+        if (state.ambianceWantsPlayback) toggleAmbiance();
+      },
+      stop: stopAmbiance
+    };
+
+    Object.keys(actions).forEach(function (action) {
+      try {
+        navigator.mediaSession.setActionHandler(action, actions[action]);
+      } catch (error) {
+        // Certains navigateurs n'exposent qu'une partie des actions Media Session.
+      }
+    });
+  }
+
+  function updateAmbianceMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+    if (!state.ambianceCategory) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+      return;
+    }
+
+    const station = currentAmbianceStation();
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: station ? station.name : radioCategoryName(),
+        artist: radioCategoryMeta(),
+        album: "Un Petit Pas",
+        artwork: [
+          { src: "./icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "./icons/icon-512.png", sizes: "512x512", type: "image/png" }
+        ]
+      });
+      navigator.mediaSession.playbackState = state.ambiancePlaying ? "playing" : "paused";
+    } catch (error) {
+      // La lecture continue même si les métadonnées système ne sont pas disponibles.
+    }
   }
 
   function registerRadioClick(stationuuid) {

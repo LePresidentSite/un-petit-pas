@@ -10,7 +10,7 @@
     "routineChecks",
     "favorites"
   ];
-  const ROUTINE_DEFAULTS_VERSION = 2;
+  const ROUTINE_DEFAULTS_VERSION = 3;
   let databasePromise;
 
   function requestToPromise(request) {
