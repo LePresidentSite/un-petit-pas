@@ -1,15 +1,15 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v67";
+const CACHE_VERSION = "un-petit-pas-v69";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260619-android-sync-v1",
+  "./styles.css?v=20260626-home-declutter-v1",
   "./config.js",
   "./account.js?v=20260619-android-sync-v1",
   "./data.js?v=20260619-daily-routine-v1",
   "./db.js?v=20260619-routines-v4",
-  "./app.js?v=20260619-android-sync-v2",
+  "./app.js?v=20260626-radio-retro-v1",
   "./assets/caroline-portrait-v2.jpg?v=20260611",
   "./assets/foret-about.jpg?v=20260611",
   "./assets/brand/logo-symbol.svg",

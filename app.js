@@ -18,7 +18,7 @@
 
   const RADIO_CATEGORIES = {
     "quebec-pop": { name: "Pop québécoise", icon: "🎵" },
-    "rythme-fm": { name: "Souvenirs Rock Détente", icon: "💙", meta: "Rythme FM · soft pop francophone" },
+    "retro-souvenirs": { name: "Rétro Souvenirs", icon: "💙", meta: "Succès rétro francophones du Québec" },
     classical: { name: "Musique classique", icon: "🎼", meta: "Classique et instrumental" },
     relax: { name: "Détente", icon: "🎵" },
     hits: { name: "Hits du moment", icon: "🎵" },
@@ -49,11 +49,11 @@
       webUrl: "https://music.amazon.ca/"
     }
   };
-  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v5";
+  const RADIO_CACHE_KEY = "un-petit-pas-radio-cache-v6";
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   const RADIO_RECONNECT_INITIAL_DELAY = 1000;
   const RADIO_RECONNECT_MAX_DELAY = 30000;
-  const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "rythme-fm", "classical", "relax"]);
+  const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "retro-souvenirs", "classical", "relax"]);
   const FREE_REMINDER_TIMES = Object.freeze({
     missionTime: "09:00",
     tipTime: "12:30",
@@ -183,7 +183,6 @@
       "dailyProgressValue", "progressTitle", "progressCaption", "missionTitle",
       "missionTime", "missionDescription", "weeklyProgramTaskList", "weeklyTaskForm",
       "weeklyTaskInput", "weeklyScheduleList", "weeklyFreeDayNote",
-      "declutterCard", "declutterCheckbox", "declutterTimerButton",
       "resetWeeklyScheduleButton", "smallStepNumber",
       "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
       "completeSmallStepButton", "favoriteSmallStepButton",
@@ -265,8 +264,6 @@
     elements.weeklyTaskForm.addEventListener("submit", addWeeklyProgramTask);
     elements.weeklyScheduleList.addEventListener("change", changeWeeklyProgramDay);
     elements.resetWeeklyScheduleButton.addEventListener("click", resetWeeklyProgramSchedule);
-    elements.declutterCheckbox.addEventListener("change", toggleDailyDeclutter);
-    elements.declutterTimerButton.addEventListener("click", openDailyDeclutterTimer);
     elements.completeSmallStepButton.addEventListener("click", completeCurrentSmallStep);
     elements.favoriteSmallStepButton.addEventListener("click", toggleCurrentSmallStepFavorite);
     elements.smallStepRestartButton.addEventListener("click", restartSmallStepJourney);
@@ -581,11 +578,10 @@
     const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && activity.type === "small-step";
     });
-    const declutterDone = hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && !["mission", "tip", "small-step", "declutter"].includes(activity.type);
     });
-    const progress = Math.round(([missionDone, smallStepDone, declutterDone, otherStepDone].filter(Boolean).length / 4) * 100);
+    const progress = Math.round(([missionDone, smallStepDone, otherStepDone].filter(Boolean).length / 3) * 100);
     const journey = state.settings.smallStepProgress;
     const currentStep = getCurrentSmallStep();
 
@@ -594,8 +590,6 @@
     elements.missionTime.textContent = weeklyProgram.duration;
     elements.missionDescription.textContent = weeklyProgram.description;
     renderWeeklyProgramTasks(weeklyTasks, todayKey);
-    elements.declutterCheckbox.checked = declutterDone;
-    elements.declutterCard.classList.toggle("completed", declutterDone);
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
@@ -642,19 +636,6 @@
       elements.progressTitle.textContent = "Un pas à la fois";
       elements.progressCaption.textContent = "Rien ne presse.";
     }
-  }
-
-  async function toggleDailyDeclutter(event) {
-    const todayKey = formatDateKey(state.today);
-    if (event.target.checked) {
-      await addActivity("declutter", todayKey, DAILY_DECLUTTER_REF, DAILY_DECLUTTER_TITLE);
-      showToast("C'est noté. Un petit espace de plus.");
-    } else {
-      await removeActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
-      showToast("C'est décoché pour aujourd'hui.");
-    }
-    renderHome();
-    renderHistory();
   }
 
   async function openDailyDeclutterTimer() {
