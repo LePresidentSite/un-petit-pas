@@ -50,11 +50,12 @@ const CATEGORY_QUERIES = {
     { tag: "easy listening" },
     { tag: "80s 90s" }
   ],
-  "rythme-fm": [
-    { countrycode: "CA", name: "Rythme" },
-    { name: "Rythme 100,1" },
-    { name: "Rythme Mauricie" },
-    { countrycode: "CA", language: "french", tag: "adult pop" }
+  "retro-souvenirs": [
+    { countrycode: "CA", state: "Quebec", language: "french", name: "RetroSouvenirs" },
+    { countrycode: "CA", language: "french", name: "Souvenirs" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "classic hits" },
+    { countrycode: "CA", state: "Quebec", language: "french", tag: "oldies" },
+    { countrycode: "CA", language: "french", tag: "80s" }
   ],
   classical: [
     { countrycode: "CA", language: "french", name: "ICI Musique" },
@@ -66,6 +67,43 @@ const CATEGORY_QUERIES = {
     { countrycode: "CA", tag: "instrumental" },
     { tag: "instrumental" },
     { tag: "classical" }
+  ]
+};
+
+const CURATED_STATIONS = {
+  "retro-souvenirs": [
+    {
+      stationuuid: "964976ac-0601-11e8-ae97-52543be04c81",
+      name: "RetroSouvenirs",
+      url_resolved: "https://listen.radioking.com/radio/108/stream/61183",
+      favicon: "",
+      country: "Canada",
+      state: "Quebec",
+      language: "french",
+      tags: "50s,60s,70s,80s,90s,classic hits,oldies",
+      codec: "AAC+",
+      bitrate: 64,
+      votes: 266,
+      clickcount: 1,
+      lastcheckok: 1,
+      hls: 0
+    },
+    {
+      stationuuid: "639f5f1a-9502-47e6-8aee-7e5f4393f6fa",
+      name: "Retro Souvenirs Radio",
+      url_resolved: "https://listen.radioking.com/radio/108/stream/890",
+      favicon: "",
+      country: "France",
+      state: "",
+      language: "english/,french",
+      tags: "70s,80s,oldies",
+      codec: "MP3",
+      bitrate: 128,
+      votes: 20,
+      clickcount: 5,
+      lastcheckok: 1,
+      hls: 0
+    }
   ]
 };
 
@@ -82,7 +120,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non permise." });
   }
 
-  const category = String(req.query && req.query.category || "").toLowerCase();
+  const category = normalizeCategory(req.query && req.query.category);
   const queries = CATEGORY_QUERIES[category];
 
   if (!queries) {
@@ -90,16 +128,18 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const collected = [];
+    const collected = (CURATED_STATIONS[category] || []).slice();
 
     const minimumCandidates = category === "quebec-pop"
       ? 6
       : category === "rock-detente" ? Infinity
-        : category === "rythme-fm" ? 1 : 6;
-    for (const query of queries) {
-      const stations = await searchWithFallback(query);
-      collected.push(...stations);
-      if (normalizeStations(collected, category).length >= minimumCandidates) break;
+        : category === "retro-souvenirs" ? 2 : 6;
+    if (normalizeStations(collected, category).length < minimumCandidates) {
+      for (const query of queries) {
+        const stations = await searchWithFallback(query);
+        collected.push(...stations);
+        if (normalizeStations(collected, category).length >= minimumCandidates) break;
+      }
     }
 
     const stations = normalizeStations(collected, category).slice(0, 12);
@@ -189,7 +229,7 @@ function normalizeStations(stations, category) {
         stationuuid: String(station.stationuuid || ""),
         name: category === "rock-detente"
           ? "Pop québécoise"
-          : category === "rythme-fm" ? "Rythme FM" : cleanStationName(station.name),
+          : category === "retro-souvenirs" ? "Rétro Souvenirs" : cleanStationName(station.name),
         sourceName: cleanStationName(station.name),
         url: String(station.url_resolved || station.url || ""),
         favicon: String(station.favicon || ""),
@@ -266,13 +306,13 @@ function scoreStation(station, category) {
     if (/(classic rock|rock ballads|hard rock|heavy metal|metal|punk)/.test(haystack)) score -= 36;
     if (/(dance|eurodance|disco|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel|punk)/.test(haystack)) score -= 72;
   }
-  if (category === "rythme-fm") {
-    if (/rythme/.test(haystack)) score += 220;
-    if (/(canada|quebec|québec)/.test(haystack)) score += 70;
-    if (/(french|français|francophone|francais)/.test(haystack)) score += 70;
-    if (/(adult pop|adult contemporary|pop)/.test(haystack)) score += 35;
-    if (/english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 160;
-    if (/(hard rock|heavy metal|metal|punk|dance|techno|house|hip-hop|rap|country|sports|news|talk)/.test(haystack)) score -= 90;
+  if (category === "retro-souvenirs") {
+    if (/(retrosouvenirs|retro souvenirs|souvenirs)/.test(haystack)) score += 220;
+    if (/(canada|quebec|québec)/.test(haystack)) score += 90;
+    if (/(french|français|francophone|francais)/.test(haystack)) score += 80;
+    if (/(classic hits|oldies|50s|60s|70s|80s|90s|souvenir)/.test(haystack)) score += 70;
+    if (/english/.test(haystack) && !/(french|français|francophone|francais)/.test(haystack)) score -= 120;
+    if (/(hard rock|heavy metal|metal|punk|dance|techno|house|hip-hop|rap|country|sports|news|talk|gospel|christian)/.test(haystack)) score -= 90;
   }
   if (category === "classical" && /(classical|classique|symphon|baroque|piano|orchestra|orchestre)/.test(haystack)) score += 28;
   if (category === "instrumental" && /(instrumental|classical|piano)/.test(haystack)) score += 20;
@@ -286,12 +326,17 @@ function isCategoryCompatible(station, category) {
     return /(soft|love|lovesongs|romantic|ballad|baladas|adult contemporary|adulte contemporain|easy listening|80s|90s|2000s|classic hits|oldies|pop|rouge|rythme|plaisir|retrosouvenirs|retro souvenirs|wow-fm)/.test(haystack)
       && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk|christmas|old time radio|otr|bollywood|tamil|cumbia|gospel)/.test(haystack);
   }
-  if (category === "rythme-fm") {
-    return /rythme/.test(haystack)
-      && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk)/.test(haystack);
+  if (category === "retro-souvenirs") {
+    return /(retrosouvenirs|retro souvenirs|souvenirs|classic hits|oldies|50s|60s|70s|80s|90s)/.test(haystack)
+      && !/(hard rock|heavy metal|metal|punk|dance|eurodance|techno|house|hip-hop|rap|country|sports|news|talk|gospel|christian)/.test(haystack);
   }
   if (category !== "hits") return true;
   return !/(country|classic rock|heavy metal|oldies|retro|70s|80s|90s)/.test(haystack);
+}
+
+function normalizeCategory(value) {
+  const category = String(value || "").toLowerCase();
+  return category === "rythme-fm" ? "retro-souvenirs" : category;
 }
 
 function cleanStationName(value) {
