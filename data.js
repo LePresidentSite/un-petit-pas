@@ -1054,6 +1054,639 @@
     { id: "default-v2-evening-3", routine: "evening", title: "Ranger ce qui traîne", duration: "5 min", order: 2 }
   ];
 
+  const energyRules = Object.freeze({
+    pointsPerAction: 5,
+    rewardThreshold: 25,
+    sourceKeyVersion: 1,
+    sourceTypes: {
+      weeklyTask: "weekly-task",
+      routineTask: "routine-task",
+      declutter: "declutter",
+      smallStep: "small-step"
+    }
+  });
+
+  const collectionRules = Object.freeze({
+    primaryAlbumId: "album-petits-bonheurs",
+    defaultRewardAlbumId: "album-petits-bonheurs",
+    rewardAlbumStrategy: "single-active-album",
+    visibleHistoryLimit: 8,
+    preserveOwnedSeasonalStickers: true
+  });
+
+  const collectionAlbumFamilies = Object.freeze({
+    permanent: "permanent",
+    seasonal: "seasonal"
+  });
+
+  const collectionReleaseStatus = Object.freeze({
+    released: "released",
+    planned: "planned",
+    archived: "archived"
+  });
+
+  const collectionAccessTypes = Object.freeze({
+    free: "free",
+    premium: "premium",
+    purchase: "purchase",
+    event: "event"
+  });
+
+  const stickerRarities = Object.freeze({
+    common: "common",
+    rare: "rare",
+    special: "special"
+  });
+
+  const collectionArtDirection = Object.freeze({
+    id: "cute-childhood-reward",
+    label: "Autocollants doux de récompense d'enfance",
+    principles: [
+      "personnages et objets 100 % originaux",
+      "formes rondes, lisibles et attachantes",
+      "petits visages expressifs avec joues rosées",
+      "contours blancs épais type autocollant découpé",
+      "couleurs tendres mais joyeuses",
+      "texture papier très discrète et ombre douce"
+    ],
+    palette: ["crème", "vert sauge", "jaune chaud", "pêche", "bleu-gris", "lilas doux"],
+    avoid: [
+      "personnages sous licence",
+      "silhouettes reconnaissables d'univers existants",
+      "copies de styles protégés ou trop identifiables"
+    ]
+  });
+
+  const collectionCharacters = [
+    {
+      id: "character-petit-rayon",
+      name: "Petit Rayon",
+      role: "encouragement",
+      status: collectionReleaseStatus.planned,
+      description: "Un petit éclat solaire très fier des minuscules progrès.",
+      visualNotes: "forme ronde jaune chaud, sourire confiant, petites étincelles sauge"
+    },
+    {
+      id: "character-mimi-feuille",
+      name: "Mimi Feuille",
+      role: "douceur et croissance",
+      status: collectionReleaseStatus.planned,
+      description: "Une jeune feuille curieuse qui revient quand l'utilisateur reprend doucement son rythme.",
+      visualNotes: "vert sauge, grandes joues rosées, posture de petite pousse courageuse"
+    },
+    {
+      id: "character-bulle-calin",
+      name: "Bulle Câlin",
+      role: "repos et réconfort",
+      status: collectionReleaseStatus.released,
+      description: "Une petite bulle bleue-gris qui rappelle que ralentir fait aussi partie du chemin.",
+      visualNotes: "petite bulle bleu-gris ronde, reflet blanc ovale en haut à gauche, mini bulle/antenne au sommet, yeux paisiblement fermés, petit sourire, joues pêche rosées, traits brun doux, posture timide et rassurante",
+      referenceStickerId: "sticker-maison-cocon-002"
+    }
+  ];
+
+  const plannedStickerAlbums = [
+    {
+      id: "album-jardin-mini-courage",
+      sourceKey: "album:permanent:jardin-mini-courage",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Jardin Mini-Courage",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Serre miniature lumineuse",
+      palette: ["vert sauge", "crème", "jaune soleil", "pêche", "bleu-gris"],
+      mood: "Un petit jardin de progrès lents, avec des objets et plantes qui célèbrent la patience.",
+      stickerIdeas: [
+        "Petit arrosoir fier",
+        "Graine d'espoir",
+        "Fleur timide",
+        "Bottes de jardin joyeuses",
+        "Nuage qui encourage",
+        "Serre miniature lumineuse"
+      ]
+    },
+    {
+      id: "album-petites-victoires",
+      sourceKey: "album:permanent:petites-victoires",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Petites Victoires",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Trophée tout petit",
+      palette: ["jaune chaud", "pêche", "vert sauge", "crème", "lilas doux"],
+      mood: "Des symboles de réussite minuscules et joyeux, sans pression de performance.",
+      stickerIdeas: [
+        "Médaille mini-bravo",
+        "Check fièrement coché",
+        "Éclair d'énergie doux",
+        "Ruban j'ai essayé",
+        "Carnet courage",
+        "Trophée tout petit"
+      ]
+    },
+    {
+      id: "album-douce-nuit",
+      sourceKey: "album:permanent:douce-nuit",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Douce Nuit",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Étoile veilleuse",
+      palette: ["bleu-gris", "crème", "lilas doux", "jaune pâle", "sauge foncé"],
+      mood: "Une collection calme et rêveuse pour les fins de journée, le sommeil et le repos.",
+      stickerIdeas: [
+        "Lune doudou",
+        "Oreiller paisible",
+        "Bougie calme",
+        "Pyjama sourire",
+        "Nuage repos",
+        "Étoile veilleuse"
+      ]
+    },
+    {
+      id: "album-pause-sucree",
+      sourceKey: "album:permanent:pause-sucree",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Pause Sucrée",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Pot de miel doux",
+      palette: ["crème", "pêche", "jaune miel", "rose fraise", "sauge léger"],
+      mood: "Petites douceurs nostalgiques, rondes et réconfortantes, comme une récompense tendre.",
+      stickerIdeas: [
+        "Biscuit bravo",
+        "Fraise sourire",
+        "Petit gâteau nuage",
+        "Bol de lait chaud",
+        "Bonbon étoile",
+        "Pot de miel doux"
+      ]
+    },
+    {
+      id: "album-petits-amis",
+      sourceKey: "album:permanent:petits-amis",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Petits Amis",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Chaton étoile",
+      palette: ["crème", "pêche", "bleu-gris", "vert sauge", "jaune doux"],
+      mood: "Animaux originaux très ronds, affectueux et expressifs, pensés comme de petits compagnons de progrès.",
+      stickerIdeas: [
+        "Chaton courage",
+        "Chiot bravo",
+        "Lapin pause",
+        "Oiseau doux",
+        "Ourson carnet",
+        "Chaton étoile"
+      ]
+    },
+    {
+      id: "album-ferme-douce",
+      sourceKey: "album:permanent:ferme-douce",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Ferme Douce",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Petit tracteur souriant",
+      palette: ["crème", "vert prairie doux", "jaune paille", "pêche", "bleu-gris"],
+      mood: "Une ferme tendre et tranquille, avec des objets et animaux originaux qui donnent envie de ranger doucement.",
+      stickerIdeas: [
+        "Poussin fier",
+        "Pomme joyeuse",
+        "Mouton nuage",
+        "Grange câlin",
+        "Carotte bravo",
+        "Petit tracteur souriant"
+      ]
+    },
+    {
+      id: "album-voyage-minuscule",
+      sourceKey: "album:permanent:voyage-minuscule",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Voyage Minuscule",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Petite valise merveille",
+      palette: ["bleu-gris", "crème", "jaune carte", "vert sauge", "lilas doux"],
+      mood: "Petites aventures sans pression, comme un carnet de voyage miniature rempli de découvertes rassurantes.",
+      stickerIdeas: [
+        "Boussole gentille",
+        "Ticket souvenir",
+        "Nuage voyageur",
+        "Carte pliée",
+        "Appareil photo timide",
+        "Petite valise merveille"
+      ]
+    },
+    {
+      id: "album-foret-enchantee",
+      sourceKey: "album:permanent:foret-enchantee",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Forêt Enchantée",
+      access: collectionAccessTypes.free,
+      rewardEligible: false,
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Champignon veilleuse",
+      palette: ["vert mousse", "crème", "bleu-gris", "lilas brume", "jaune luciole"],
+      mood: "Une forêt magique mais douce, pleine de petits objets vivants, de lumières tendres et de mystère rassurant.",
+      stickerIdeas: [
+        "Feuille curieuse",
+        "Luciole bravo",
+        "Pierre sourire",
+        "Gland courage",
+        "Fougère câlin",
+        "Champignon veilleuse"
+      ]
+    },
+    {
+      id: "album-halloween-douillet",
+      sourceKey: "album:seasonal:halloween-douillet",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Halloween Douillet",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 10, startDay: 1, endMonth: 10, endDay: 31, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Petite citrouille étoilée",
+      palette: ["bleu nuit doux", "crème", "orange citrouille", "vert sauge", "lilas brume"],
+      mood: "Halloween tendre et pas effrayant, avec de petites créatures originales très rassurantes.",
+      stickerIdeas: [
+        "Citrouille timide",
+        "Bougie courageuse",
+        "Chapeau pointu souriant",
+        "Bonbon lune",
+        "Balai minuscule",
+        "Petite citrouille étoilée"
+      ]
+    },
+    {
+      id: "album-noel-cocon",
+      sourceKey: "album:seasonal:noel-cocon",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Noël Cocon",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 12, startDay: 1, endMonth: 12, endDay: 31, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Petit sapin lumineux",
+      palette: ["crème", "vert sapin doux", "rouge canneberge", "or chaud", "bleu givré"],
+      mood: "Une collection festive, chaleureuse et feutrée, centrée sur les petits moments de réconfort.",
+      stickerIdeas: [
+        "Mitaine heureuse",
+        "Biscuit étoile",
+        "Tasse de chocolat",
+        "Ruban doux",
+        "Flocon sourire",
+        "Petit sapin lumineux"
+      ]
+    },
+    {
+      id: "album-saint-valentin-tendresse",
+      sourceKey: "album:seasonal:saint-valentin-tendresse",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Saint-Valentin Tendresse",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 2, startDay: 1, endMonth: 2, endDay: 14, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Lettre petit cœur",
+      palette: ["crème", "rose poudré", "pêche", "rouge doux", "lilas clair"],
+      mood: "Tendresse, affection et petits gestes pour soi, sans surcharge romantique.",
+      stickerIdeas: [
+        "Cœur doudou",
+        "Fleur câlin",
+        "Enveloppe sourire",
+        "Ruban tendresse",
+        "Bisou confetti",
+        "Lettre petit cœur"
+      ]
+    },
+    {
+      id: "album-printemps-fleuri",
+      sourceKey: "album:seasonal:printemps-fleuri",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Printemps Fleuri",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 3, startDay: 20, endMonth: 6, endDay: 20, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Bourgeon arc-en-ciel",
+      palette: ["vert tendre", "crème", "rose pétale", "jaune doux", "lilas clair"],
+      mood: "Une saison de renaissance douce, pleine de fleurs rondes, de petites pousses et d'encouragements frais.",
+      stickerIdeas: [
+        "Tulipe timide",
+        "Abeille bravo",
+        "Arrosoir fleuri",
+        "Papillon calme",
+        "Panier de graines",
+        "Bourgeon arc-en-ciel"
+      ]
+    },
+    {
+      id: "album-ete-rayon",
+      sourceKey: "album:seasonal:ete-rayon",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Été Rayon",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 6, startDay: 21, endMonth: 9, endDay: 21, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Soleil coquillage",
+      palette: ["jaune chaud", "crème", "bleu ciel doux", "pêche", "vert menthe"],
+      mood: "Un été souriant, lumineux et simple, comme une petite pause chaude après un effort.",
+      stickerIdeas: [
+        "Glace sourire",
+        "Serviette repos",
+        "Citronnade bravo",
+        "Coquillage doux",
+        "Nuage parasol",
+        "Soleil coquillage"
+      ]
+    },
+    {
+      id: "album-rentree-douce",
+      sourceKey: "album:seasonal:rentree-douce",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Rentrée Douce",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 8, startDay: 15, endMonth: 9, endDay: 30, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Cartable courage",
+      palette: ["crème", "vert sauge", "jaune crayon", "bleu-gris", "pêche"],
+      mood: "Une rentrée rassurante, organisée et mignonne, qui célèbre les petits recommencements.",
+      stickerIdeas: [
+        "Crayon content",
+        "Gomme gentille",
+        "Cahier propre",
+        "Trombone bravo",
+        "Collation courage",
+        "Cartable courage"
+      ]
+    },
+    {
+      id: "album-hiver-feutre",
+      sourceKey: "album:seasonal:hiver-feutre",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Hiver Feutré",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      seasonalWindow: { startMonth: 12, startDay: 21, endMonth: 2, endDay: 28, repeatsYearly: true },
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Lanterne neige",
+      palette: ["bleu givré", "crème", "lilas pâle", "vert sauge", "jaune lanterne"],
+      mood: "Un hiver calme et enveloppant, avec de petits objets lumineux et moelleux pour garder l'élan.",
+      stickerIdeas: [
+        "Flocon doudou",
+        "Mitaine bravo",
+        "Écharpe câlin",
+        "Tasse fumante",
+        "Botte neige",
+        "Lanterne neige"
+      ]
+    },
+    {
+      id: "album-anniversaire-bravo",
+      sourceKey: "album:seasonal:anniversaire-bravo",
+      family: collectionAlbumFamilies.seasonal,
+      releaseStatus: collectionReleaseStatus.planned,
+      title: "Anniversaire Bravo",
+      access: collectionAccessTypes.event,
+      rewardEligible: false,
+      preserveOwnedAfterEvent: true,
+      eventTrigger: "birthday",
+      stickerCountRange: { min: 6, max: 12 },
+      rareStickerIdea: "Gâteau petit vœu",
+      palette: ["crème", "rose confetti", "jaune fête", "bleu-gris", "lilas doux"],
+      mood: "Une mini fête personnelle, tendre et joyeuse, pour célébrer l'utilisateur sans pression.",
+      stickerIdeas: [
+        "Bougie sourire",
+        "Ballon bravo",
+        "Ruban confetti",
+        "Chapeau fête",
+        "Carte douce",
+        "Gâteau petit vœu"
+      ]
+    }
+  ];
+
+  const stickerAlbums = [
+    {
+      id: "album-petits-bonheurs",
+      sourceKey: "album:permanent:petits-bonheurs",
+      title: "Petits bonheurs",
+      description: "Un album gratuit de test pour préparer la future collection.",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.released,
+      access: collectionAccessTypes.free,
+      rewardEligible: true,
+      artDirectionId: collectionArtDirection.id,
+      specialStickerId: "sticker-petits-bonheurs-006",
+      order: 0
+    },
+    {
+      id: "album-maison-cocon",
+      sourceKey: "album:permanent:maison-cocon",
+      title: "Maison Cocon",
+      description: "Un petit refuge intérieur rempli d'objets doux, fiers d'aider à prendre soin de son espace.",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.released,
+      access: collectionAccessTypes.free,
+      rewardEligible: true,
+      artDirectionId: collectionArtDirection.id,
+      specialStickerId: "sticker-maison-cocon-008",
+      order: 1
+    }
+  ];
+
+  const stickerCatalog = [
+    {
+      id: "sticker-petits-bonheurs-001",
+      sourceKey: "sticker:petits-bonheurs:etincelle-douce",
+      albumId: "album-petits-bonheurs",
+      title: "Étincelle douce",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/petits-bonheurs/etincelle-douce.png",
+      rarity: stickerRarities.common,
+      order: 0
+    },
+    {
+      id: "sticker-petits-bonheurs-002",
+      sourceKey: "sticker:petits-bonheurs:coeur-confetti",
+      albumId: "album-petits-bonheurs",
+      title: "Cœur confetti",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "heart",
+      imageSrc: "./assets/stickers/petits-bonheurs/coeur-confetti.png",
+      rarity: stickerRarities.common,
+      order: 1
+    },
+    {
+      id: "sticker-petits-bonheurs-003",
+      sourceKey: "sticker:petits-bonheurs:maison-tranquille",
+      albumId: "album-petits-bonheurs",
+      title: "Maison tranquille",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "home",
+      imageSrc: "./assets/stickers/petits-bonheurs/maison-tranquille.png",
+      rarity: stickerRarities.common,
+      order: 2
+    },
+    {
+      id: "sticker-petits-bonheurs-004",
+      sourceKey: "sticker:petits-bonheurs:lune-berceuse",
+      albumId: "album-petits-bonheurs",
+      title: "Lune berceuse",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "moon",
+      imageSrc: "./assets/stickers/petits-bonheurs/lune-berceuse.png",
+      rarity: stickerRarities.common,
+      order: 3
+    },
+    {
+      id: "sticker-petits-bonheurs-005",
+      sourceKey: "sticker:petits-bonheurs:liste-fiere",
+      albumId: "album-petits-bonheurs",
+      title: "Liste fière",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "check",
+      imageSrc: "./assets/stickers/petits-bonheurs/liste-fiere.png",
+      rarity: stickerRarities.common,
+      order: 4
+    },
+    {
+      id: "sticker-petits-bonheurs-006",
+      sourceKey: "sticker:petits-bonheurs:pousse-courage",
+      albumId: "album-petits-bonheurs",
+      title: "Pousse courage",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "zones",
+      imageSrc: "./assets/stickers/petits-bonheurs/pousse-courage.png",
+      rarity: stickerRarities.rare,
+      order: 5
+    },
+    {
+      id: "sticker-maison-cocon-001",
+      sourceKey: "sticker:maison-cocon:tasse-calin",
+      albumId: "album-maison-cocon",
+      title: "Tasse Câlin",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "heart",
+      imageSrc: "./assets/stickers/maison-cocon/tasse-calin.png",
+      rarity: stickerRarities.common,
+      order: 0
+    },
+    {
+      id: "sticker-maison-cocon-002",
+      sourceKey: "sticker:maison-cocon:coussin-doudou",
+      albumId: "album-maison-cocon",
+      title: "Coussin Doudou",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "moon",
+      imageSrc: "./assets/stickers/maison-cocon/coussin-doudou.png",
+      rarity: stickerRarities.common,
+      characterIds: ["character-bulle-calin"],
+      order: 1
+    },
+    {
+      id: "sticker-maison-cocon-003",
+      sourceKey: "sticker:maison-cocon:chaussettes-repos",
+      albumId: "album-maison-cocon",
+      title: "Chaussettes Repos",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "moon",
+      imageSrc: "./assets/stickers/maison-cocon/chaussettes-repos.png",
+      rarity: stickerRarities.common,
+      order: 2
+    },
+    {
+      id: "sticker-maison-cocon-004",
+      sourceKey: "sticker:maison-cocon:panier-range",
+      albumId: "album-maison-cocon",
+      title: "Panier Rangé",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "zones",
+      imageSrc: "./assets/stickers/maison-cocon/panier-range.png",
+      rarity: stickerRarities.common,
+      order: 3
+    },
+    {
+      id: "sticker-maison-cocon-005",
+      sourceKey: "sticker:maison-cocon:lampe-veilleuse",
+      albumId: "album-maison-cocon",
+      title: "Lampe Veilleuse",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/maison-cocon/lampe-veilleuse.png",
+      rarity: stickerRarities.common,
+      order: 4
+    },
+    {
+      id: "sticker-maison-cocon-006",
+      sourceKey: "sticker:maison-cocon:balai-courageux",
+      albumId: "album-maison-cocon",
+      title: "Balai Courageux",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "check",
+      imageSrc: "./assets/stickers/maison-cocon/balai-courageux.png",
+      rarity: stickerRarities.common,
+      order: 5
+    },
+    {
+      id: "sticker-maison-cocon-007",
+      sourceKey: "sticker:maison-cocon:petite-cle-du-cocon",
+      albumId: "album-maison-cocon",
+      title: "Petite Clé du Cocon",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "home",
+      imageSrc: "./assets/stickers/maison-cocon/petite-cle-du-cocon.png",
+      rarity: stickerRarities.common,
+      order: 6
+    },
+    {
+      id: "sticker-maison-cocon-008",
+      sourceKey: "sticker:maison-cocon:petite-fenetre-au-soleil",
+      albumId: "album-maison-cocon",
+      title: "Petite Fenêtre au Soleil",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "home",
+      imageSrc: "./assets/stickers/maison-cocon/petite-fenetre-au-soleil.png",
+      rarity: stickerRarities.rare,
+      order: 7
+    }
+  ];
+
   window.APP_DATA = {
     quotes: quotes,
     missions: missions,
@@ -1065,6 +1698,17 @@
     weeklyZones: referenceWeeklyZones,
     weeklyPrograms: weeklyPrograms,
     defaultWeeklyProgramSchedule: defaultWeeklyProgramSchedule,
-    defaultRoutines: defaultRoutines
+    defaultRoutines: defaultRoutines,
+    energyRules: energyRules,
+    collectionRules: collectionRules,
+    collectionAlbumFamilies: collectionAlbumFamilies,
+    collectionReleaseStatus: collectionReleaseStatus,
+    collectionAccessTypes: collectionAccessTypes,
+    stickerRarities: stickerRarities,
+    collectionArtDirection: collectionArtDirection,
+    collectionCharacters: collectionCharacters,
+    plannedStickerAlbums: plannedStickerAlbums,
+    stickerAlbums: stickerAlbums,
+    stickerCatalog: stickerCatalog
   };
 })();

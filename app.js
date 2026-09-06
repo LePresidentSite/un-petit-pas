@@ -9,6 +9,7 @@
     zones: "Zones",
     principles: "Principes",
     routines: "Routines",
+    collection: "Collection",
     ambiance: "Ambiance", // NOUVEAU: Ambiance
     history: "Progrès",
     settings: "Réglages",
@@ -70,6 +71,7 @@
   });
   const DAILY_DECLUTTER_REF = "daily-declutter-15";
   const DAILY_DECLUTTER_TITLE = "Désencombrement 15 minutes";
+  const REWARD_HISTORY_LIMIT = Number(DATA.collectionRules && DATA.collectionRules.visibleHistoryLimit) || 8;
 
   const TIMER_CIRCUMFERENCE = 2 * Math.PI * 69;
   const DEFAULT_TIMER_STATE = {
@@ -98,6 +100,9 @@
     weeklyProgramSchedule: Object.assign({}, DATA.defaultWeeklyProgramSchedule),
     weeklyProgramOverrides: {},
     weeklyProgramChecks: {},
+    activeRewardAlbumId: DATA.collectionRules && DATA.collectionRules.defaultRewardAlbumId
+      ? DATA.collectionRules.defaultRewardAlbumId
+      : "album-petits-bonheurs",
     timerState: Object.assign({}, DEFAULT_TIMER_STATE)
   };
 
@@ -107,6 +112,14 @@
     activeRoutine: "morning",
     settings: Object.assign({}, DEFAULT_SETTINGS),
     activities: new Map(),
+    energyEvents: new Map(),
+    dailyRewardStates: new Map(),
+    stickerAwards: new Map(),
+    ownedStickers: new Map(),
+    lastStickerAward: null,
+    presentedStickerAwardIds: new Set(),
+    rewardProcessingPromise: Promise.resolve(),
+    selectedCollectionAlbumId: "",
     routineTasks: [],
     routineChecks: new Map(),
     zoneStates: new Map(),
@@ -181,7 +194,20 @@
     [
       "app", "splash", "todayLabel", "pageTitle", "dailyQuote", "dailyProgressRing",
       "dailyProgressValue", "progressTitle", "progressCaption", "missionTitle",
-      "missionTime", "missionDescription", "weeklyProgramTaskList", "weeklyTaskForm",
+      "missionTime", "missionDescription", "homeChecklistCount", "homeChecklistMeta",
+      "homeDeclutterCard", "homeDeclutterToggle", "homeDeclutterTimer", "homeRoutineList",
+      "todayEnergyTotal", "todayEnergyProgressBar", "todayEnergyProgressText",
+      "todayRewardAlbumLabel",
+      "todayCollectionTitle", "todayCollectionProgress", "todayCollectionGrid",
+      "todayCollectionMeta", "stickerAwardDialog", "stickerAwardIcon",
+      "stickerAwardTitle", "stickerAwardMessage",
+      "collectionAlbumTitle", "collectionAlbumDescription", "collectionAlbumProgress",
+      "collectionAlbumProgressBar", "collectionAlbumSubtitle", "collectionAlbumMeta",
+      "collectionAlbumSwitcher", "collectionRewardAlbumButton", "collectionAlbumGrid", "collectionRewardHistoryList", "collectionRewardHistoryEmpty",
+      "stickerDetailDialog", "stickerDetailIcon",
+      "stickerDetailAlbum", "stickerDetailTitle", "stickerDetailAwardDate", "stickerDetailQuantity",
+      "stickerDetailRare",
+      "weeklyProgramTaskList", "weeklyTaskForm",
       "weeklyTaskInput", "weeklyScheduleList", "weeklyFreeDayNote",
       "resetWeeklyScheduleButton", "smallStepNumber",
       "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
@@ -235,6 +261,11 @@
     state.settings.weeklyProgramSchedule = normalizeWeeklyProgramSchedule(state.settings.weeklyProgramSchedule);
     state.settings.weeklyProgramOverrides = normalizeWeeklyProgramOverrides(state.settings.weeklyProgramOverrides);
     state.settings.weeklyProgramChecks = normalizeWeeklyProgramChecks(state.settings.weeklyProgramChecks);
+    const activeRewardAlbumId = normalizeActiveRewardAlbumId(state.settings.activeRewardAlbumId);
+    if (state.settings.activeRewardAlbumId !== activeRewardAlbumId) {
+      state.settings.activeRewardAlbumId = activeRewardAlbumId;
+      await DB.saveSettings({ activeRewardAlbumId: activeRewardAlbumId });
+    }
     state.timer = normalizeTimerState(state.settings.timerState);
     state.settings.timerState = Object.assign({}, state.timer);
     state.routineTasks = await DB.seedRoutines(DATA.defaultRoutines);
@@ -243,13 +274,22 @@
       DB.getAll("activities"),
       DB.getAll("routineChecks"),
       DB.getAll("zoneTaskStates"),
-      DB.getAll("favorites")
+      DB.getAll("favorites"),
+      DB.getAll("energyEvents"),
+      DB.getAll("dailyRewardStates"),
+      DB.getAll("stickerAwards"),
+      DB.getAll("ownedStickers")
     ]);
 
     state.activities = new Map(results[0].map(function (item) { return [item.id, item]; }));
     state.routineChecks = new Map(results[1].map(function (item) { return [item.id, item]; }));
     state.zoneStates = new Map(results[2].map(function (item) { return [item.id, item]; }));
     state.favorites = new Map(results[3].map(function (item) { return [item.id, item]; }));
+    state.energyEvents = new Map(results[4].map(function (item) { return [item.sourceKey || item.id, item]; }));
+    state.dailyRewardStates = new Map(results[5].map(function (item) { return [item.id, item]; }));
+    state.stickerAwards = new Map(results[6].map(function (item) { return [item.id, item]; }));
+    state.ownedStickers = new Map(results[7].map(function (item) { return [item.id, item]; }));
+    state.lastStickerAward = null;
 
     const hashRoute = window.location.hash.replace("#", "");
     if (Object.prototype.hasOwnProperty.call(ROUTE_TITLES, hashRoute)) {
@@ -262,6 +302,13 @@
     elements.weeklyProgramTaskList.addEventListener("change", handleWeeklyProgramTaskToggle);
     elements.weeklyProgramTaskList.addEventListener("click", handleWeeklyProgramTaskClick);
     elements.weeklyTaskForm.addEventListener("submit", addWeeklyProgramTask);
+    elements.homeDeclutterToggle.addEventListener("click", toggleRoutineDeclutter);
+    elements.homeDeclutterTimer.addEventListener("click", openDailyDeclutterTimer);
+    elements.homeRoutineList.addEventListener("click", handleHomeRoutineClick);
+    elements.collectionAlbumSwitcher.addEventListener("click", handleCollectionAlbumSwitch);
+    elements.collectionRewardAlbumButton.addEventListener("click", handleCollectionRewardAlbumChoice);
+    elements.collectionAlbumGrid.addEventListener("click", handleCollectionStickerClick);
+    elements.collectionRewardHistoryList.addEventListener("click", handleRewardHistoryClick);
     elements.weeklyScheduleList.addEventListener("change", changeWeeklyProgramDay);
     elements.resetWeeklyScheduleButton.addEventListener("click", resetWeeklyProgramSchedule);
     elements.completeSmallStepButton.addEventListener("click", completeCurrentSmallStep);
@@ -363,6 +410,16 @@
 
     if (event.target.closest("[data-close-dialog]")) {
       elements.routineTaskDialog.close();
+      return;
+    }
+
+    if (event.target.closest("[data-close-sticker-award]")) {
+      closeStickerAwardDialog();
+      return;
+    }
+
+    if (event.target.closest("[data-close-sticker-detail]")) {
+      closeStickerDetailDialog();
     }
   }
 
@@ -389,6 +446,7 @@
     }
 
     if (route === "history") renderHistory();
+    if (route === "collection") renderCollectionPage();
     if (route === "pro") renderAccountUi();
     window.scrollTo({ top: 0, behavior: state.settings.reduceMotion ? "auto" : "smooth" });
   }
@@ -403,6 +461,7 @@
     renderZones();
     renderPrinciples();
     renderRoutines();
+    renderCollectionPage();
     renderHistory();
     renderSettings();
     renderAccountUi();
@@ -574,6 +633,8 @@
     const todayKey = formatDateKey(state.today);
     const weeklyProgram = getWeeklyProgramForDate(state.today);
     const weeklyTasks = getWeeklyProgramTasks(state.today);
+    const weeklyChecks = state.settings.weeklyProgramChecks[todayKey] || {};
+    const declutterDone = hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
     const missionDone = isWeeklyProgramComplete(state.today);
     const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && activity.type === "small-step";
@@ -584,12 +645,30 @@
     const progress = Math.round(([missionDone, smallStepDone, otherStepDone].filter(Boolean).length / 3) * 100);
     const journey = state.settings.smallStepProgress;
     const currentStep = getCurrentSmallStep();
+    const routineHighlights = getHomeRoutineTasks();
+    const completedWeeklyTasks = weeklyTasks.filter(function (task) {
+      return Boolean(weeklyChecks[task.id]);
+    }).length;
+    const completedRoutineHighlights = routineHighlights.filter(function (task) {
+      return state.routineChecks.has(todayKey + ":" + task.id);
+    }).length;
+    const checklistTotal = weeklyTasks.length + (currentStep ? 1 : 0) + 1 + routineHighlights.length;
+    const checklistDone = completedWeeklyTasks +
+      (smallStepDone ? 1 : 0) +
+      (declutterDone ? 1 : 0) +
+      completedRoutineHighlights;
 
     elements.dailyQuote.textContent = daily.quote;
     elements.missionTitle.textContent = weeklyProgram.title;
     elements.missionTime.textContent = weeklyProgram.duration;
     elements.missionDescription.textContent = weeklyProgram.description;
+    elements.homeChecklistCount.textContent = checklistDone + " / " + checklistTotal;
+    elements.homeChecklistMeta.textContent = checklistTotal
+      ? checklistTotal + " gestes possibles. Coche seulement ce qui t'aide aujourd'hui."
+      : "Une journée légère. Ajoute seulement ce qui te ferait du bien.";
     renderWeeklyProgramTasks(weeklyTasks, todayKey);
+    renderHomeDeclutter(declutterDone);
+    renderHomeRoutineTasks(routineHighlights, todayKey);
     elements.weeklyZoneTitle.textContent = daily.weeklyZone.name;
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
@@ -603,10 +682,13 @@
       elements.smallStepDetails.innerHTML = renderTextParagraphs(currentStep.details);
       elements.completeSmallStepButton.hidden = false;
       elements.completeSmallStepButton.disabled = false;
+      elements.completeSmallStepButton.classList.toggle("completed", smallStepDone);
+      elements.completeSmallStepButton.setAttribute("aria-pressed", String(smallStepDone));
+      elements.completeSmallStepButton.querySelector("span").textContent = smallStepDone ? "Continuer" : "Cocher";
       elements.favoriteSmallStepButton.hidden = false;
       elements.favoriteSmallStepButton.classList.toggle("completed", isFavorite);
       elements.favoriteSmallStepButton.setAttribute("aria-pressed", String(isFavorite));
-      elements.favoriteSmallStepButton.querySelector("span").textContent = isFavorite ? "Dans mes favoris" : "Ajouter aux favoris";
+      elements.favoriteSmallStepButton.querySelector("span").textContent = isFavorite ? "Favori" : "Favori";
       elements.smallStepRestartButton.hidden = true;
       elements.smallStepDetailsPanel.hidden = false;
     } else {
@@ -622,6 +704,8 @@
 
     elements.dailyProgressRing.style.setProperty("--progress", String(progress));
     elements.dailyProgressValue.textContent = progress + "%";
+    renderTodayEnergyProgress(todayKey);
+    renderTodayCollection();
 
     if (progress === 100) {
       elements.progressTitle.textContent = "C'est assez pour aujourd'hui";
@@ -636,6 +720,582 @@
       elements.progressTitle.textContent = "Un pas à la fois";
       elements.progressCaption.textContent = "Rien ne presse.";
     }
+    showLastStickerAward();
+  }
+
+  function renderTodayEnergyProgress(todayKey) {
+    const threshold = Number(DATA.energyRules && DATA.energyRules.rewardThreshold) || 25;
+    const total = getDailyEnergyTotal(todayKey);
+    const current = threshold > 0 ? total % threshold : total;
+    const percent = threshold > 0 ? Math.min(100, Math.round((current / threshold) * 100)) : 0;
+    const nextThreshold = threshold > 0 ? (Math.floor(total / threshold) + 1) * threshold : total;
+
+    elements.todayEnergyTotal.textContent = total + " ⚡";
+    elements.todayEnergyProgressBar.style.setProperty("--width", percent + "%");
+    elements.todayEnergyProgressText.textContent = current + " / " + threshold + " ⚡ vers le prochain autocollant";
+    elements.todayEnergyProgressText.title = "Prochain seuil à " + nextThreshold + " ⚡ aujourd'hui.";
+    if (elements.todayRewardAlbumLabel) {
+      const album = getActiveRewardAlbum();
+      elements.todayRewardAlbumLabel.textContent = "Récompenses : " + (album ? album.title : "Petits bonheurs");
+    }
+  }
+
+  function renderTodayCollection() {
+    const album = getPrimaryStickerAlbum();
+    if (!album) {
+      elements.todayCollectionTitle.textContent = "Collection";
+      elements.todayCollectionProgress.textContent = "0 / 0";
+      elements.todayCollectionGrid.innerHTML = "";
+      elements.todayCollectionMeta.textContent = "Les autocollants seront bientôt disponibles.";
+      return;
+    }
+
+    const stickers = getAlbumStickers(album.id);
+    const progress = getAlbumProgress(album.id);
+    elements.todayCollectionTitle.textContent = album.title;
+    elements.todayCollectionProgress.textContent = progress.ownedCount + " / " + progress.totalCount;
+    elements.todayCollectionGrid.setAttribute("aria-label", "Collection " + album.title);
+    elements.todayCollectionGrid.innerHTML = stickers.map(renderCollectionSticker).join("");
+    elements.todayCollectionMeta.textContent = progress.complete
+      ? "Album complet. Les prochains gains ajouteront des doublons."
+      : "Débloque tes petits trésors avec tes points d'énergie.";
+  }
+
+  function renderCollectionPage() {
+    const albums = getReleasedStickerAlbums();
+    const album = getSelectedCollectionAlbum(albums);
+    if (!album) {
+      elements.collectionAlbumTitle.textContent = "Collection";
+      elements.collectionAlbumDescription.textContent = "Les autocollants seront bientôt disponibles.";
+      elements.collectionAlbumProgress.textContent = "0 / 0";
+      elements.collectionAlbumProgressBar.style.setProperty("--width", "0%");
+      if (elements.collectionAlbumSubtitle) elements.collectionAlbumSubtitle.textContent = "Aucun album";
+      if (elements.collectionAlbumMeta) elements.collectionAlbumMeta.textContent = "Reviens bientôt pour découvrir tes premiers autocollants.";
+      elements.collectionAlbumSwitcher.innerHTML = "";
+      elements.collectionRewardAlbumButton.hidden = true;
+      elements.collectionAlbumGrid.innerHTML = "";
+      renderCollectionRewardHistory();
+      return;
+    }
+
+    const stickers = getAlbumStickers(album.id);
+    const progress = getAlbumProgress(album.id);
+    const progressPercent = progress.totalCount
+      ? Math.round((progress.ownedCount / progress.totalCount) * 100)
+      : 0;
+
+    elements.collectionAlbumTitle.textContent = album.title;
+    elements.collectionAlbumDescription.textContent = album.description || "Débloque tes petits trésors avec tes points d'énergie.";
+    elements.collectionAlbumProgress.textContent = progress.ownedCount + " / " + progress.totalCount;
+    elements.collectionAlbumProgressBar.style.setProperty("--width", progressPercent + "%");
+    if (elements.collectionAlbumSubtitle) elements.collectionAlbumSubtitle.textContent = album.title;
+    if (elements.collectionAlbumMeta) {
+      elements.collectionAlbumMeta.textContent = progress.complete
+        ? "Album complet. Les prochains gains ajouteront des doublons à ta collection."
+        : "Débloque tes petits trésors avec tes points d'énergie.";
+    }
+    elements.collectionAlbumGrid.setAttribute("aria-label", "Album " + album.title);
+    elements.collectionAlbumGrid.innerHTML = stickers.map(function (sticker, index) {
+      return renderCollectionPageSticker(sticker, album, index);
+    }).join("");
+    renderCollectionAlbumSwitcher(albums, album);
+    renderCollectionRewardAlbumAction(album);
+    renderCollectionRewardHistory();
+  }
+
+  function renderCollectionAlbumSwitcher(albums, selectedAlbum) {
+    elements.collectionAlbumSwitcher.hidden = albums.length <= 1;
+    const activeRewardAlbum = getActiveRewardAlbum();
+    elements.collectionAlbumSwitcher.innerHTML = albums.map(function (album) {
+      const progress = getAlbumProgress(album.id);
+      const selected = selectedAlbum && album.id === selectedAlbum.id;
+      const rewardActive = activeRewardAlbum && album.id === activeRewardAlbum.id;
+      return [
+        '<button class="collection-album-tab',
+        selected ? " active" : "",
+        rewardActive ? " reward-active" : "",
+        '" type="button" data-collection-album="',
+        escapeHtml(album.id),
+        '"',
+        selected ? ' aria-current="true"' : "",
+        '>',
+        '<span>', escapeHtml(album.title), "</span>",
+        '<small>', progress.ownedCount, " / ", progress.totalCount, "</small>",
+        "</button>"
+      ].join("");
+    }).join("");
+  }
+
+  function renderCollectionRewardAlbumAction(album) {
+    if (!elements.collectionRewardAlbumButton) return;
+    const activeAlbum = getActiveRewardAlbum();
+    const active = activeAlbum && album && activeAlbum.id === album.id;
+    const selectable = isRewardSelectableAlbum(album);
+
+    elements.collectionRewardAlbumButton.hidden = false;
+    elements.collectionRewardAlbumButton.disabled = active || !selectable;
+    elements.collectionRewardAlbumButton.dataset.rewardAlbum = album ? album.id : "";
+    elements.collectionRewardAlbumButton.classList.toggle("active", Boolean(active));
+    elements.collectionRewardAlbumButton.classList.toggle("disabled", !selectable);
+
+    if (active) {
+      elements.collectionRewardAlbumButton.textContent = "Album actif pour mes récompenses";
+    } else if (selectable) {
+      elements.collectionRewardAlbumButton.textContent = "Gagner mes prochains autocollants ici";
+    } else {
+      elements.collectionRewardAlbumButton.textContent = "Album non disponible pour les récompenses";
+    }
+  }
+
+  function renderCollectionPageSticker(sticker, album, index) {
+    const ownedSticker = findOwnedStickerByStickerId(sticker.id);
+    const unlocked = Boolean(ownedSticker);
+    const quantity = Math.max(1, Number(ownedSticker && ownedSticker.quantity) || 1);
+    const lockedTitle = sticker.rarity === "rare" ? sticker.title : "À débloquer";
+    const lockedMeta = sticker.rarity === "rare" ? "Sticker rare · Continue !" : "Continue tes petits pas";
+    const visualClassName = getStickerClassName(sticker) + (unlocked ? " unlocked" : " locked") + " collection-page-sticker-visual";
+    const buttonClassName = [
+      "collection-page-sticker-card",
+      unlocked ? "unlocked" : "locked",
+      sticker.rarity === "rare" ? "collection-page-sticker-rare" : ""
+    ].filter(Boolean).join(" ");
+
+    return [
+      '<button class="', buttonClassName, '" type="button"',
+      unlocked ? ' data-collection-sticker="' + escapeHtml(sticker.id) + '"' : " disabled",
+      ' aria-label="',
+      unlocked ? escapeHtml(sticker.title + ", " + album.title + ", " + quantity + " exemplaire" + (quantity > 1 ? "s" : "")) : "Autocollant " + (index + 1) + " verrouillé",
+      '">',
+      '<span class="collection-page-sticker-number" aria-hidden="true">', index + 1, "</span>",
+      unlocked ? "" : '<span class="collection-page-lock" aria-hidden="true"><svg><use href="#icon-lock"></use></svg></span>',
+      '<span class="', visualClassName, '" aria-hidden="true">',
+      renderStickerVisual(sticker, true),
+      unlocked && quantity > 1 ? '<strong class="sticker-quantity">×' + quantity + "</strong>" : "",
+      "</span>",
+      '<span class="collection-page-sticker-copy">',
+      '<strong>', unlocked ? escapeHtml(sticker.title) : escapeHtml(lockedTitle), "</strong>",
+      '<small>',
+      unlocked ? "Dans " + escapeHtml(album.title) : escapeHtml(lockedMeta),
+      "</small>",
+      sticker.rarity === "rare" && unlocked ? '<span class="collection-page-rare-label">Rare</span>' : "",
+      "</span>",
+      "</button>"
+    ].join("");
+  }
+
+  function handleCollectionStickerClick(event) {
+    const stickerButton = event.target.closest("[data-collection-sticker]");
+    if (!stickerButton) return;
+    openStickerDetail(stickerButton.dataset.collectionSticker);
+  }
+
+  function handleCollectionAlbumSwitch(event) {
+    const albumButton = event.target.closest("[data-collection-album]");
+    if (!albumButton) return;
+    const album = getStickerAlbumById(albumButton.dataset.collectionAlbum);
+    if (!album || !isReleasedStickerAlbum(album)) return;
+    state.selectedCollectionAlbumId = album.id;
+    renderCollectionPage();
+  }
+
+  async function handleCollectionRewardAlbumChoice() {
+    const albumId = elements.collectionRewardAlbumButton.dataset.rewardAlbum;
+    const album = getStickerAlbumById(albumId);
+    if (!isRewardSelectableAlbum(album)) {
+      showToast("Cet album n'est pas disponible pour les récompenses.");
+      return;
+    }
+
+    if (state.settings.activeRewardAlbumId === album.id) return;
+
+    state.settings.activeRewardAlbumId = album.id;
+    await DB.saveSettings({ activeRewardAlbumId: album.id });
+    renderCollectionPage();
+    renderTodayEnergyProgress(formatDateKey(state.today));
+    showToast("Tes prochaines récompenses iront dans " + album.title + ".");
+  }
+
+  function renderCollectionRewardHistory() {
+    if (!elements.collectionRewardHistoryList || !elements.collectionRewardHistoryEmpty) return;
+
+    const entries = getRecentStickerAwardEntries(REWARD_HISTORY_LIMIT);
+    elements.collectionRewardHistoryEmpty.hidden = entries.length > 0;
+    elements.collectionRewardHistoryList.innerHTML = entries.map(renderCollectionRewardHistoryItem).join("");
+  }
+
+  function getRecentStickerAwardEntries(limit) {
+    return Array.from(state.stickerAwards.values()).map(function (award) {
+      const sticker = DATA.stickerCatalog.find(function (item) {
+        return item.id === award.stickerId;
+      });
+      if (!sticker) return null;
+
+      const album = DATA.stickerAlbums.find(function (item) {
+        return item.id === award.albumId;
+      }) || getPrimaryStickerAlbum();
+      const ownedSticker = findOwnedStickerByStickerId(sticker.id);
+      const currentQuantity = Math.max(
+        1,
+        Number(ownedSticker && ownedSticker.quantity) || Number(award.quantityAfterAward) || 1
+      );
+
+      return {
+        award: award,
+        sticker: sticker,
+        album: album,
+        currentQuantity: currentQuantity,
+        awardedAt: award.awardedAt || award.date || ""
+      };
+    }).filter(Boolean).sort(function (a, b) {
+      return getRewardAwardTime(b.award) - getRewardAwardTime(a.award);
+    }).slice(0, limit);
+  }
+
+  function renderCollectionRewardHistoryItem(entry) {
+    const award = entry.award;
+    const sticker = entry.sticker;
+    const albumTitle = entry.album ? entry.album.title : "Collection";
+    const duplicateQuantity = Math.max(2, Number(award.quantityAfterAward) || entry.currentQuantity || 2);
+    const badgeText = award.duplicate ? "Déjà gagné ×" + duplicateQuantity : "Nouveau";
+    const badgeClass = award.duplicate ? "duplicate" : "new";
+
+    return [
+      '<article class="collection-reward-item" role="listitem">',
+      '<button class="collection-reward-button" type="button" data-reward-award="',
+      escapeHtml(award.id),
+      '" aria-label="',
+      escapeHtml(sticker.title + ", " + albumTitle + ", " + formatRewardShortDate(entry.awardedAt)),
+      '">',
+      '<span class="', getStickerClassName(sticker), ' unlocked collection-reward-thumb" aria-hidden="true">',
+      renderStickerVisual(sticker, true),
+      "</span>",
+      '<span class="collection-reward-copy">',
+      '<strong>', escapeHtml(sticker.title), "</strong>",
+      '<small>', escapeHtml(albumTitle), " · ", escapeHtml(formatRewardShortDate(entry.awardedAt)), "</small>",
+      "</span>",
+      '<span class="collection-reward-badge ', badgeClass, '">', badgeText, "</span>",
+      "</button>",
+      "</article>"
+    ].join("");
+  }
+
+  function handleRewardHistoryClick(event) {
+    const rewardButton = event.target.closest("[data-reward-award]");
+    if (!rewardButton) return;
+    openStickerAwardDetail(rewardButton.dataset.rewardAward);
+  }
+
+  function openStickerAwardDetail(awardId) {
+    const award = state.stickerAwards.get(awardId);
+    if (!award) return;
+    openStickerDetail(award.stickerId, { awardedAt: award.awardedAt || award.date || "" });
+  }
+
+  function openStickerDetail(stickerId, options) {
+    const sticker = DATA.stickerCatalog.find(function (item) {
+      return item.id === stickerId;
+    });
+    if (!sticker) return;
+
+    const ownedSticker = findOwnedStickerByStickerId(sticker.id);
+    if (!ownedSticker) {
+      showToast("Cet autocollant reste à débloquer.");
+      return;
+    }
+
+    const album = DATA.stickerAlbums.find(function (item) {
+      return item.id === sticker.albumId;
+    }) || getPrimaryStickerAlbum();
+    const quantity = Math.max(1, Number(ownedSticker.quantity) || 1);
+
+    elements.stickerDetailIcon.className = getStickerClassName(sticker) + " unlocked sticker-detail-visual";
+    elements.stickerDetailIcon.innerHTML = renderStickerVisual(sticker, false);
+    elements.stickerDetailAlbum.textContent = album ? album.title : "Collection";
+    elements.stickerDetailTitle.textContent = sticker.title;
+    elements.stickerDetailQuantity.textContent = quantity + " exemplaire" + (quantity > 1 ? "s" : "") + " dans ta collection.";
+    if (elements.stickerDetailAwardDate) {
+      const awardedAt = options && options.awardedAt ? options.awardedAt : "";
+      elements.stickerDetailAwardDate.hidden = !awardedAt;
+      elements.stickerDetailAwardDate.textContent = awardedAt ? "Gagné le " + formatRewardDetailDate(awardedAt) + "." : "";
+    }
+    elements.stickerDetailRare.hidden = sticker.rarity !== "rare";
+
+    if (typeof elements.stickerDetailDialog.showModal === "function") {
+      if (!elements.stickerDetailDialog.open) elements.stickerDetailDialog.showModal();
+    } else {
+      elements.stickerDetailDialog.setAttribute("open", "");
+    }
+  }
+
+  function closeStickerDetailDialog() {
+    if (elements.stickerDetailDialog.open && typeof elements.stickerDetailDialog.close === "function") {
+      elements.stickerDetailDialog.close();
+      return;
+    }
+    elements.stickerDetailDialog.removeAttribute("open");
+  }
+
+  function renderCollectionSticker(sticker) {
+    const ownedSticker = findOwnedStickerByStickerId(sticker.id);
+    const unlocked = Boolean(ownedSticker);
+    const quantity = Math.max(1, Number(ownedSticker && ownedSticker.quantity) || 1);
+    return [
+      '<span class="', getStickerClassName(sticker),
+      unlocked ? " unlocked" : " locked",
+      '" title="', escapeHtml(sticker.title), unlocked ? "" : " verrouillé", '">',
+      renderStickerVisual(sticker, true),
+      '<span class="sr-only">', escapeHtml(sticker.title), unlocked ? " débloqué" : " verrouillé", "</span>",
+      unlocked && quantity > 1 ? '<strong class="sticker-quantity">×' + quantity + "</strong>" : "",
+      "</span>"
+    ].join("");
+  }
+
+  function getStickerClassName(sticker) {
+    return [
+      "collection-sticker",
+      "collection-sticker-" + escapeHtml(sticker.placeholderIcon || "spark"),
+      sticker.rarity === "rare" ? "collection-sticker-rare" : ""
+    ].filter(Boolean).join(" ");
+  }
+
+  function renderStickerVisual(sticker, lazy) {
+    if (sticker && sticker.imageSrc) {
+      return [
+        '<img class="collection-sticker-image" src="', escapeHtml(sticker.imageSrc),
+        '" alt="" aria-hidden="true" decoding="async"',
+        lazy ? ' loading="lazy"' : "",
+        ">"
+      ].join("");
+    }
+    return '<svg aria-hidden="true"><use href="' + getStickerIconRef(sticker || {}) + '"></use></svg>';
+  }
+
+  function showLastStickerAward() {
+    const award = state.lastStickerAward;
+    if (!award || !award.stickerAwardId || state.presentedStickerAwardIds.has(award.stickerAwardId)) return;
+    state.presentedStickerAwardIds.add(award.stickerAwardId);
+
+    const title = award.sticker && award.sticker.title ? award.sticker.title : "Autocollant gagné";
+    const albumTitle = award.album && award.album.title ? award.album.title : "Petits bonheurs";
+    elements.stickerAwardTitle.textContent = award.isDuplicate
+      ? title + " gagné à nouveau"
+      : title;
+    elements.stickerAwardMessage.textContent = award.isDuplicate
+      ? "Tu l'as gagné à nouveau dans " + albumTitle + ". Quantité : ×" + award.quantity + "."
+      : "Il a été ajouté à " + albumTitle + ".";
+    elements.stickerAwardIcon.className = getStickerClassName(award.sticker || {}) + " unlocked";
+    elements.stickerAwardIcon.innerHTML = renderStickerVisual(award.sticker || {}, false);
+
+    if (typeof elements.stickerAwardDialog.showModal === "function") {
+      if (!elements.stickerAwardDialog.open) elements.stickerAwardDialog.showModal();
+    } else {
+      elements.stickerAwardDialog.setAttribute("open", "");
+    }
+  }
+
+  function closeStickerAwardDialog() {
+    state.lastStickerAward = null;
+    if (elements.stickerAwardDialog.open && typeof elements.stickerAwardDialog.close === "function") {
+      elements.stickerAwardDialog.close();
+      return;
+    }
+    elements.stickerAwardDialog.removeAttribute("open");
+  }
+
+  function getStickerAlbumById(albumId) {
+    return DATA.stickerAlbums.find(function (album) {
+      return album.id === albumId;
+    }) || null;
+  }
+
+  function isReleasedStickerAlbum(album) {
+    const releasedStatus = DATA.collectionReleaseStatus && DATA.collectionReleaseStatus.released
+      ? DATA.collectionReleaseStatus.released
+      : "released";
+    return album && (!album.releaseStatus || album.releaseStatus === releasedStatus);
+  }
+
+  function isRewardSelectableAlbum(album) {
+    return Boolean(album && album.rewardEligible === true && isReleasedStickerAlbum(album));
+  }
+
+  function getReleasedStickerAlbums() {
+    return DATA.stickerAlbums
+      .filter(isReleasedStickerAlbum)
+      .sort(function (a, b) { return Number(a.order || 0) - Number(b.order || 0); });
+  }
+
+  function getRewardSelectableAlbums() {
+    return getReleasedStickerAlbums().filter(isRewardSelectableAlbum);
+  }
+
+  function getDefaultRewardAlbumId() {
+    return DATA.collectionRules && DATA.collectionRules.defaultRewardAlbumId
+      ? DATA.collectionRules.defaultRewardAlbumId
+      : "album-petits-bonheurs";
+  }
+
+  function normalizeActiveRewardAlbumId(albumId) {
+    const requestedAlbum = getStickerAlbumById(albumId);
+    if (isRewardSelectableAlbum(requestedAlbum)) return requestedAlbum.id;
+
+    const defaultAlbum = getStickerAlbumById(getDefaultRewardAlbumId());
+    if (isRewardSelectableAlbum(defaultAlbum)) return defaultAlbum.id;
+
+    const fallbackAlbum = getRewardSelectableAlbums()[0];
+    return fallbackAlbum ? fallbackAlbum.id : getDefaultRewardAlbumId();
+  }
+
+  function getActiveRewardAlbum() {
+    const albumId = normalizeActiveRewardAlbumId(state.settings.activeRewardAlbumId);
+    if (state.settings.activeRewardAlbumId !== albumId) {
+      state.settings.activeRewardAlbumId = albumId;
+    }
+    return getStickerAlbumById(albumId);
+  }
+
+  function getSelectedCollectionAlbum(albums) {
+    const selectedAlbum = state.selectedCollectionAlbumId
+      ? albums.find(function (album) { return album.id === state.selectedCollectionAlbumId; })
+      : null;
+    if (selectedAlbum) return selectedAlbum;
+
+    const primaryAlbum = getPrimaryStickerAlbum();
+    if (primaryAlbum && albums.some(function (album) { return album.id === primaryAlbum.id; })) {
+      state.selectedCollectionAlbumId = primaryAlbum.id;
+      return primaryAlbum;
+    }
+
+    const fallbackAlbum = albums[0] || null;
+    state.selectedCollectionAlbumId = fallbackAlbum ? fallbackAlbum.id : "";
+    return fallbackAlbum;
+  }
+
+  function getPrimaryStickerAlbum() {
+    const primaryAlbumId = DATA.collectionRules && DATA.collectionRules.primaryAlbumId
+      ? DATA.collectionRules.primaryAlbumId
+      : "album-petits-bonheurs";
+    return getStickerAlbumById(primaryAlbumId) || DATA.stickerAlbums[0] || null;
+  }
+
+  function getStickerIconRef(sticker) {
+    const icons = {
+      spark: "#icon-spark",
+      heart: "#icon-heart",
+      home: "#icon-home",
+      moon: "#icon-moon",
+      check: "#icon-check",
+      zones: "#icon-zones"
+    };
+    return icons[sticker.placeholderIcon] || "#icon-spark";
+  }
+
+  function renderHomeDeclutter(done) {
+    elements.homeDeclutterCard.classList.toggle("completed", done);
+    elements.homeDeclutterToggle.classList.toggle("completed", done);
+    elements.homeDeclutterToggle.setAttribute("aria-pressed", String(done));
+    elements.homeDeclutterToggle.querySelector("span").textContent = done ? "Fait" : "Cocher";
+  }
+
+  function getHomeRoutineTasks() {
+    const hour = new Date().getHours();
+    const preferredRoutine = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+    const periods = Array.from(new Set(["daily", preferredRoutine, "morning", "evening", "afternoon"]));
+    const selected = [];
+    const seen = new Set();
+
+    periods.forEach(function (routine) {
+      getRoutineTasks(routine).forEach(function (task) {
+        if (seen.has(task.id) || selected.length >= 4) return;
+        seen.add(task.id);
+        selected.push(task);
+      });
+    });
+
+    return selected;
+  }
+
+  function renderHomeRoutineTasks(tasks, todayKey) {
+    if (!tasks.length) {
+      elements.homeRoutineList.innerHTML = '<div class="today-empty-note">Tes routines apparaîtront ici quand elles seront prêtes.</div>';
+      return;
+    }
+
+    elements.homeRoutineList.innerHTML = tasks.map(function (task, index) {
+      const done = state.routineChecks.has(todayKey + ":" + task.id);
+      const visual = getTodayTaskVisual(task, index);
+      return [
+        '<article class="today-check-card today-routine-task', done ? " completed" : "", '">',
+        '<button class="today-check-content today-routine-toggle" type="button" data-home-routine-toggle="', escapeHtml(task.id), '" aria-pressed="', String(done), '">',
+        renderTodayTaskIcon(visual),
+        '<span class="today-check-copy">',
+        '<strong>', escapeHtml(task.title), '</strong>',
+        '<small>', escapeHtml(getRoutineLabel(task.routine)), " · ", escapeHtml(task.duration || "Quelques minutes"), '</small>',
+        '</span>',
+        renderTodayEnergySlot(),
+        '<span class="today-checkmark"><svg><use href="#icon-check"></use></svg></span>',
+        '</button>',
+        '</article>'
+      ].join("");
+    }).join("");
+  }
+
+  async function handleHomeRoutineClick(event) {
+    const button = event.target.closest("[data-home-routine-toggle]");
+    if (!button) return;
+    const task = state.routineTasks.find(function (row) {
+      return row.id === button.dataset.homeRoutineToggle;
+    });
+    if (task) await toggleRoutineTask(task);
+  }
+
+  function getRoutineLabel(routine) {
+    const labels = {
+      daily: "Quotidienne",
+      morning: "Matin",
+      afternoon: "Après-midi",
+      evening: "Soir"
+    };
+    return labels[routine] || "Routine";
+  }
+
+  function getTodayTaskVisual(task, index) {
+    const text = normalizeTodayTaskText((task && task.title) + " " + (task && task.description));
+    const visuals = [
+      { words: ["lit", "chambre", "drap", "sommeil"], icon: "icon-home", tone: "sky" },
+      { words: ["medicament", "sante", "soin"], icon: "icon-shield", tone: "mint" },
+      { words: ["rangement", "desencombr", "trier", "placer", "surface"], icon: "icon-zones", tone: "butter" },
+      { words: ["eau", "boire", "hydrat"], icon: "icon-spark", tone: "sky" },
+      { words: ["manger", "repas", "cuisine", "vaisselle"], icon: "icon-home", tone: "sage" },
+      { words: ["matin", "routine"], icon: "icon-routines", tone: "mint" },
+      { words: ["soir", "calme"], icon: "icon-moon", tone: "sky" },
+      { words: ["minute", "temps"], icon: "icon-timer", tone: "butter" }
+    ];
+    const match = visuals.find(function (visual) {
+      return visual.words.some(function (word) { return text.includes(word); });
+    });
+    const fallback = [
+      { icon: "icon-spark", tone: "butter" },
+      { icon: "icon-home", tone: "sage" },
+      { icon: "icon-routines", tone: "mint" },
+      { icon: "icon-check", tone: "sky" }
+    ];
+    return match || fallback[index % fallback.length];
+  }
+
+  function normalizeTodayTaskText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function renderTodayTaskIcon(visual) {
+    return '<span class="today-check-icon today-check-icon-' + visual.tone + '"><svg><use href="#' + visual.icon + '"></use></svg></span>';
+  }
+
+  function renderTodayEnergySlot() {
+    return '<span class="today-energy-slot" data-energy-preview="true" aria-label="Points d\'énergie à venir"><strong>5</strong><span aria-hidden="true">⚡</span></span>';
   }
 
   async function openDailyDeclutterTimer() {
@@ -653,17 +1313,20 @@
       return;
     }
 
-    elements.weeklyProgramTaskList.innerHTML = tasks.map(function (task) {
+    elements.weeklyProgramTaskList.innerHTML = tasks.map(function (task, index) {
       const checked = Boolean(checks[task.id]);
+      const visual = getTodayTaskVisual(task, index);
       return [
-        '<div class="weekly-program-task', checked ? " completed" : "", '" data-weekly-task-id="', escapeHtml(task.id), '">',
-        '<label class="weekly-program-check">',
+        '<article class="today-check-card weekly-program-task', checked ? " completed" : "", '" data-weekly-task-id="', escapeHtml(task.id), '">',
+        '<label class="weekly-program-check today-check-content">',
         '<input type="checkbox" data-weekly-task-check="', escapeHtml(task.id), '"', checked ? " checked" : "", ">",
-        '<span class="weekly-program-checkmark"><svg><use href="#icon-check"></use></svg></span>',
-        '<span>', escapeHtml(task.title), "</span>",
+        renderTodayTaskIcon(visual),
+        '<span class="today-check-copy"><strong>', escapeHtml(task.title), '</strong><small>Programme du jour</small></span>',
+        renderTodayEnergySlot(),
+        '<span class="weekly-program-checkmark today-checkmark"><svg><use href="#icon-check"></use></svg></span>',
         "</label>",
         '<button class="weekly-program-remove" type="button" data-weekly-task-remove="', escapeHtml(task.id), '" aria-label="Retirer ', escapeHtml(task.title), ' pour aujourd\'hui"><svg><use href="#icon-trash"></use></svg></button>',
-        "</div>"
+        "</article>"
       ].join("");
     }).join("");
   }
@@ -672,13 +1335,23 @@
     const checkbox = event.target.closest("[data-weekly-task-check]");
     if (!checkbox) return;
     const dateKey = formatDateKey(state.today);
+    const taskId = checkbox.dataset.weeklyTaskCheck;
     const checks = Object.assign({}, state.settings.weeklyProgramChecks[dateKey] || {});
-    if (checkbox.checked) checks[checkbox.dataset.weeklyTaskCheck] = true;
-    else delete checks[checkbox.dataset.weeklyTaskCheck];
+    if (checkbox.checked) checks[taskId] = true;
+    else delete checks[taskId];
     state.settings.weeklyProgramChecks = Object.assign({}, state.settings.weeklyProgramChecks, {
       [dateKey]: checks
     });
     await DB.saveSettings({ weeklyProgramChecks: state.settings.weeklyProgramChecks });
+    if (checkbox.checked) {
+      const task = getWeeklyProgramTasks(state.today).find(function (item) { return item.id === taskId; });
+      await awardEnergyForAction({
+        sourceType: DATA.energyRules.sourceTypes.weeklyTask,
+        sourceId: taskId,
+        date: dateKey,
+        title: task ? task.title : "Tâche du programme du jour"
+      });
+    }
     await syncWeeklyProgramActivity();
     renderHome();
     renderHistory();
@@ -765,6 +1438,13 @@
     const todayKey = formatDateKey(state.today);
     const reference = step.id + "-cycle-" + journey.cycle;
     await addActivity("small-step", todayKey, reference, step.title);
+    await awardEnergyForAction({
+      sourceType: DATA.energyRules.sourceTypes.smallStep,
+      sourceId: step.id,
+      sourceScope: "cycle-" + journey.cycle,
+      date: todayKey,
+      title: step.title
+    });
 
     const nextIndex = journey.currentIndex + 1;
     state.settings.smallStepProgress = {
@@ -1107,6 +1787,12 @@
       showToast("C'est décoché pour aujourd'hui.");
     } else {
       await addActivity("declutter", todayKey, DAILY_DECLUTTER_REF, DAILY_DECLUTTER_TITLE);
+      await awardEnergyForAction({
+        sourceType: DATA.energyRules.sourceTypes.declutter,
+        sourceId: DAILY_DECLUTTER_REF,
+        date: todayKey,
+        title: DAILY_DECLUTTER_TITLE
+      });
       showToast("C'est noté. Un petit espace de plus.");
     }
     renderHome();
@@ -1127,6 +1813,12 @@
       await DB.put("routineChecks", row);
       state.routineChecks.set(checkId, row);
       await addActivity("routine", todayKey, task.id, task.title);
+      await awardEnergyForAction({
+        sourceType: DATA.energyRules.sourceTypes.routineTask,
+        sourceId: task.id,
+        date: todayKey,
+        title: task.title
+      });
       showToast("Bien joué. Tu peux t'arrêter là.");
     }
 
@@ -2400,6 +3092,341 @@
     await DB.put("activities", activity);
     state.activities.set(id, activity);
     return activity;
+  }
+
+  async function awardEnergyForAction(options) {
+    const rules = DATA.energyRules || {};
+    const sourceType = options && options.sourceType;
+    const sourceId = options && options.sourceId;
+    const date = options && options.date;
+    if (!sourceType || !sourceId || !date) return null;
+
+    const sourceKey = buildEnergySourceKey({
+      sourceType: sourceType,
+      sourceId: sourceId,
+      sourceScope: options.sourceScope,
+      date: date
+    });
+    if (state.energyEvents.has(sourceKey)) return null;
+
+    const event = {
+      id: "energy-event:" + sourceKey,
+      sourceKey: sourceKey,
+      sourceType: sourceType,
+      sourceId: String(sourceId),
+      sourceScope: options.sourceScope || "",
+      date: date,
+      points: Number(rules.pointsPerAction) || 5,
+      title: options.title || "",
+      awardedAt: new Date().toISOString()
+    };
+
+    try {
+      await DB.add("energyEvents", event);
+      state.energyEvents.set(sourceKey, event);
+      await queueDailyEnergyRewards(date);
+      return event;
+    } catch (error) {
+      if (isIndexedDbConstraintError(error)) return null;
+      throw error;
+    }
+  }
+
+  async function queueDailyEnergyRewards(date) {
+    const previous = state.rewardProcessingPromise.catch(function () {});
+    const current = previous.then(function () {
+      return awardDailyEnergyRewards(date);
+    });
+    state.rewardProcessingPromise = current.catch(function (error) {
+      console.error("Récompense quotidienne impossible :", error);
+    });
+    return current;
+  }
+
+  async function awardDailyEnergyRewards(date) {
+    const threshold = Number(DATA.energyRules && DATA.energyRules.rewardThreshold) || 25;
+    if (threshold <= 0) return [];
+
+    const total = getDailyEnergyTotal(date);
+    const reachedMilestones = Math.floor(total / threshold);
+    const awards = [];
+
+    for (let milestoneIndex = 1; milestoneIndex <= reachedMilestones; milestoneIndex += 1) {
+      const award = await awardDailyEnergyReward(date, milestoneIndex, total, threshold);
+      if (award) awards.push(award);
+    }
+
+    return awards;
+  }
+
+  async function awardDailyEnergyReward(date, milestoneIndex, energyTotal, threshold) {
+    const id = buildDailyRewardStateId(date, milestoneIndex);
+    if (state.dailyRewardStates.has(id)) return null;
+
+    const awardedAt = new Date().toISOString();
+    const rewardState = {
+      id: id,
+      date: date,
+      milestoneIndex: milestoneIndex,
+      thresholdPoints: milestoneIndex * threshold,
+      energyTotalAtAward: energyTotal,
+      status: "awarded",
+      awardedAt: awardedAt
+    };
+
+    try {
+      await DB.add("dailyRewardStates", rewardState);
+      state.dailyRewardStates.set(id, rewardState);
+    } catch (error) {
+      if (isIndexedDbConstraintError(error)) {
+        const existing = await DB.get("dailyRewardStates", id);
+        if (existing) state.dailyRewardStates.set(existing.id, existing);
+        return null;
+      }
+      throw error;
+    }
+
+    const selection = selectStickerForDailyReward(milestoneIndex);
+    if (!selection) {
+      const skippedState = Object.assign({}, rewardState, {
+        status: "missing-sticker-catalog",
+        completedAt: new Date().toISOString()
+      });
+      await DB.put("dailyRewardStates", skippedState);
+      state.dailyRewardStates.set(id, skippedState);
+      return null;
+    }
+
+    const existingOwnedSticker = findOwnedStickerByStickerId(selection.sticker.id);
+    const nextQuantity = existingOwnedSticker
+      ? Math.max(1, Number(existingOwnedSticker.quantity) || 1) + 1
+      : 1;
+    const stickerAward = {
+      id: buildStickerAwardId(id),
+      rewardStateId: id,
+      date: date,
+      milestoneIndex: milestoneIndex,
+      thresholdPoints: rewardState.thresholdPoints,
+      energyTotalAtAward: energyTotal,
+      albumId: selection.album.id,
+      stickerId: selection.sticker.id,
+      duplicate: selection.isDuplicate,
+      quantityAfterAward: nextQuantity,
+      awardedAt: awardedAt
+    };
+
+    try {
+      await DB.add("stickerAwards", stickerAward);
+      state.stickerAwards.set(stickerAward.id, stickerAward);
+    } catch (error) {
+      if (!isIndexedDbConstraintError(error)) throw error;
+      const existingAward = await DB.get("stickerAwards", stickerAward.id);
+      if (existingAward) state.stickerAwards.set(existingAward.id, existingAward);
+      return null;
+    }
+
+    const ownedSticker = await upsertOwnedStickerForAward(selection.sticker, stickerAward, nextQuantity);
+    const albumProgress = getAlbumProgress(selection.album.id);
+    const completedState = Object.assign({}, rewardState, {
+      status: "completed",
+      stickerAwardId: stickerAward.id,
+      albumId: selection.album.id,
+      stickerId: selection.sticker.id,
+      duplicate: selection.isDuplicate,
+      albumOwnedCount: albumProgress.ownedCount,
+      albumTotalCount: albumProgress.totalCount,
+      completedAt: new Date().toISOString()
+    });
+
+    await DB.put("dailyRewardStates", completedState);
+    state.dailyRewardStates.set(id, completedState);
+    state.lastStickerAward = {
+      rewardStateId: completedState.id,
+      stickerAwardId: stickerAward.id,
+      date: date,
+      milestoneIndex: milestoneIndex,
+      thresholdPoints: completedState.thresholdPoints,
+      energyTotalAtAward: energyTotal,
+      sticker: summarizeSticker(selection.sticker),
+      album: summarizeAlbum(selection.album),
+      isDuplicate: selection.isDuplicate,
+      quantity: ownedSticker.quantity,
+      albumProgress: albumProgress,
+      awardedAt: completedState.completedAt
+    };
+
+    return state.lastStickerAward;
+  }
+
+  async function upsertOwnedStickerForAward(sticker, stickerAward, nextQuantity) {
+    const existing = findOwnedStickerByStickerId(sticker.id);
+    const awardIds = existing && Array.isArray(existing.sourceAwardIds)
+      ? existing.sourceAwardIds.slice()
+      : [];
+    if (!awardIds.includes(stickerAward.id)) awardIds.push(stickerAward.id);
+
+    const ownedSticker = Object.assign({}, existing || {}, {
+      id: existing ? existing.id : buildOwnedStickerId(sticker.id),
+      stickerId: sticker.id,
+      albumId: sticker.albumId,
+      quantity: nextQuantity,
+      firstAwardedAt: existing && existing.firstAwardedAt ? existing.firstAwardedAt : stickerAward.awardedAt,
+      lastAwardedAt: stickerAward.awardedAt,
+      sourceAwardIds: awardIds
+    });
+
+    await DB.put("ownedStickers", ownedSticker);
+    state.ownedStickers.set(ownedSticker.id, ownedSticker);
+    return ownedSticker;
+  }
+
+  function getDailyEnergyTotal(date) {
+    return Array.from(state.energyEvents.values()).reduce(function (total, event) {
+      return event.date === date ? total + Number(event.points || 0) : total;
+    }, 0);
+  }
+
+  function selectStickerForDailyReward(milestoneIndex) {
+    const album = getActiveRewardAlbum();
+    if (!album) return null;
+
+    const stickers = getAlbumStickers(album.id);
+    if (!stickers.length) return null;
+
+    const unowned = stickers.find(function (sticker) {
+      return !findOwnedStickerByStickerId(sticker.id);
+    });
+    if (unowned) {
+      return { album: album, sticker: unowned, isDuplicate: false };
+    }
+
+    return {
+      album: album,
+      sticker: stickers[(milestoneIndex - 1) % stickers.length],
+      isDuplicate: true
+    };
+  }
+
+  function getAlbumStickers(albumId) {
+    return DATA.stickerCatalog
+      .filter(function (sticker) { return sticker.albumId === albumId; })
+      .sort(function (a, b) { return Number(a.order) - Number(b.order); });
+  }
+
+  function findOwnedStickerByStickerId(stickerId) {
+    return Array.from(state.ownedStickers.values()).find(function (ownedSticker) {
+      return ownedSticker.stickerId === stickerId;
+    }) || null;
+  }
+
+  function getAlbumProgress(albumId) {
+    const stickers = getAlbumStickers(albumId);
+    const ownedCount = stickers.filter(function (sticker) {
+      return findOwnedStickerByStickerId(sticker.id);
+    }).length;
+    return {
+      ownedCount: ownedCount,
+      totalCount: stickers.length,
+      complete: stickers.length > 0 && ownedCount >= stickers.length
+    };
+  }
+
+  function summarizeSticker(sticker) {
+    return {
+      id: sticker.id,
+      albumId: sticker.albumId,
+      title: sticker.title,
+      placeholderIcon: sticker.placeholderIcon,
+      imageSrc: sticker.imageSrc,
+      rarity: sticker.rarity
+    };
+  }
+
+  function summarizeAlbum(album) {
+    return {
+      id: album.id,
+      title: album.title,
+      access: album.access
+    };
+  }
+
+  function getRewardAwardTime(award) {
+    const value = award.awardedAt || award.date || "";
+    const date = parseRewardDate(value);
+    const time = date ? date.getTime() : 0;
+    return Number.isNaN(time) ? 0 : time;
+  }
+
+  function formatRewardShortDate(value) {
+    const date = parseRewardDate(value);
+    if (!date || Number.isNaN(date.getTime())) return "Date inconnue";
+    const dateKey = formatDateKey(date);
+    const todayKey = formatDateKey(state.today);
+    if (dateKey === todayKey) return "Aujourd'hui";
+
+    const options = date.getFullYear() === state.today.getFullYear()
+      ? { day: "numeric", month: "short" }
+      : { day: "numeric", month: "short", year: "numeric" };
+    return new Intl.DateTimeFormat("fr-CA", options).format(date);
+  }
+
+  function formatRewardDetailDate(value) {
+    const date = parseRewardDate(value);
+    if (!date || Number.isNaN(date.getTime())) return "date inconnue";
+    return new Intl.DateTimeFormat("fr-CA", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(date);
+  }
+
+  function parseRewardDate(value) {
+    if (!value) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return parseDateKey(String(value));
+    return new Date(value);
+  }
+
+  function buildDailyRewardStateId(date, milestoneIndex) {
+    return ["daily-reward", date, "milestone-" + milestoneIndex].map(normalizeEnergyKeyPart).join(":");
+  }
+
+  function buildStickerAwardId(rewardStateId) {
+    return "sticker-award:" + rewardStateId;
+  }
+
+  function buildOwnedStickerId(stickerId) {
+    return "owned-sticker:" + normalizeEnergyKeyPart(stickerId);
+  }
+
+  function buildEnergySourceKey(parts) {
+    const version = DATA.energyRules && DATA.energyRules.sourceKeyVersion
+      ? DATA.energyRules.sourceKeyVersion
+      : 1;
+    return [
+      "energy",
+      "v" + version,
+      parts.sourceType,
+      parts.date,
+      parts.sourceScope || "",
+      parts.sourceId
+    ].filter(Boolean).map(normalizeEnergyKeyPart).join(":");
+  }
+
+  function normalizeEnergyKeyPart(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function isIndexedDbConstraintError(error) {
+    return Boolean(error && (
+      error.name === "ConstraintError" ||
+      /constraint/i.test((error.name || "") + " " + (error.message || ""))
+    ));
   }
 
   async function removeActivity(type, date, refId) {

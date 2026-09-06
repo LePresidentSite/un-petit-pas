@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260626-home-declutter-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260905-active-reward-album-v1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js?v=20260619-android-sync-v1" defer></script>
-  <script src="./data.js?v=20260619-daily-routine-v1" defer></script>
-  <script src="./db.js?v=20260619-routines-v4" defer></script>
-  <script src="./app.js?v=20260626-radio-retro-v1" defer></script>
+  <script src="./data.js?v=20260905-active-reward-album-v1" defer></script>
+  <script src="./db.js?v=20260829-gamification-phase3" defer></script>
+  <script src="./app.js?v=20260905-active-reward-album-v1" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -95,6 +95,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
         <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
         <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+        <button class="nav-item" data-route="collection"><svg><use href="#icon-heart"></use></svg><span>Collection</span></button>
         <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
         <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
         <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
@@ -126,60 +127,101 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </header>
 
       <section id="page-home" class="page active" data-page="home" aria-labelledby="pageTitle">
-        <div class="home-grid">
-          <article class="card quote-card">
-            <div class="quote-icon"><svg><use href="#icon-spark"></use></svg></div>
-            <p class="card-kicker">Pour aujourd'hui</p>
-            <blockquote id="dailyQuote"></blockquote>
-          </article>
-
-          <article class="card mission-card">
-            <div class="card-heading">
+        <div class="home-grid today-redesign">
+          <article class="today-board" data-reward-surface="today">
+            <div class="today-board-header">
               <div>
-                <p class="card-kicker">Programme du jour</p>
+                <p class="card-kicker">Mes petits pas d'aujourd'hui</p>
                 <h2 id="missionTitle"></h2>
+                <p id="missionDescription" class="mission-description"></p>
               </div>
-              <span class="time-pill"><svg><use href="#icon-clock"></use></svg><span id="missionTime"></span></span>
+              <div class="today-header-tools">
+                <div class="today-count-pill">
+                  <strong id="homeChecklistCount">0 / 0</strong>
+                  <span id="missionTime"></span>
+                </div>
+                <button class="today-board-ambiance" type="button" data-route="ambiance">
+                  <svg><use href="#icon-music"></use></svg>
+                  <span>Ambiance</span>
+                </button>
+              </div>
             </div>
-            <p id="missionDescription" class="mission-description"></p>
-            <div id="weeklyProgramTaskList" class="weekly-program-task-list"></div>
-            <form id="weeklyTaskForm" class="weekly-task-form">
+
+            <p id="homeChecklistMeta" class="today-board-meta"></p>
+
+            <div id="weeklyProgramTaskList" class="weekly-program-task-list today-checklist"></div>
+
+            <article id="homeDeclutterCard" class="today-check-card today-declutter-card">
+              <div class="today-check-content">
+                <span class="today-check-icon"><svg><use href="#icon-timer"></use></svg></span>
+                <span class="today-check-copy">
+                  <strong>Désencombrement 15 minutes</strong>
+                  <small>Une petite zone, puis tu peux t'arrêter.</small>
+                </span>
+                <span class="today-energy-slot" data-energy-preview="true" aria-label="Points d'énergie à venir">
+                  <strong>5</strong><span aria-hidden="true">⚡</span>
+                </span>
+              </div>
+              <div class="today-check-actions">
+                <button id="homeDeclutterTimer" class="today-card-action" type="button">
+                  <svg><use href="#icon-timer"></use></svg>
+                  <span>15 min</span>
+                </button>
+                <button id="homeDeclutterToggle" class="today-check-button" type="button" aria-pressed="false">
+                  <svg><use href="#icon-check"></use></svg>
+                  <span>Cocher</span>
+                </button>
+              </div>
+            </article>
+
+            <article class="today-check-card today-small-step-card">
+              <div class="today-check-content">
+                <span class="today-check-icon"><svg><use href="#icon-spark"></use></svg></span>
+                <span class="today-check-copy">
+                  <small>Petit pas du jour <span id="smallStepNumber"></span></small>
+                  <strong id="smallStepTitle"></strong>
+                  <span id="smallStepDescription" class="tip-text"></span>
+                </span>
+                <span class="today-energy-slot" data-energy-preview="true" aria-label="Points d'énergie à venir">
+                  <strong>5</strong><span aria-hidden="true">⚡</span>
+                </span>
+              </div>
+              <div class="today-check-actions">
+                <button id="favoriteSmallStepButton" class="today-card-action favorite-button" type="button">
+                  <svg><use href="#icon-heart"></use></svg>
+                  <span>Favori</span>
+                </button>
+                <button id="completeSmallStepButton" class="today-check-button" type="button">
+                  <svg><use href="#icon-check"></use></svg>
+                  <span>Cocher</span>
+                </button>
+                <button id="smallStepRestartButton" class="today-card-action" type="button" hidden>
+                  <svg><use href="#icon-reset"></use></svg>
+                  <span>Recommencer</span>
+                </button>
+              </div>
+              <details id="smallStepDetailsPanel" class="small-step-details">
+                <summary>Voir le détail <svg><use href="#icon-chevron"></use></svg></summary>
+                <div id="smallStepDetails"></div>
+              </details>
+            </article>
+
+            <div class="today-habit-section">
+              <div class="today-subheading">
+                <p class="card-kicker">Habitudes douces</p>
+                <button class="text-button" type="button" data-route="routines">Voir toutes <svg><use href="#icon-chevron"></use></svg></button>
+              </div>
+              <div id="homeRoutineList" class="today-routine-list"></div>
+            </div>
+
+            <form id="weeklyTaskForm" class="weekly-task-form today-add-step">
               <label class="sr-only" for="weeklyTaskInput">Ajouter une tâche pour aujourd'hui</label>
-              <input id="weeklyTaskInput" class="text-input" type="text" maxlength="90" placeholder="Ajouter une tâche pour aujourd'hui">
+              <input id="weeklyTaskInput" class="text-input" type="text" maxlength="90" placeholder="Ajouter un petit pas">
               <button class="secondary-button" type="submit"><svg><use href="#icon-plus"></use></svg>Ajouter</button>
             </form>
           </article>
 
-          <article class="card tip-card small-step-card">
-            <div class="card-heading compact">
-              <div>
-                <p class="card-kicker">Petit pas du jour</p>
-                <h2 id="smallStepTitle"></h2>
-              </div>
-              <span class="tip-number" id="smallStepNumber"></span>
-            </div>
-            <p id="smallStepDescription" class="tip-text"></p>
-            <details id="smallStepDetailsPanel" class="small-step-details">
-              <summary>Découvrir ce petit pas <svg><use href="#icon-chevron"></use></svg></summary>
-              <div id="smallStepDetails"></div>
-            </details>
-            <div class="small-step-actions">
-              <button id="completeSmallStepButton" class="primary-button">
-                <svg><use href="#icon-check"></use></svg>
-                <span>J'ai fait ce petit pas</span>
-              </button>
-              <button id="favoriteSmallStepButton" class="secondary-button favorite-button">
-                <svg><use href="#icon-heart"></use></svg>
-                <span>Ajouter aux favoris</span>
-              </button>
-              <button id="smallStepRestartButton" class="secondary-button" hidden>
-                <svg><use href="#icon-reset"></use></svg>
-                <span>Recommencer le parcours</span>
-              </button>
-            </div>
-          </article>
-
-          <article class="card progress-card">
+          <article class="today-progress-card progress-card">
             <div class="progress-ring" id="dailyProgressRing" style="--progress: 0">
               <div><strong id="dailyProgressValue">0%</strong><span>aujourd'hui</span></div>
             </div>
@@ -188,9 +230,45 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <h2 id="progressTitle">Un pas à la fois</h2>
               <p id="progressCaption" class="muted">Rien ne presse.</p>
             </div>
+            <div class="today-reward-seed" data-reward-preview="energy">
+              <div class="today-energy-head">
+                <span>Énergie aujourd'hui</span>
+                <strong id="todayEnergyTotal">0 ⚡</strong>
+              </div>
+              <div class="today-energy-track" aria-hidden="true"><span id="todayEnergyProgressBar"></span></div>
+              <small id="todayEnergyProgressText">0 / 25 ⚡ vers le prochain autocollant</small>
+              <small id="todayRewardAlbumLabel" class="today-reward-album-label">Récompenses : Petits bonheurs</small>
+            </div>
           </article>
 
-          <article class="card weekly-card">
+          <article class="today-collection-card" data-collection-preview="true">
+            <div class="today-card-heading">
+              <div>
+                <p class="card-kicker">Ma collection</p>
+                <h2 id="todayCollectionTitle">Petits bonheurs</h2>
+              </div>
+              <span id="todayCollectionProgress" class="today-card-badge">0 / 6</span>
+            </div>
+            <div id="todayCollectionGrid" class="today-collection-preview-grid" aria-label="Collection Petits bonheurs"></div>
+            <p id="todayCollectionMeta">Débloque tes petits trésors en gagnant de l'énergie.</p>
+          </article>
+
+          <article class="today-hero-card">
+            <div class="today-hero-mark" aria-hidden="true">
+              <svg><use href="#icon-spark"></use></svg>
+            </div>
+            <div class="today-hero-copy">
+              <p class="card-kicker">Un Petit Pas</p>
+              <h2>Un petit geste suffit.</h2>
+              <blockquote id="dailyQuote"></blockquote>
+            </div>
+            <button class="today-ambiance-link" type="button" data-route="ambiance">
+              <svg><use href="#icon-music"></use></svg>
+              <span>Ambiance</span>
+            </button>
+          </article>
+
+          <article class="today-zone-card weekly-card">
             <div class="zone-visual" id="weeklyZoneVisual">
               <span class="zone-shape zone-shape-one"></span>
               <span class="zone-shape zone-shape-two"></span>
@@ -204,7 +282,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </article>
 
-          <article class="card principles-preview-card">
+          <article class="principles-preview-card today-principles-card">
             <div class="principle-preview-icon"><svg><use href="#icon-spark"></use></svg></div>
             <div>
               <p class="card-kicker">Les 11 principes</p>
@@ -266,6 +344,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div id="routineSummary" class="routine-summary"></div>
         <div id="routineTaskList" class="routine-list"></div>
+      </section>
+
+      <section id="page-collection" class="page collection-page" data-page="collection" aria-labelledby="collectionAlbumTitle">
+        <div class="collection-shell">
+          <section class="collection-hero">
+            <div class="collection-hero-copy">
+              <span class="collection-hero-spark" aria-hidden="true"><svg><use href="#icon-spark"></use></svg></span>
+              <h2 id="collectionAlbumTitle">Petits bonheurs</h2>
+            </div>
+            <p id="collectionAlbumDescription">Débloque tes petits trésors avec tes points d'énergie.</p>
+          </section>
+
+          <div id="collectionAlbumSwitcher" class="collection-album-switcher" role="list" aria-label="Choisir un album"></div>
+          <button id="collectionRewardAlbumButton" class="collection-reward-album-button" type="button">
+            Gagner mes prochains autocollants ici
+          </button>
+
+          <div id="collectionAlbumGrid" class="collection-album-grid" aria-label="Album Petits bonheurs"></div>
+
+          <section class="collection-progress-footer" aria-live="polite">
+            <span>Progression</span>
+            <div class="collection-progress-track" aria-hidden="true"><span id="collectionAlbumProgressBar"></span></div>
+            <strong id="collectionAlbumProgress">0 / 6</strong>
+          </section>
+
+          <section class="collection-reward-history" aria-labelledby="collectionRewardHistoryTitle">
+            <div class="collection-reward-history-head">
+              <div>
+                <p class="card-kicker">Souvenirs doux</p>
+                <h3 id="collectionRewardHistoryTitle">Mes récompenses récentes</h3>
+              </div>
+              <p>Les derniers autocollants gagnés.</p>
+            </div>
+            <div id="collectionRewardHistoryList" class="collection-reward-history-list" role="list"></div>
+            <p id="collectionRewardHistoryEmpty" class="collection-reward-history-empty">Tes prochaines récompenses apparaîtront ici.</p>
+          </section>
+        </div>
       </section>
 
       <section id="page-ambiance" class="page" data-page="ambiance">
@@ -657,6 +772,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <button class="nav-item active" data-route="home"><svg><use href="#icon-home"></use></svg><span>Aujourd'hui</span></button>
       <button class="nav-item" data-route="zones"><svg><use href="#icon-zones"></use></svg><span>Zones</span></button>
       <button class="nav-item" data-route="routines"><svg><use href="#icon-routines"></use></svg><span>Routines</span></button>
+      <button class="nav-item" data-route="collection"><svg><use href="#icon-heart"></use></svg><span>Collection</span></button>
       <button class="nav-item" data-route="ambiance"><svg><use href="#icon-music"></use></svg><span>Ambiance</span></button>
       <button class="nav-item" data-route="history"><svg><use href="#icon-history"></use></svg><span>Progrès</span></button>
       <button class="nav-item" data-route="settings"><svg><use href="#icon-settings"></use></svg><span>Réglages</span></button>
@@ -733,6 +849,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <label class="form-field">Durée approximative<input id="routineTaskDuration" class="text-input" type="text" maxlength="20" placeholder="Ex. 2 min"></label>
       <button class="primary-button full-width" type="submit">Enregistrer</button>
     </form>
+  </dialog>
+
+  <dialog id="stickerAwardDialog" class="sticker-award-dialog" aria-labelledby="stickerAwardTitle">
+    <div class="sticker-award-card">
+      <button type="button" class="dialog-close sticker-award-close" data-close-sticker-award aria-label="Fermer">×</button>
+      <div class="sticker-award-sparkles" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div id="stickerAwardIcon" class="collection-sticker unlocked">
+        <svg><use href="#icon-spark"></use></svg>
+      </div>
+      <p class="card-kicker">Bravo !</p>
+      <h2 id="stickerAwardTitle">Autocollant gagné</h2>
+      <p id="stickerAwardMessage">Il a été ajouté à Petits bonheurs.</p>
+      <button class="primary-button full-width" type="button" data-close-sticker-award>Continuer</button>
+    </div>
+  </dialog>
+
+  <dialog id="stickerDetailDialog" class="sticker-detail-dialog" aria-labelledby="stickerDetailTitle">
+    <div class="sticker-detail-card">
+      <button type="button" class="dialog-close sticker-detail-close" data-close-sticker-detail aria-label="Fermer">×</button>
+      <div id="stickerDetailIcon" class="collection-sticker unlocked"></div>
+      <p id="stickerDetailAlbum" class="card-kicker">Petits bonheurs</p>
+      <h2 id="stickerDetailTitle">Autocollant</h2>
+      <p id="stickerDetailAwardDate" class="sticker-detail-award-date" hidden>Gagné aujourd'hui.</p>
+      <p id="stickerDetailQuantity">1 exemplaire dans ta collection.</p>
+      <p id="stickerDetailRare" class="sticker-detail-rare" hidden>Autocollant rare</p>
+    </div>
   </dialog>
 
   <dialog id="accountDialog" class="account-dialog">

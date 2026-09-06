@@ -2,13 +2,17 @@
   "use strict";
 
   const DATABASE_NAME = "un-petit-pas";
-  const DATABASE_VERSION = 2;
+  const DATABASE_VERSION = 3;
   const DATA_STORES = [
     "activities",
     "routineTasks",
     "zoneTaskStates",
     "routineChecks",
-    "favorites"
+    "favorites",
+    "energyEvents",
+    "dailyRewardStates",
+    "stickerAwards",
+    "ownedStickers"
   ];
   const ROUTINE_DEFAULTS_VERSION = 3;
   let databasePromise;
@@ -57,6 +61,32 @@
         if (!db.objectStoreNames.contains("favorites")) {
           db.createObjectStore("favorites", { keyPath: "id" });
         }
+
+        if (!db.objectStoreNames.contains("energyEvents")) {
+          const energyEvents = db.createObjectStore("energyEvents", { keyPath: "id" });
+          energyEvents.createIndex("date", "date", { unique: false });
+          energyEvents.createIndex("sourceKey", "sourceKey", { unique: true });
+          energyEvents.createIndex("sourceType", "sourceType", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("dailyRewardStates")) {
+          const dailyRewardStates = db.createObjectStore("dailyRewardStates", { keyPath: "id" });
+          dailyRewardStates.createIndex("date", "date", { unique: false });
+          dailyRewardStates.createIndex("dateMilestone", ["date", "milestoneIndex"], { unique: true });
+        }
+
+        if (!db.objectStoreNames.contains("stickerAwards")) {
+          const stickerAwards = db.createObjectStore("stickerAwards", { keyPath: "id" });
+          stickerAwards.createIndex("date", "date", { unique: false });
+          stickerAwards.createIndex("albumId", "albumId", { unique: false });
+          stickerAwards.createIndex("stickerId", "stickerId", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("ownedStickers")) {
+          const ownedStickers = db.createObjectStore("ownedStickers", { keyPath: "id" });
+          ownedStickers.createIndex("albumId", "albumId", { unique: false });
+          ownedStickers.createIndex("stickerId", "stickerId", { unique: true });
+        }
       };
 
       request.onsuccess = function () {
@@ -86,6 +116,12 @@
 
   async function put(name, value) {
     const result = await requestToPromise((await store(name, "readwrite")).put(value));
+    emitLocalChange(name);
+    return result;
+  }
+
+  async function add(name, value) {
+    const result = await requestToPromise((await store(name, "readwrite")).add(value));
     emitLocalChange(name);
     return result;
   }
@@ -190,14 +226,9 @@
   }
 
   async function clearUserData() {
-    await Promise.all([
-      clear("settings"),
-      clear("activities"),
-      clear("routineTasks"),
-      clear("zoneTaskStates"),
-      clear("routineChecks"),
-      clear("favorites")
-    ]);
+    await Promise.all(["settings"].concat(DATA_STORES).map(function (name) {
+      return clear(name);
+    }));
   }
 
   window.AppDB = {
@@ -205,6 +236,7 @@
     getAll: getAll,
     get: get,
     put: put,
+    add: add,
     remove: remove,
     clear: clear,
     seedRoutines: seedRoutines,
