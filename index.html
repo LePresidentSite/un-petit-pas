@@ -36,13 +36,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
   <link rel="shortcut icon" href="./icons/favicon.ico">
-  <link rel="stylesheet" href="./styles.css?v=20260905-active-reward-album-v1">
+  <link rel="stylesheet" href="./styles.css?v=20260906-radio-player-vertical-v1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="./config.js" defer></script>
   <script src="./account.js?v=20260619-android-sync-v1" defer></script>
   <script src="./data.js?v=20260905-active-reward-album-v1" defer></script>
   <script src="./db.js?v=20260829-gamification-phase3" defer></script>
-  <script src="./app.js?v=20260905-active-reward-album-v1" defer></script>
+  <script src="./app.js?v=20260906-radio-player-vertical-v1" defer></script>
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WXJT9R4X"
@@ -750,7 +750,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </section>
       
       <audio id="global-audio-player" preload="none"></audio>
-      <div id="mini-player" class="mini-player hidden">
+      <div id="mini-player" class="mini-player hidden" aria-label="Lecteur radio" aria-expanded="true">
         <div class="mp-info">
           <span id="mp-icon" class="mp-icon" aria-hidden="true">🎵</span>
           <span class="mp-copy">
@@ -762,7 +762,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <button id="mp-playpause" class="mp-btn" aria-label="Lecture/Pause">
             <svg><use id="mp-play-icon-use" href="#icon-pause"></use></svg>
           </button>
-          <button id="mp-close" class="mp-btn mp-btn-close" aria-label="Fermer">×</button>
+          <button id="mp-stop" class="mp-stop" type="button">Arrêter</button>
+          <button id="mp-close" class="mp-btn mp-btn-close" aria-label="Réduire le lecteur radio">×</button>
         </div>
       </div>
 
