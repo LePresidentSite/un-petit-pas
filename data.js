@@ -139,7 +139,7 @@
     { title: "Faire briller l'évier", description: "Vide l'évier, rince-le et essuie rapidement le contour. Pas besoin de toucher au reste.", minutes: 8 },
     { title: "Dégager une tablette", description: "Retire ce qui n'a plus sa place sur une tablette visible et remets seulement l'essentiel.", minutes: 10 },
     { title: "Ramasser le salon", description: "Prends un panier et rassemble les objets qui appartiennent à une autre pièce.", minutes: 7 },
-    { title: "Rafraîchir le réfrigérateur", description: "Jette un aliment périmé et essuie une seule tablette. Cette petite victoire suffit.", minutes: 10 },
+    { title: "Rafraîchir le frigo", description: "Jette un aliment périmé et essuie une seule tablette. Cette petite victoire suffit.", minutes: 10 },
     { title: "Sauvetage express d'une pièce", description: "Choisis la pièce qui te pèse le plus et range seulement ce qui est évident.", minutes: 5 },
     { title: "Dégager une chaise", description: "Retire tout ce qui s'est accumulé sur une chaise et redonne-lui sa fonction.", minutes: 5 },
     { title: "Trier le courrier", description: "Fais trois piles : agir, garder, recycler. Ne traite rien d'autre pour l'instant.", minutes: 8 },
@@ -153,7 +153,7 @@
     { title: "Créer un panier de départ", description: "Rassemble les objets à donner dans un sac ou un panier clairement identifié.", minutes: 8 },
     { title: "Dégager la table", description: "Libère juste assez d'espace pour y déposer un repas ou une tasse.", minutes: 7 },
     { title: "Balayer une zone", description: "Choisis un petit passage très fréquenté et balaie seulement cet endroit.", minutes: 6 },
-    { title: "Ranger les chaussures", description: "Aligne ou range les chaussures près de l'entrée. Ignore le reste de la pièce.", minutes: 5 },
+    { title: "Ranger les souliers", description: "Aligne ou range les souliers près de l'entrée. Ignore le reste de la pièce.", minutes: 5 },
     { title: "Faire le tour des déchets", description: "Avec un sac, ramasse uniquement ce qui est clairement à jeter.", minutes: 6 },
     { title: "Rafraîchir la toilette", description: "Nettoie rapidement le siège et la cuvette. Une version simple est parfaite.", minutes: 8 },
     { title: "Réunir les produits", description: "Regroupe les produits de soin qui traînent dans un seul contenant.", minutes: 6 },
@@ -415,7 +415,7 @@
     },
     {
       id: "small-step-20",
-      title: "Faire une brassée de lessive",
+      title: "Faire une brassée",
       description: "Fais avancer une seule étape du linge.",
       details: "Démarre, transfère, plie ou range une brassée. Une seule étape terminée est déjà une vraie avancée.",
       principleId: "principle-05"
@@ -975,7 +975,7 @@
         { id: "blessing-02", title: "Changer les draps" },
         { id: "blessing-03", title: "Vider toutes les poubelles de la maison" },
         { id: "blessing-04", title: "Passer l'aspirateur dans les chambres et les pièces de vie" },
-        { id: "blessing-05", title: "Passer la serpillière dans la cuisine et la salle de bain" },
+        { id: "blessing-05", title: "Passer la vadrouille" },
         { id: "blessing-06", title: "Nettoyer les miroirs" },
         { id: "blessing-07", title: "Nettoyer les portes" }
       ]
@@ -987,7 +987,7 @@
       description: "Une journée pour les besoins personnels et ce qui te fait du bien.",
       duration: "À ton rythme",
       tasks: [
-        { id: "personal-01", title: "Faire les courses" },
+        { id: "personal-01", title: "Faire l'épicerie" },
         { id: "personal-02", title: "Arroser les plantes" },
         { id: "personal-03", title: "Prendre du temps pour soi" },
         { id: "personal-04", title: "Effectuer des rendez-vous personnels" }
@@ -1013,7 +1013,7 @@
       description: "Quelques tâches pratiques pour soutenir le reste de la semaine.",
       duration: "À ton rythme",
       tasks: [
-        { id: "daily-management-01", title: "Faire les courses" },
+        { id: "daily-management-01", title: "Faire l'épicerie" },
         { id: "daily-management-02", title: "Faire le repassage" },
         { id: "daily-management-03", title: "S'occuper de la gestion de la maison" },
         { id: "daily-management-04", title: "Faire de petites tâches administratives" }
@@ -1030,7 +1030,7 @@
         { id: "administrative-02", title: "Vérifier le budget" },
         { id: "administrative-03", title: "Classer les documents" },
         { id: "administrative-04", title: "Faire la gestion administrative" },
-        { id: "administrative-05", title: "Nettoyer et vider le réfrigérateur" }
+        { id: "administrative-05", title: "Nettoyer et vider le frigo" }
       ]
     },
     {
@@ -1062,17 +1062,17 @@
     {
       id: "default-daily-laundry",
       routine: "daily",
-      title: "Une lessive à la fois",
+      title: "Une brassée à la fois",
       duration: "quotidien",
       order: 0,
-      description: "Le but n'est pas de faire toute la lessive d'un coup, mais d'éviter l'accumulation grâce à une petite habitude quotidienne.",
+      description: "Le but n'est pas de faire tout le lavage d'un coup, mais d'éviter l'accumulation grâce à une petite habitude quotidienne.",
       steps: [
-        "Une lessive par jour — Lance une seule machine selon ton horaire et tes besoins.",
-        "Le transfert rapide — Dès la fin du cycle, transfère le linge au sèche-linge ou sur l'étendoir.",
+        "Une brassée par jour — Pars une seule brassée selon ton horaire et tes besoins.",
+        "Le transfert rapide — Dès la fin du cycle, transfère le linge dans la sécheuse ou sur le séchoir.",
         "Le pliage immédiat — Plie ou suspends les vêtements dès qu'ils sont secs.",
         "Le rangement direct — Range immédiatement chaque vêtement à sa place."
       ],
-      closingMessage: "Une petite lessive terminée aujourd'hui évite une montagne demain."
+      closingMessage: "Une petite brassée terminée aujourd'hui évite une montagne demain."
     },
     { id: "default-v2-morning-1", routine: "morning", title: "S'habiller et se chausser", duration: "5 min", order: 0 },
     { id: "default-v2-morning-2", routine: "morning", title: "Faire le lit", duration: "3 min", order: 1 },
