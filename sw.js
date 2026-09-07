@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v96";
+const CACHE_VERSION = "un-petit-pas-v97";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -53,6 +53,8 @@ self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_VERSION).then(function (cache) {
       return cache.addAll(APP_SHELL);
+    }).then(function () {
+      return self.skipWaiting();
     })
   );
 });
