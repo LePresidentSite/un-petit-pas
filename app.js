@@ -54,6 +54,10 @@
   const RADIO_CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
   const RADIO_RECONNECT_INITIAL_DELAY = 1000;
   const RADIO_RECONNECT_MAX_DELAY = 30000;
+  const AMBIANCE_PLAYER_AUTO_COLLAPSE_MS = 4500;
+  const AMBIANCE_PLAYER_POSITION_KEY = "un-petit-pas-ambiance-player-position-v1";
+  const AMBIANCE_PLAYER_EDGE_PADDING = 12;
+  const AMBIANCE_PLAYER_DRAG_THRESHOLD = 6;
   const FREE_RADIO_CATEGORIES = new Set(["quebec-pop", "retro-souvenirs", "classical", "relax"]);
   const FREE_REMINDER_TIMES = Object.freeze({
     missionTime: "09:00",
@@ -143,6 +147,11 @@
     ambianceAttemptToken: 0,
     ambiancePlaybackTimer: null,
     ambianceReconnectTimer: null,
+    ambiancePlayerCollapsed: false,
+    ambiancePlayerAutoCollapseTimer: null,
+    ambiancePlayerDrag: null,
+    ambiancePlayerSuppressClick: false,
+    ambiancePlayerPositions: { desktop: null, mobile: null },
     ambianceRetryAttempt: 0,
     ambianceWantsPlayback: false,
     ambianceActiveService: null,
@@ -168,6 +177,7 @@
 
   async function init() {
     cacheElements();
+    loadAmbiancePlayerPositions();
     bindEvents();
     setupAmbianceMediaSession();
 
@@ -243,7 +253,7 @@
       "accountPassword", "accountSubmitButton", "accountModeSwitch",
       "accountResetPassword", "accountCloudNotice", "closeAccountDialog",
       "global-audio-player", "mini-player", "mp-title", "mp-subtitle", "mp-icon",
-      "mp-playpause", "mp-close", "mp-play-icon-use", "ambiance-status",
+      "mp-playpause", "mp-stop", "mp-close", "mp-play-icon-use", "ambiance-status",
       "ambiance-active-name", "ambiance-active-meta", "ambiance-play-ready",
       "ambiance-retry"
     ].forEach(function (id) {
@@ -360,7 +370,15 @@
     window.addEventListener("hashchange", navigateFromHash);
 
     elements["mp-playpause"].addEventListener("click", toggleAmbiance);
-    elements["mp-close"].addEventListener("click", stopAmbiance);
+    elements["mp-stop"].addEventListener("click", stopAmbiance);
+    elements["mp-close"].addEventListener("click", collapseAmbiancePlayer);
+    elements["mini-player"].addEventListener("click", handleAmbiancePlayerClick);
+    elements["mini-player"].addEventListener("keydown", handleAmbiancePlayerKeydown);
+    elements["mini-player"].addEventListener("pointerdown", startAmbiancePlayerDrag);
+    elements["mini-player"].addEventListener("pointermove", moveAmbiancePlayerDrag);
+    elements["mini-player"].addEventListener("pointerup", finishAmbiancePlayerDrag);
+    elements["mini-player"].addEventListener("pointercancel", finishAmbiancePlayerDrag);
+    window.addEventListener("resize", handleAmbiancePlayerViewportChange);
     elements["global-audio-player"].addEventListener("playing", handleAmbiancePlaying);
     elements["global-audio-player"].addEventListener("pause", handleAmbiancePause);
     elements["global-audio-player"].addEventListener("error", handleAmbiancePlaybackError);
@@ -3592,6 +3610,7 @@
     state.ambianceCategory = categoryId;
     state.ambianceActiveService = null;
     state.ambianceLoading = true;
+    showAmbiancePlayerExpanded(true);
     renderAmbianceSelection();
     setAmbianceStatus("Recherche d'une station…", category.name, "loading");
 
@@ -3708,7 +3727,7 @@
     elements["mp-title"].textContent = station.name;
     elements["mp-subtitle"].textContent = "Connexion en cours";
     elements["mp-icon"].textContent = RADIO_CATEGORIES[state.ambianceCategory].icon;
-    elements["mini-player"].classList.remove("hidden");
+    revealAmbiancePlayer();
     updateMiniPlayer();
     updateAmbianceMediaSession();
     scheduleAmbianceFailover(token, 10000);
@@ -3751,6 +3770,9 @@
     const station = currentAmbianceStation();
     setAmbianceStatus(station ? station.name : "Station en lecture", radioCategoryMeta(), "playing");
     renderAmbianceSelection();
+    if (state.ambiancePlayerAutoCollapseTimer && !state.ambiancePlayerCollapsed) {
+      scheduleAmbiancePlayerAutoCollapse();
+    }
     updateMiniPlayer();
     updateAmbianceMediaSession();
     if (station && station.stationuuid) registerRadioClick(station.stationuuid);
@@ -3807,7 +3829,10 @@
     player.pause();
     player.removeAttribute("src");
     player.load();
+    clearAmbiancePlayerAutoCollapseTimer();
+    state.ambiancePlayerCollapsed = false;
     elements["mini-player"].classList.add("hidden");
+    updateAmbiancePlayerPresentation();
     elements["mp-play-icon-use"].setAttribute("href", "#icon-play");
     updateAmbianceMediaSession();
   }
@@ -3844,7 +3869,7 @@
         : "Nouvelle tentative dans " + Math.max(1, Math.ceil(delay / 1000)) + " s.",
       "loading"
     );
-    elements["mini-player"].classList.remove("hidden");
+    revealAmbiancePlayer();
     renderAmbianceSelection();
     updateMiniPlayer();
     updateAmbianceMediaSession();
@@ -3982,6 +4007,262 @@
       playbackActive ? "Mettre la radio en pause" : "Reprendre la radio"
     );
     elements["mp-playpause"].disabled = !state.ambianceCategory;
+    updateAmbiancePlayerPresentation();
+  }
+
+  function showAmbiancePlayerExpanded(autoCollapse) {
+    if (!state.ambianceCategory) return;
+    clearAmbiancePlayerAutoCollapseTimer();
+    state.ambiancePlayerCollapsed = false;
+    revealAmbiancePlayer();
+    if (autoCollapse) scheduleAmbiancePlayerAutoCollapse();
+  }
+
+  function revealAmbiancePlayer() {
+    elements["mini-player"].classList.remove("hidden");
+    updateAmbiancePlayerPresentation();
+  }
+
+  function collapseAmbiancePlayer() {
+    if (!state.ambianceCategory) return;
+    clearAmbiancePlayerAutoCollapseTimer();
+    state.ambiancePlayerCollapsed = true;
+    revealAmbiancePlayer();
+  }
+
+  function scheduleAmbiancePlayerAutoCollapse() {
+    if (!state.ambianceCategory || state.ambiancePlayerCollapsed) return;
+    clearAmbiancePlayerAutoCollapseTimer();
+    state.ambiancePlayerAutoCollapseTimer = window.setTimeout(function () {
+      collapseAmbiancePlayer();
+    }, AMBIANCE_PLAYER_AUTO_COLLAPSE_MS);
+  }
+
+  function clearAmbiancePlayerAutoCollapseTimer() {
+    if (state.ambiancePlayerAutoCollapseTimer) {
+      window.clearTimeout(state.ambiancePlayerAutoCollapseTimer);
+      state.ambiancePlayerAutoCollapseTimer = null;
+    }
+  }
+
+  function loadAmbiancePlayerPositions() {
+    const defaults = { desktop: null, mobile: null };
+    try {
+      const saved = window.localStorage.getItem(AMBIANCE_PLAYER_POSITION_KEY);
+      if (!saved) {
+        state.ambiancePlayerPositions = defaults;
+        return;
+      }
+      const parsed = JSON.parse(saved);
+      state.ambiancePlayerPositions = {
+        desktop: normalizeAmbiancePlayerPosition(parsed.desktop),
+        mobile: normalizeAmbiancePlayerPosition(parsed.mobile)
+      };
+    } catch (error) {
+      state.ambiancePlayerPositions = defaults;
+    }
+  }
+
+  function saveAmbiancePlayerPositions() {
+    try {
+      window.localStorage.setItem(
+        AMBIANCE_PLAYER_POSITION_KEY,
+        JSON.stringify(state.ambiancePlayerPositions)
+      );
+    } catch (error) {
+      // Le déplacement reste disponible pendant la session si le stockage local est bloqué.
+    }
+  }
+
+  function normalizeAmbiancePlayerPosition(position) {
+    if (!position || typeof position !== "object") return null;
+    const left = Number(position.left);
+    const top = Number(position.top);
+    if (!Number.isFinite(left) || !Number.isFinite(top)) return null;
+    return {
+      left: Math.max(0, Math.round(left)),
+      top: Math.max(0, Math.round(top))
+    };
+  }
+
+  function getAmbiancePlayerLayoutMode() {
+    return window.matchMedia("(min-width: 680px)").matches ? "desktop" : "mobile";
+  }
+
+  function getAmbiancePlayerSafeBottom() {
+    const value = window.getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom");
+    const pixels = Number.parseFloat(value);
+    return Number.isFinite(pixels) ? pixels : 0;
+  }
+
+  function clampAmbiancePlayerPosition(left, top, width, height) {
+    const padding = AMBIANCE_PLAYER_EDGE_PADDING;
+    const maxLeft = Math.max(padding, window.innerWidth - width - padding);
+    const maxTop = Math.max(padding, window.innerHeight - height - padding - getAmbiancePlayerSafeBottom());
+    return {
+      left: Math.round(Math.min(Math.max(left, padding), maxLeft)),
+      top: Math.round(Math.min(Math.max(top, padding), maxTop))
+    };
+  }
+
+  function applyAmbiancePlayerPosition(position) {
+    const playerShell = elements["mini-player"];
+    if (!position) {
+      playerShell.classList.remove("is-positioned");
+      playerShell.style.removeProperty("--ambiance-player-left");
+      playerShell.style.removeProperty("--ambiance-player-top");
+      return;
+    }
+
+    playerShell.classList.add("is-positioned");
+    playerShell.style.setProperty("--ambiance-player-left", position.left + "px");
+    playerShell.style.setProperty("--ambiance-player-top", position.top + "px");
+  }
+
+  function syncAmbiancePlayerPosition() {
+    if (state.ambiancePlayerDrag) return;
+    const playerShell = elements["mini-player"];
+    const mode = getAmbiancePlayerLayoutMode();
+    const savedPosition = state.ambiancePlayerPositions[mode];
+    if (!savedPosition) {
+      applyAmbiancePlayerPosition(null);
+      return;
+    }
+
+    applyAmbiancePlayerPosition(savedPosition);
+    const rect = playerShell.getBoundingClientRect();
+    const clampedPosition = clampAmbiancePlayerPosition(
+      rect.left,
+      rect.top,
+      rect.width,
+      rect.height
+    );
+    applyAmbiancePlayerPosition(clampedPosition);
+    if (
+      clampedPosition.left !== savedPosition.left ||
+      clampedPosition.top !== savedPosition.top
+    ) {
+      state.ambiancePlayerPositions[mode] = clampedPosition;
+      saveAmbiancePlayerPositions();
+    }
+  }
+
+  function startAmbiancePlayerDrag(event) {
+    if (!state.ambianceCategory) return;
+    if (event.button !== undefined && event.button !== 0) return;
+    if (event.target.closest("button, a, input, select, textarea")) return;
+
+    const playerShell = elements["mini-player"];
+    const rect = playerShell.getBoundingClientRect();
+    state.ambiancePlayerDrag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      moved: false
+    };
+
+    try {
+      playerShell.setPointerCapture(event.pointerId);
+    } catch (error) {
+      // Le glisser reste fonctionnel même sans capture explicite du pointeur.
+    }
+  }
+
+  function moveAmbiancePlayerDrag(event) {
+    const drag = state.ambiancePlayerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(deltaX, deltaY) < AMBIANCE_PLAYER_DRAG_THRESHOLD) return;
+
+    if (!drag.moved) {
+      drag.moved = true;
+      state.ambiancePlayerSuppressClick = true;
+      elements["mini-player"].classList.add("is-dragging");
+    }
+
+    const nextPosition = clampAmbiancePlayerPosition(
+      drag.left + deltaX,
+      drag.top + deltaY,
+      drag.width,
+      drag.height
+    );
+    applyAmbiancePlayerPosition(nextPosition);
+    event.preventDefault();
+  }
+
+  function finishAmbiancePlayerDrag(event) {
+    const drag = state.ambiancePlayerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const playerShell = elements["mini-player"];
+    try {
+      playerShell.releasePointerCapture(event.pointerId);
+    } catch (error) {
+      // Rien à libérer dans les navigateurs qui n'ont pas capturé le pointeur.
+    }
+
+    playerShell.classList.remove("is-dragging");
+    if (drag.moved) {
+      const rect = playerShell.getBoundingClientRect();
+      const mode = getAmbiancePlayerLayoutMode();
+      const finalPosition = clampAmbiancePlayerPosition(rect.left, rect.top, rect.width, rect.height);
+      state.ambiancePlayerPositions[mode] = finalPosition;
+      applyAmbiancePlayerPosition(finalPosition);
+      saveAmbiancePlayerPositions();
+      window.setTimeout(function () {
+        state.ambiancePlayerSuppressClick = false;
+      }, 160);
+    } else {
+      state.ambiancePlayerSuppressClick = false;
+    }
+    state.ambiancePlayerDrag = null;
+  }
+
+  function handleAmbiancePlayerViewportChange() {
+    window.requestAnimationFrame(syncAmbiancePlayerPosition);
+  }
+
+  function handleAmbiancePlayerClick(event) {
+    if (state.ambiancePlayerSuppressClick) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (!state.ambiancePlayerCollapsed || !state.ambianceCategory) return;
+    if (event.target.closest("button")) return;
+    showAmbiancePlayerExpanded(false);
+  }
+
+  function handleAmbiancePlayerKeydown(event) {
+    if (!state.ambiancePlayerCollapsed || !state.ambianceCategory) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    if (event.target.closest("button")) return;
+    event.preventDefault();
+    showAmbiancePlayerExpanded(false);
+  }
+
+  function updateAmbiancePlayerPresentation() {
+    const playerShell = elements["mini-player"];
+    const isCollapsed = Boolean(state.ambianceCategory && state.ambiancePlayerCollapsed);
+    playerShell.classList.toggle("is-collapsed", isCollapsed);
+    playerShell.setAttribute("aria-expanded", String(!isCollapsed));
+    playerShell.setAttribute(
+      "aria-label",
+      isCollapsed ? "Lecteur radio réduit. Ouvrir le lecteur complet." : "Lecteur radio"
+    );
+    if (isCollapsed) {
+      playerShell.setAttribute("tabindex", "0");
+    } else {
+      playerShell.removeAttribute("tabindex");
+    }
+    syncAmbiancePlayerPosition();
+    window.setTimeout(syncAmbiancePlayerPosition, 220);
   }
 
   function setupAmbianceMediaSession() {

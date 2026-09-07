@@ -15572,6 +15572,11 @@ body[data-active-route="collection"] .topbar {
     border-radius 190ms ease;
 }
 
+.mini-player.is-dragging {
+  cursor: grabbing;
+  transition: opacity 180ms ease, box-shadow 120ms ease;
+}
+
 .mini-player.hidden {
   display: flex;
   opacity: 0;
@@ -15585,7 +15590,7 @@ body[data-active-route="collection"] .topbar {
   left: auto;
   width: min(292px, calc(100vw - 2rem));
   min-height: 54px;
-  cursor: pointer;
+  cursor: grab;
   gap: 0.55rem;
   padding: 0.46rem 0.5rem 0.46rem 0.56rem;
   border-radius: 18px;
@@ -15599,6 +15604,13 @@ body[data-active-route="collection"] .topbar {
 
 .mini-player .mp-info {
   flex: 1 1 auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.mini-player.is-dragging .mp-info {
+  cursor: grabbing;
 }
 
 .mini-player .mp-icon {
@@ -15733,6 +15745,20 @@ body[data-active-route="collection"] .topbar {
     width: min(252px, calc(100vw - 5.35rem));
   }
 
+}
+
+.mini-player.is-positioned,
+body[data-active-route] .mini-player.is-positioned,
+body[data-active-route] .mini-player.is-positioned.is-collapsed {
+  top: var(--ambiance-player-top);
+  right: auto;
+  bottom: auto;
+  left: var(--ambiance-player-left);
+  transform: none;
+}
+
+.mini-player.is-positioned.hidden {
+  transform: none;
 }
 
 .sr-only,
