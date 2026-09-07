@@ -1638,12 +1638,6 @@
       showToast("Débloque PRO pour accéder à toutes les tâches de cette zone.");
       return;
     }
-    const lockedZone = event.target.closest("[data-zone-locked]");
-    if (lockedZone) {
-      navigate("pro");
-      showToast("La version gratuite donne accès à la zone active de la semaine.");
-      return;
-    }
     const summary = event.target.closest("[data-zone-summary]");
     if (!summary) return;
     const zoneId = summary.dataset.zoneSummary;
