@@ -1533,7 +1533,14 @@
       const freeTaskIds = new Set(zone.freeTaskIds || []);
       const sections = zone.sections.map(function (section) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
-        const tasks = sectionTasks.map(function (task) {
+        const displayedTasks = isPro
+          ? sectionTasks
+          : sectionTasks.slice().sort(function (first, second) {
+            const firstIsFree = freeTaskIds.has(first.id);
+            const secondIsFree = freeTaskIds.has(second.id);
+            return Number(secondIsFree) - Number(firstIsFree);
+          });
+        const tasks = displayedTasks.map(function (task) {
           const taskAvailable = isPro || freeTaskIds.has(task.id);
           if (!taskAvailable) {
             return [
