@@ -796,6 +796,13 @@
       short: "Z1",
       description: "Une banque de petits gestes pour alléger les arrivées, les départs et le balcon.",
       sections: ["Entrée & balcon"],
+      freeTaskIds: [
+        "entry_balcony_ref_001",
+        "entry_balcony_ref_003",
+        "entry_balcony_ref_006",
+        "entry_balcony_ref_007",
+        "entry_balcony_ref_008"
+      ],
       tasks: [
         referenceTask("entry_balcony_ref_001", "Ranger les souliers", "Entrée & balcon"),
         referenceTask("entry_balcony_ref_002", "Ranger les manteaux", "Entrée & balcon"),
@@ -830,6 +837,13 @@
       short: "Z2",
       description: "Une banque de petits gestes pour garder les repas, les surfaces et le frigo sous contrôle.",
       sections: ["Cuisine & salle à manger"],
+      freeTaskIds: [
+        "kitchen_dining_ref_002",
+        "kitchen_dining_ref_007",
+        "kitchen_dining_ref_008",
+        "kitchen_dining_ref_018",
+        "kitchen_dining_ref_023"
+      ],
       tasks: [
         referenceTask("kitchen_dining_ref_001", "Ramasser ce qui traîne", "Cuisine & salle à manger"),
         referenceTask("kitchen_dining_ref_002", "Faire la vaisselle", "Cuisine & salle à manger"),
@@ -864,6 +878,13 @@
       short: "Z3",
       description: "Une banque de petits gestes pour garder la pièce commune accueillante et respirable.",
       sections: ["Salon"],
+      freeTaskIds: [
+        "living_ref_001",
+        "living_ref_002",
+        "living_ref_003",
+        "living_ref_006",
+        "living_ref_015"
+      ],
       tasks: [
         referenceTask("living_ref_001", "Ramasser ce qui traîne", "Salon"),
         referenceTask("living_ref_002", "Replacer les coussins", "Salon"),
@@ -893,6 +914,13 @@
       short: "Z4",
       description: "Une banque simple pour retrouver de la fraîcheur et avancer une brassée à la fois.",
       sections: ["Salle de bain & salle de lavage"],
+      freeTaskIds: [
+        "bathroom_laundry_ref_002",
+        "bathroom_laundry_ref_006",
+        "bathroom_laundry_ref_011",
+        "bathroom_laundry_ref_016",
+        "bathroom_laundry_ref_028"
+      ],
       tasks: [
         referenceTask("bathroom_laundry_ref_001", "Ranger ce qui traîne", "Salle de bain & salle de lavage"),
         referenceTask("bathroom_laundry_ref_002", "Nettoyer le lavabo", "Salle de bain & salle de lavage"),
@@ -932,6 +960,13 @@
       short: "Z5",
       description: "Une banque de petits repères pour garder un coin reposant.",
       sections: ["Chambre"],
+      freeTaskIds: [
+        "bedroom_ref_001",
+        "bedroom_ref_003",
+        "bedroom_ref_005",
+        "bedroom_ref_014",
+        "bedroom_ref_017"
+      ],
       tasks: [
         referenceTask("bedroom_ref_001", "Faire le lit", "Chambre"),
         referenceTask("bedroom_ref_002", "Ramasser ce qui traîne", "Chambre"),

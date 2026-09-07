@@ -1527,25 +1527,25 @@
 
   function renderZones() {
     const currentWeeklyZone = getDailyContent().weeklyZone;
+    const isPro = canUse("allZones");
     elements.zonesList.innerHTML = DATA.zones.map(function (zone) {
       const isCurrent = currentWeeklyZone.id === zone.id;
-      const isAvailable = isCurrent || canUse("allZones");
-      if (!isAvailable) {
-        return [
-          '<article class="card zone-card zone-overview zone-locked">',
-          '<button class="zone-overview-summary zone-locked-button" type="button" data-zone-locked="', zone.id, '">',
-          '<span class="zone-icon">', zone.short, "</span>",
-          "<div><h3>", escapeHtml(zone.name), "</h3>",
-          '<p class="zone-visit-label">Disponible avec PRO</p></div>',
-          '<span class="zone-pro-badge"><svg><use href="#icon-lock"></use></svg>PRO</span>',
-          '<svg class="zone-overview-chevron"><use href="#icon-chevron"></use></svg>',
-          "</button>",
-          "</article>"
-        ].join("");
-      }
+      const freeTaskIds = new Set(zone.freeTaskIds || []);
       const sections = zone.sections.map(function (section) {
         const sectionTasks = zone.tasks.filter(function (task) { return task.categorie === section; });
         const tasks = sectionTasks.map(function (task) {
+          const taskAvailable = isPro || freeTaskIds.has(task.id);
+          if (!taskAvailable) {
+            return [
+              '<li class="zone-reference-item zone-task-locked">',
+              '<button class="zone-task-locked-button" type="button" data-zone-task-locked="', task.id, '" aria-label="', escapeHtml(task.titre), ' — Disponible avec PRO">',
+              '<span class="zone-task-locked-icon" aria-hidden="true"><svg><use href="#icon-lock"></use></svg></span>',
+              '<span class="zone-reference-task-title">', escapeHtml(task.titre), "</span>",
+              '<span class="zone-pro-badge"><svg><use href="#icon-lock"></use></svg>PRO</span>',
+              "</button>",
+              "</li>"
+            ].join("");
+          }
           const done = isZoneTaskDone(task.id);
           return [
             '<li class="zone-reference-item', done ? " done" : "", '">',
@@ -1579,6 +1579,7 @@
         "</summary>",
         '<p class="zone-description">', escapeHtml(zone.description), "</p>",
         '<p class="zone-reference-note">Liste de référence : choisis seulement ce qui est utile aujourd\'hui.</p>',
+        isPro ? "" : '<p class="zone-free-access-note">5 tâches incluses dans la version gratuite. Débloque PRO pour accéder à toute la banque.</p>',
         '<div class="zone-subsections">', sections, "</div>",
         "</details>"
       ].join("");
@@ -1631,6 +1632,12 @@
   }
 
   async function handleZoneClick(event) {
+    const lockedTask = event.target.closest("[data-zone-task-locked]");
+    if (lockedTask) {
+      navigate("pro");
+      showToast("Débloque PRO pour accéder à toutes les tâches de cette zone.");
+      return;
+    }
     const lockedZone = event.target.closest("[data-zone-locked]");
     if (lockedZone) {
       navigate("pro");
