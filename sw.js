@@ -1,15 +1,15 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v98";
+const CACHE_VERSION = "un-petit-pas-v99";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260907-radio-player-draggable-v1",
+  "./styles.css?v=20260908-zone-small-steps-v1",
   "./config.js",
   "./account.js?v=20260619-android-sync-v1",
-  "./data.js?v=20260907-zones-qc-v3",
-  "./db.js?v=20260829-gamification-phase3",
-  "./app.js?v=20260907-free-zones-order-v1",
+  "./data.js?v=20260908-zone-small-steps-v1",
+  "./db.js?v=20260908-zone-small-steps-v1",
+  "./app.js?v=20260908-zone-small-steps-v1",
   "./assets/caroline-portrait-v2.jpg?v=20260611",
   "./assets/foret-about.jpg?v=20260611",
   "./assets/stickers/petits-bonheurs/etincelle-douce.png",

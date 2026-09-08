@@ -13139,6 +13139,11 @@ body[data-active-route="home"] .topbar-brand .brand-logo {
   background: rgba(220, 230, 215, 0.92);
 }
 
+.today-check-icon-emoji {
+  font-size: 1.32rem;
+  line-height: 1;
+}
+
 .today-check-icon-sky {
   color: #415d78;
   background: #dbeaf1;

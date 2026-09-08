@@ -2,7 +2,7 @@
   "use strict";
 
   const DATABASE_NAME = "un-petit-pas";
-  const DATABASE_VERSION = 3;
+  const DATABASE_VERSION = 4;
   const DATA_STORES = [
     "activities",
     "routineTasks",
@@ -12,7 +12,8 @@
     "energyEvents",
     "dailyRewardStates",
     "stickerAwards",
-    "ownedStickers"
+    "ownedStickers",
+    "smallStepSuggestionHistory"
   ];
   const ROUTINE_DEFAULTS_VERSION = 3;
   let databasePromise;
@@ -86,6 +87,13 @@
           const ownedStickers = db.createObjectStore("ownedStickers", { keyPath: "id" });
           ownedStickers.createIndex("albumId", "albumId", { unique: false });
           ownedStickers.createIndex("stickerId", "stickerId", { unique: true });
+        }
+
+        if (!db.objectStoreNames.contains("smallStepSuggestionHistory")) {
+          const smallStepSuggestionHistory = db.createObjectStore("smallStepSuggestionHistory", { keyPath: "id" });
+          smallStepSuggestionHistory.createIndex("date", "date", { unique: true });
+          smallStepSuggestionHistory.createIndex("zoneId", "zoneId", { unique: false });
+          smallStepSuggestionHistory.createIndex("suggestionId", "suggestionId", { unique: false });
         }
       };
 

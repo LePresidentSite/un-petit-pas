@@ -788,6 +788,19 @@
     return { id: id, titre: titre, categorie: categorie };
   }
 
+  function zoneSmallStepSuggestion(id, zoneId, emoji, title, description, minutes, difficulty, referenceTaskIds) {
+    return {
+      id: id,
+      zoneId: zoneId,
+      emoji: emoji,
+      title: title,
+      description: description,
+      minutes: minutes,
+      difficulty: difficulty === "normal" ? "normal" : "easy",
+      referenceTaskIds: Array.isArray(referenceTaskIds) ? referenceTaskIds : []
+    };
+  }
+
   const referenceZones = [
     {
       id: "entry-balcony",
@@ -996,6 +1009,149 @@
     { id: "living", name: "Salon", description: "On apaise la pièce où la vie se rassemble.", color: "#eee4d4" },
     { id: "bathroom-laundry", name: "Salle de bain & salle de lavage", description: "On retrouve de la fraîcheur et on avance une brassée à la fois.", color: "#dfe9ed" },
     { id: "bedroom", name: "Chambre", description: "On protège un espace calme qui soutient le repos.", color: "#e7e1ee" }
+  ];
+
+  const zoneSmallStepSuggestions = [
+    zoneSmallStepSuggestion(
+      "zone-step-entry-balcony-front-door",
+      "entry-balcony",
+      "🚪",
+      "Essuyer la porte d’entrée",
+      "Nettoie aussi la poignée et les interrupteurs.",
+      5,
+      "easy",
+      ["entry_balcony_ref_009", "entry_balcony_ref_010", "entry_balcony_ref_011"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-entry-balcony-entry-reset",
+      "entry-balcony",
+      "👟",
+      "Ranger ce qui s’est accumulé dans l’entrée",
+      "Souliers, sacs et manteaux.",
+      8,
+      "normal",
+      ["entry_balcony_ref_001", "entry_balcony_ref_002", "entry_balcony_ref_003", "entry_balcony_ref_004"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-entry-balcony-windows-baseboards",
+      "entry-balcony",
+      "🪟",
+      "Épousseter les rebords de fenêtres et les plinthes",
+      "Une petite section suffit.",
+      5,
+      "easy",
+      ["entry_balcony_ref_013"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-entry-balcony-floor-refresh",
+      "entry-balcony",
+      "🧹",
+      "Donner un petit coup au plancher de l’entrée",
+      "Passe le balai, l’aspirateur ou la vadrouille selon le besoin.",
+      7,
+      "normal",
+      ["entry_balcony_ref_006", "entry_balcony_ref_007", "entry_balcony_ref_008"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-entry-balcony-welcome-touch",
+      "entry-balcony",
+      "🌷",
+      "Ajouter une petite touche accueillante",
+      "Dans l’entrée ou sur le balcon, seulement si ça te fait du bien.",
+      5,
+      "easy",
+      ["entry_balcony_ref_021", "entry_balcony_ref_024"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-fridge-reset",
+      "kitchen-dining",
+      "🧊",
+      "Faire un petit tri dans le frigo",
+      "Jette seulement ce qui n’est plus bon.",
+      5,
+      "easy",
+      ["kitchen_dining_ref_013", "kitchen_dining_ref_014"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-microwave",
+      "kitchen-dining",
+      "🧽",
+      "Nettoyer le micro-ondes",
+      "Intérieur et extérieur.",
+      7,
+      "normal",
+      ["kitchen_dining_ref_011"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-stove-refresh",
+      "kitchen-dining",
+      "🔥",
+      "Donner un petit coup à la cuisinière",
+      "Essuie le dessus et l’extérieur du four.",
+      8,
+      "normal",
+      ["kitchen_dining_ref_010"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-drawer-cabinet",
+      "kitchen-dining",
+      "🗄️",
+      "Ranger un tiroir ou une armoire",
+      "Un seul aujourd’hui, c’est suffisant.",
+      10,
+      "normal",
+      []
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-cabinet-doors",
+      "kitchen-dining",
+      "✨",
+      "Essuyer quelques portes d’armoires",
+      "Quelques-unes seulement, avec les poignées.",
+      8,
+      "normal",
+      ["kitchen_dining_ref_015", "kitchen_dining_ref_016"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-hood",
+      "kitchen-dining",
+      "🌬️",
+      "Nettoyer la hotte",
+      "Et le filtre s’il en a besoin.",
+      10,
+      "normal",
+      []
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-under-sink",
+      "kitchen-dining",
+      "🧴",
+      "Faire un petit ménage sous l’évier",
+      "Jette les vieux chiffons et les produits inutiles.",
+      10,
+      "normal",
+      []
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-table",
+      "kitchen-dining",
+      "🍽️",
+      "Dégager puis nettoyer la table de salle à manger",
+      "Une surface visible suffit pour aujourd’hui.",
+      6,
+      "easy",
+      ["kitchen_dining_ref_008"]
+    ),
+    zoneSmallStepSuggestion(
+      "zone-step-kitchen-dining-chairs",
+      "kitchen-dining",
+      "🪑",
+      "Essuyer les chaises et passer rapidement dessous",
+      "Un passage rapide suffit.",
+      7,
+      "normal",
+      ["kitchen_dining_ref_009"]
+    )
   ];
 
   const weeklyPrograms = [
@@ -1756,6 +1912,7 @@
     tips: tips,
     leapDayTip: leapDayTip,
     smallSteps: smallSteps,
+    zoneSmallStepSuggestions: zoneSmallStepSuggestions,
     principles: principles,
     zones: referenceZones,
     weeklyZones: referenceWeeklyZones,

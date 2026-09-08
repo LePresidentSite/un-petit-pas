@@ -120,6 +120,7 @@
     dailyRewardStates: new Map(),
     stickerAwards: new Map(),
     ownedStickers: new Map(),
+    smallStepSuggestionHistory: new Map(),
     lastStickerAward: null,
     presentedStickerAwardIds: new Set(),
     rewardProcessingPromise: Promise.resolve(),
@@ -219,7 +220,7 @@
       "stickerDetailRare",
       "weeklyProgramTaskList", "weeklyTaskForm",
       "weeklyTaskInput", "weeklyScheduleList", "weeklyFreeDayNote",
-      "resetWeeklyScheduleButton", "smallStepNumber",
+      "resetWeeklyScheduleButton", "smallStepVisual", "smallStepNumber",
       "smallStepTitle", "smallStepDescription", "smallStepDetails", "smallStepDetailsPanel",
       "completeSmallStepButton", "favoriteSmallStepButton",
       "smallStepRestartButton", "weeklyZoneVisual", "weeklyZoneTitle",
@@ -288,7 +289,8 @@
       DB.getAll("energyEvents"),
       DB.getAll("dailyRewardStates"),
       DB.getAll("stickerAwards"),
-      DB.getAll("ownedStickers")
+      DB.getAll("ownedStickers"),
+      DB.getAll("smallStepSuggestionHistory")
     ]);
 
     state.activities = new Map(results[0].map(function (item) { return [item.id, item]; }));
@@ -299,7 +301,9 @@
     state.dailyRewardStates = new Map(results[5].map(function (item) { return [item.id, item]; }));
     state.stickerAwards = new Map(results[6].map(function (item) { return [item.id, item]; }));
     state.ownedStickers = new Map(results[7].map(function (item) { return [item.id, item]; }));
+    state.smallStepSuggestionHistory = new Map(results[8].map(function (item) { return [item.id, item]; }));
     state.lastStickerAward = null;
+    await ensureSmallStepSuggestionForDate(state.today);
 
     const hashRoute = window.location.hash.replace("#", "");
     if (Object.prototype.hasOwnProperty.call(ROUTE_TITLES, hashRoute)) {
@@ -611,6 +615,176 @@
     return DATA.smallSteps[journey.currentIndex] || null;
   }
 
+  async function ensureSmallStepSuggestionForDate(date) {
+    const dateKey = formatDateKey(date);
+    const weeklyZone = getDailyContent(date).weeklyZone;
+    const suggestions = getZoneSmallStepSuggestions(weeklyZone.id);
+    if (!suggestions.length) return null;
+
+    const id = buildSmallStepSuggestionHistoryId(dateKey);
+    const existing = state.smallStepSuggestionHistory.get(id);
+    const existingSuggestion = existing && existing.zoneId === weeklyZone.id
+      ? suggestions.find(function (suggestion) { return suggestion.id === existing.suggestionId; })
+      : null;
+
+    if (existingSuggestion) {
+      return { row: existing, suggestion: existingSuggestion, zone: weeklyZone };
+    }
+
+    const suggestion = selectSmallStepSuggestionForDate(dateKey, weeklyZone.id, suggestions);
+    if (!suggestion) return null;
+
+    const row = {
+      id: id,
+      date: dateKey,
+      zoneId: weeklyZone.id,
+      suggestionId: suggestion.id,
+      selectedAt: new Date().toISOString()
+    };
+
+    state.smallStepSuggestionHistory.set(row.id, row);
+    try {
+      await DB.put("smallStepSuggestionHistory", row);
+    } catch (error) {
+      console.warn("Suggestion du petit pas impossible à mémoriser :", error);
+    }
+
+    return { row: row, suggestion: suggestion, zone: weeklyZone };
+  }
+
+  function getCurrentSmallStepCard() {
+    const suggestionSelection = getSmallStepSuggestionSelectionForDate(state.today);
+    if (suggestionSelection) {
+      const suggestion = suggestionSelection.suggestion;
+      const zone = suggestionSelection.zone;
+      return {
+        kind: "zone-suggestion",
+        refId: suggestion.id,
+        sourceId: suggestion.id,
+        sourceScope: "zone-" + suggestion.zoneId,
+        favoriteId: "small-step:" + suggestion.id,
+        emoji: suggestion.emoji,
+        title: suggestion.title,
+        description: suggestion.description,
+        details: buildZoneSmallStepDetails(suggestion, zone),
+        meta: "· " + zone.name + " · ≈ " + suggestion.minutes + " min",
+        tone: getSmallStepSuggestionTone(suggestion)
+      };
+    }
+
+    const step = getCurrentSmallStep();
+    if (!step) return null;
+
+    const journey = state.settings.smallStepProgress;
+    return {
+      kind: "legacy-step",
+      refId: step.id + "-cycle-" + journey.cycle,
+      sourceId: step.id,
+      sourceScope: "cycle-" + journey.cycle,
+      favoriteId: "small-step:" + step.id,
+      emoji: "",
+      title: step.title,
+      description: step.description,
+      details: step.details,
+      meta: (journey.currentIndex + 1) + "/" + DATA.smallSteps.length,
+      tone: "butter"
+    };
+  }
+
+  function getSmallStepSuggestionSelectionForDate(date) {
+    const dateKey = formatDateKey(date);
+    const weeklyZone = getDailyContent(date).weeklyZone;
+    const suggestions = getZoneSmallStepSuggestions(weeklyZone.id);
+    if (!suggestions.length) return null;
+
+    const row = state.smallStepSuggestionHistory.get(buildSmallStepSuggestionHistoryId(dateKey));
+    const suggestion = row && row.zoneId === weeklyZone.id
+      ? suggestions.find(function (item) { return item.id === row.suggestionId; })
+      : null;
+
+    return suggestion ? { row: row, suggestion: suggestion, zone: weeklyZone } : null;
+  }
+
+  function getZoneSmallStepSuggestions(zoneId) {
+    return (DATA.zoneSmallStepSuggestions || [])
+      .filter(function (suggestion) {
+        return suggestion &&
+          suggestion.zoneId === zoneId &&
+          suggestion.id &&
+          suggestion.title &&
+          suggestion.description;
+      });
+  }
+
+  function selectSmallStepSuggestionForDate(dateKey, zoneId, suggestions) {
+    if (!suggestions.length) return null;
+
+    const suggestionIds = new Set(suggestions.map(function (suggestion) { return suggestion.id; }));
+    const previousDateKey = getRelativeDateKey(dateKey, -1);
+    const previousRow = state.smallStepSuggestionHistory.get(buildSmallStepSuggestionHistoryId(previousDateKey));
+    const previousSuggestionId = previousRow && previousRow.zoneId === zoneId
+      ? previousRow.suggestionId
+      : "";
+    const seenDatesBySuggestionId = new Map();
+
+    Array.from(state.smallStepSuggestionHistory.values()).forEach(function (row) {
+      if (!row || row.date === dateKey || row.zoneId !== zoneId || !suggestionIds.has(row.suggestionId)) return;
+      const currentDate = seenDatesBySuggestionId.get(row.suggestionId);
+      if (!currentDate || row.date > currentDate) {
+        seenDatesBySuggestionId.set(row.suggestionId, row.date);
+      }
+    });
+
+    let candidates = suggestions.filter(function (suggestion) {
+      return !seenDatesBySuggestionId.has(suggestion.id);
+    });
+
+    if (!candidates.length) {
+      candidates = suggestions.slice().sort(function (first, second) {
+        const firstDate = seenDatesBySuggestionId.get(first.id) || "";
+        const secondDate = seenDatesBySuggestionId.get(second.id) || "";
+        return firstDate.localeCompare(secondDate) ||
+          suggestions.indexOf(first) - suggestions.indexOf(second);
+      });
+    }
+
+    if (candidates.length > 1 && candidates[0].id === previousSuggestionId) {
+      const alternate = candidates.find(function (suggestion) {
+        return suggestion.id !== previousSuggestionId;
+      });
+      if (alternate) return alternate;
+    }
+
+    return candidates[0];
+  }
+
+  function getRelativeDateKey(dateKey, offsetDays) {
+    const date = parseDateKey(dateKey);
+    date.setDate(date.getDate() + offsetDays);
+    return formatDateKey(date);
+  }
+
+  function buildSmallStepSuggestionHistoryId(dateKey) {
+    return "small-step-suggestion:" + dateKey;
+  }
+
+  function buildZoneSmallStepDetails(suggestion, zone) {
+    return [
+      suggestion.description,
+      "Zone de la semaine : " + zone.name + ".",
+      "Durée estimée : environ " + suggestion.minutes + " minutes.",
+      "+5 ⚡ quand c’est fait."
+    ].join("\n\n");
+  }
+
+  function getSmallStepSuggestionTone(suggestion) {
+    const tones = {
+      "entry-balcony": "sage",
+      "kitchen-dining": "butter"
+    };
+    return tones[suggestion.zoneId] || (suggestion.difficulty === "easy" ? "mint" : "sky");
+  }
+
   function renderTextParagraphs(value) {
     return String(value || "")
       .split(/\n\s*\n/)
@@ -654,15 +828,16 @@
     const weeklyChecks = state.settings.weeklyProgramChecks[todayKey] || {};
     const declutterDone = hasActivity("declutter", todayKey, DAILY_DECLUTTER_REF);
     const missionDone = isWeeklyProgramComplete(state.today);
-    const smallStepDone = Array.from(state.activities.values()).some(function (activity) {
-      return activity.date === todayKey && activity.type === "small-step";
-    });
+    const currentSmallStep = getCurrentSmallStepCard();
+    const smallStepDone = currentSmallStep
+      ? hasActivity("small-step", todayKey, currentSmallStep.refId)
+      : Array.from(state.activities.values()).some(function (activity) {
+        return activity.date === todayKey && activity.type === "small-step";
+      });
     const otherStepDone = Array.from(state.activities.values()).some(function (activity) {
       return activity.date === todayKey && !["mission", "tip", "small-step", "declutter"].includes(activity.type);
     });
     const progress = Math.round(([missionDone, smallStepDone, otherStepDone].filter(Boolean).length / 3) * 100);
-    const journey = state.settings.smallStepProgress;
-    const currentStep = getCurrentSmallStep();
     const routineHighlights = getHomeRoutineTasks();
     const completedWeeklyTasks = weeklyTasks.filter(function (task) {
       return Boolean(weeklyChecks[task.id]);
@@ -670,7 +845,7 @@
     const completedRoutineHighlights = routineHighlights.filter(function (task) {
       return state.routineChecks.has(todayKey + ":" + task.id);
     }).length;
-    const checklistTotal = weeklyTasks.length + (currentStep ? 1 : 0) + 1 + routineHighlights.length;
+    const checklistTotal = weeklyTasks.length + (currentSmallStep ? 1 : 0) + 1 + routineHighlights.length;
     const checklistDone = completedWeeklyTasks +
       (smallStepDone ? 1 : 0) +
       (declutterDone ? 1 : 0) +
@@ -691,18 +866,21 @@
     elements.weeklyZoneDescription.textContent = daily.weeklyZone.description;
     elements.weeklyZoneVisual.style.background = daily.weeklyZone.color;
 
-    if (currentStep) {
-      const favoriteId = "small-step:" + currentStep.id;
-      const isFavorite = state.favorites.has(favoriteId);
-      elements.smallStepNumber.textContent = (journey.currentIndex + 1) + "/" + DATA.smallSteps.length;
-      elements.smallStepTitle.textContent = currentStep.title;
-      elements.smallStepDescription.textContent = currentStep.description;
-      elements.smallStepDetails.innerHTML = renderTextParagraphs(currentStep.details);
+    const smallStepCard = elements.completeSmallStepButton.closest(".today-small-step-card");
+    if (smallStepCard) smallStepCard.classList.toggle("completed", smallStepDone);
+
+    if (currentSmallStep) {
+      const isFavorite = state.favorites.has(currentSmallStep.favoriteId);
+      renderSmallStepVisual(currentSmallStep);
+      elements.smallStepNumber.textContent = currentSmallStep.meta;
+      elements.smallStepTitle.textContent = currentSmallStep.title;
+      elements.smallStepDescription.textContent = currentSmallStep.description;
+      elements.smallStepDetails.innerHTML = renderTextParagraphs(currentSmallStep.details);
       elements.completeSmallStepButton.hidden = false;
-      elements.completeSmallStepButton.disabled = false;
+      elements.completeSmallStepButton.disabled = smallStepDone && currentSmallStep.kind === "zone-suggestion";
       elements.completeSmallStepButton.classList.toggle("completed", smallStepDone);
       elements.completeSmallStepButton.setAttribute("aria-pressed", String(smallStepDone));
-      elements.completeSmallStepButton.querySelector("span").textContent = smallStepDone ? "Continuer" : "Cocher";
+      elements.completeSmallStepButton.querySelector("span").textContent = smallStepDone ? "Fait" : "Cocher";
       elements.favoriteSmallStepButton.hidden = false;
       elements.favoriteSmallStepButton.classList.toggle("completed", isFavorite);
       elements.favoriteSmallStepButton.setAttribute("aria-pressed", String(isFavorite));
@@ -710,6 +888,7 @@
       elements.smallStepRestartButton.hidden = true;
       elements.smallStepDetailsPanel.hidden = false;
     } else {
+      renderSmallStepVisual({ emoji: "", tone: "butter" });
       elements.smallStepNumber.textContent = DATA.smallSteps.length + "/" + DATA.smallSteps.length;
       elements.smallStepTitle.textContent = "Ton parcours est complété";
       elements.smallStepDescription.textContent = "Tu as parcouru les 31 Petits pas. Prends un moment pour reconnaître tout ce chemin.";
@@ -1312,6 +1491,16 @@
     return '<span class="today-check-icon today-check-icon-' + visual.tone + '"><svg><use href="#' + visual.icon + '"></use></svg></span>';
   }
 
+  function renderSmallStepVisual(smallStep) {
+    if (!elements.smallStepVisual) return;
+    const tone = smallStep && smallStep.tone ? smallStep.tone : "butter";
+    const emoji = smallStep && smallStep.emoji ? smallStep.emoji : "";
+    elements.smallStepVisual.className = "today-check-icon today-check-icon-" + tone + (emoji ? " today-check-icon-emoji" : "");
+    elements.smallStepVisual.innerHTML = emoji
+      ? '<span aria-hidden="true">' + escapeHtml(emoji) + "</span>"
+      : '<svg><use href="#icon-spark"></use></svg>';
+  }
+
   function renderTodayEnergySlot() {
     return '<span class="today-energy-slot" data-energy-preview="true" aria-label="Points d\'énergie à venir"><strong>5</strong><span aria-hidden="true">⚡</span></span>';
   }
@@ -1450,19 +1639,34 @@
   }
 
   async function completeCurrentSmallStep() {
-    const step = getCurrentSmallStep();
-    if (!step) return;
-    const journey = state.settings.smallStepProgress;
+    const currentSmallStep = getCurrentSmallStepCard();
+    if (!currentSmallStep) return;
     const todayKey = formatDateKey(state.today);
-    const reference = step.id + "-cycle-" + journey.cycle;
-    await addActivity("small-step", todayKey, reference, step.title);
+
+    if (hasActivity("small-step", todayKey, currentSmallStep.refId)) {
+      showToast("C'est déjà noté pour aujourd'hui.");
+      renderHome();
+      return;
+    }
+
+    await addActivity("small-step", todayKey, currentSmallStep.refId, currentSmallStep.title);
     await awardEnergyForAction({
       sourceType: DATA.energyRules.sourceTypes.smallStep,
-      sourceId: step.id,
-      sourceScope: "cycle-" + journey.cycle,
+      sourceId: currentSmallStep.sourceId,
+      sourceScope: currentSmallStep.sourceScope,
       date: todayKey,
-      title: step.title
+      title: currentSmallStep.title
     });
+
+    if (currentSmallStep.kind === "zone-suggestion") {
+      elements.smallStepDetailsPanel.open = false;
+      renderHome();
+      renderHistory();
+      showToast("Bravo. Ce petit pas compte vraiment.");
+      return;
+    }
+
+    const journey = state.settings.smallStepProgress;
 
     const nextIndex = journey.currentIndex + 1;
     state.settings.smallStepProgress = {
@@ -1491,9 +1695,9 @@
   }
 
   async function toggleCurrentSmallStepFavorite() {
-    const step = getCurrentSmallStep();
-    if (!step) return;
-    const id = "small-step:" + step.id;
+    const currentSmallStep = getCurrentSmallStepCard();
+    if (!currentSmallStep) return;
+    const id = currentSmallStep.favoriteId;
 
     if (state.favorites.has(id)) {
       await DB.remove("favorites", id);
@@ -1513,9 +1717,9 @@
     const favorite = {
       id: id,
       type: "small-step",
-      title: step.title,
-      description: step.description,
-      details: step.details,
+      title: currentSmallStep.title,
+      description: currentSmallStep.description,
+      details: currentSmallStep.details,
       savedAt: new Date().toISOString()
     };
     await DB.put("favorites", favorite);
@@ -2405,6 +2609,7 @@
       (payload.routineChecks || []).length ||
       (payload.zoneTaskStates || []).length ||
       (payload.favorites || []).length ||
+      (payload.smallStepSuggestionHistory || []).length ||
       (payload.routineTasks || []).some(function (task) { return !String(task.id).startsWith("default-"); }) ||
       settings.firstName ||
       settings.smallStepProgress && Number(settings.smallStepProgress.currentIndex) > 0
@@ -2416,7 +2621,18 @@
       version: 1,
       settings: Object.assign({}, remotePayload.settings || {}, localPayload.settings || {})
     };
-    ["activities", "routineTasks", "zoneTaskStates", "routineChecks", "favorites"].forEach(function (name) {
+    [
+      "activities",
+      "routineTasks",
+      "zoneTaskStates",
+      "routineChecks",
+      "favorites",
+      "energyEvents",
+      "dailyRewardStates",
+      "stickerAwards",
+      "ownedStickers",
+      "smallStepSuggestionHistory"
+    ].forEach(function (name) {
       const rows = new Map();
       (remotePayload[name] || []).forEach(function (row) { rows.set(row.id, row); });
       (localPayload[name] || []).forEach(function (row) { rows.set(row.id, row); });
@@ -2973,7 +3189,8 @@
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const daily = getDailyContent(now);
     const weeklyProgram = getWeeklyProgramForDate(now);
-    const currentSmallStep = getCurrentSmallStep();
+    const smallStepSelection = await ensureSmallStepSuggestionForDate(now);
+    const currentSmallStep = smallStepSelection ? smallStepSelection.suggestion : getCurrentSmallStep();
     const notifications = [
       {
         enabled: state.settings.missionReminder,
@@ -3529,7 +3746,7 @@
     }
   }
 
-  function syncCurrentDay() {
+  async function syncCurrentDay() {
     const now = new Date();
     const dateChanged = formatDateKey(now) !== formatDateKey(state.today);
     state.today = now;
@@ -3537,6 +3754,7 @@
     if (dateChanged) {
       state.selectedHistoryDate = formatDateKey(now);
       state.calendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      await ensureSmallStepSuggestionForDate(now);
       renderHeader();
       renderHome();
       renderZones();
