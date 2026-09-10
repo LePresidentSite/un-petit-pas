@@ -1,10 +1,10 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v101";
+const CACHE_VERSION = "un-petit-pas-v102";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260910-bravo-halo-v1",
+  "./styles.css?v=20260910-today-collection-blue-v1",
   "./config.js",
   "./account.js?v=20260619-android-sync-v1",
   "./data.js?v=20260910-nouvelles-collections-v1",

@@ -13938,6 +13938,18 @@ body[data-active-route="home"] .today-collection-preview-grid span {
   border-radius: 13px;
 }
 
+body[data-active-route="home"] .today-collection-preview-grid .collection-sticker,
+body[data-active-route="home"] .today-collection-preview-grid .collection-sticker.unlocked,
+body[data-active-route="home"] .today-collection-preview-grid .collection-sticker.locked,
+body[data-active-route="home"] .today-collection-preview-grid .collection-sticker-rare.unlocked {
+  border-color: rgba(207, 227, 238, 0.28);
+  background:
+    linear-gradient(155deg, rgba(48, 116, 178, 0.52), rgba(26, 83, 136, 0.42));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 8px 18px rgba(8, 37, 66, 0.1);
+}
+
 body[data-active-route="home"] .today-collection-preview-grid svg {
   width: 1rem;
   height: 1rem;
