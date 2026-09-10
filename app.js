@@ -1048,13 +1048,15 @@
     const ownedSticker = findOwnedStickerByStickerId(sticker.id);
     const unlocked = Boolean(ownedSticker);
     const quantity = Math.max(1, Number(ownedSticker && ownedSticker.quantity) || 1);
-    const lockedTitle = sticker.rarity === "rare" ? sticker.title : "À débloquer";
-    const lockedMeta = sticker.rarity === "rare" ? "Sticker rare · Continue !" : "Continue tes petits pas";
+    const rarityLabel = getStickerRarityLabel(sticker);
+    const highlightedRarity = Boolean(rarityLabel);
+    const lockedTitle = highlightedRarity ? sticker.title : "À débloquer";
+    const lockedMeta = highlightedRarity ? "Sticker " + rarityLabel.toLowerCase() + " · Continue !" : "Continue tes petits pas";
     const visualClassName = getStickerClassName(sticker) + (unlocked ? " unlocked" : " locked") + " collection-page-sticker-visual";
     const buttonClassName = [
       "collection-page-sticker-card",
       unlocked ? "unlocked" : "locked",
-      sticker.rarity === "rare" ? "collection-page-sticker-rare" : ""
+      highlightedRarity ? "collection-page-sticker-rare" : ""
     ].filter(Boolean).join(" ");
 
     return [
@@ -1074,7 +1076,7 @@
       '<small>',
       unlocked ? "Dans " + escapeHtml(album.title) : escapeHtml(lockedMeta),
       "</small>",
-      sticker.rarity === "rare" && unlocked ? '<span class="collection-page-rare-label">Rare</span>' : "",
+      highlightedRarity && unlocked ? '<span class="collection-page-rare-label">' + escapeHtml(rarityLabel) + "</span>" : "",
       "</span>",
       "</button>"
     ].join("");
@@ -1215,7 +1217,11 @@
       elements.stickerDetailAwardDate.hidden = !awardedAt;
       elements.stickerDetailAwardDate.textContent = awardedAt ? "Gagné le " + formatRewardDetailDate(awardedAt) + "." : "";
     }
-    elements.stickerDetailRare.hidden = sticker.rarity !== "rare";
+    const rarityLabel = getStickerRarityLabel(sticker);
+    elements.stickerDetailRare.hidden = !rarityLabel;
+    if (rarityLabel) {
+      elements.stickerDetailRare.textContent = "Autocollant " + rarityLabel.toLowerCase();
+    }
 
     if (typeof elements.stickerDetailDialog.showModal === "function") {
       if (!elements.stickerDetailDialog.open) elements.stickerDetailDialog.showModal();
@@ -1251,8 +1257,16 @@
     return [
       "collection-sticker",
       "collection-sticker-" + escapeHtml(sticker.placeholderIcon || "spark"),
-      sticker.rarity === "rare" ? "collection-sticker-rare" : ""
+      getStickerRarityLabel(sticker) ? "collection-sticker-rare" : ""
     ].filter(Boolean).join(" ");
+  }
+
+  function getStickerRarityLabel(sticker) {
+    const rarity = sticker && sticker.rarity ? String(sticker.rarity) : "";
+    if (rarity === "very-rare") return "Très rare";
+    if (rarity === "special") return "Spécial";
+    if (rarity === "rare") return "Rare";
+    return "";
   }
 
   function renderStickerVisual(sticker, lazy) {
@@ -1279,7 +1293,7 @@
       : title;
     elements.stickerAwardMessage.textContent = award.isDuplicate
       ? "Tu l'as gagné à nouveau dans " + albumTitle + ". Quantité : ×" + award.quantity + "."
-      : "Il a été ajouté à " + albumTitle + ".";
+      : "Ajouté à ta collection " + albumTitle + ".";
     elements.stickerAwardIcon.className = getStickerClassName(award.sticker || {}) + " unlocked";
     elements.stickerAwardIcon.innerHTML = renderStickerVisual(award.sticker || {}, false);
 

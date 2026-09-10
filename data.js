@@ -1314,6 +1314,7 @@
   const stickerRarities = Object.freeze({
     common: "common",
     rare: "rare",
+    veryRare: "very-rare",
     special: "special"
   });
 
@@ -1724,7 +1725,7 @@
       id: "album-petits-bonheurs",
       sourceKey: "album:permanent:petits-bonheurs",
       title: "Petits bonheurs",
-      description: "Un album gratuit de test pour préparer la future collection.",
+      description: "Des petits trésors doux et réconfortants pour célébrer chaque petit pas.",
       family: collectionAlbumFamilies.permanent,
       releaseStatus: collectionReleaseStatus.released,
       access: collectionAccessTypes.free,
@@ -1745,6 +1746,19 @@
       artDirectionId: collectionArtDirection.id,
       specialStickerId: "sticker-maison-cocon-008",
       order: 1
+    },
+    {
+      id: "album-paysages-enchantes",
+      sourceKey: "album:permanent:paysages-enchantes",
+      title: "Les Paysages enchantés",
+      description: "Des fenêtres féeriques et lumineuses à collectionner quand l'énergie revient doucement.",
+      family: collectionAlbumFamilies.permanent,
+      releaseStatus: collectionReleaseStatus.released,
+      access: collectionAccessTypes.free,
+      rewardEligible: true,
+      artDirectionId: collectionArtDirection.id,
+      specialStickerId: "sticker-paysages-enchantes-010",
+      order: 2
     }
   ];
 
@@ -1903,6 +1917,116 @@
       imageSrc: "./assets/stickers/maison-cocon/petite-fenetre-au-soleil.png",
       rarity: stickerRarities.rare,
       order: 7
+    },
+    {
+      id: "sticker-paysages-enchantes-001",
+      sourceKey: "sticker:paysages-enchantes:lune-forestiere",
+      albumId: "album-paysages-enchantes",
+      title: "Lune forestière",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "moon",
+      imageSrc: "./assets/stickers/paysages-enchantes/lune-forestiere.png",
+      rarity: stickerRarities.common,
+      order: 0
+    },
+    {
+      id: "sticker-paysages-enchantes-002",
+      sourceKey: "sticker:paysages-enchantes:chateau-des-nuages",
+      albumId: "album-paysages-enchantes",
+      title: "Château des nuages",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "home",
+      imageSrc: "./assets/stickers/paysages-enchantes/chateau-des-nuages.png",
+      rarity: stickerRarities.common,
+      order: 1
+    },
+    {
+      id: "sticker-paysages-enchantes-003",
+      sourceKey: "sticker:paysages-enchantes:lac-lunaire",
+      albumId: "album-paysages-enchantes",
+      title: "Lac lunaire",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "moon",
+      imageSrc: "./assets/stickers/paysages-enchantes/lac-lunaire.png",
+      rarity: stickerRarities.common,
+      order: 2
+    },
+    {
+      id: "sticker-paysages-enchantes-004",
+      sourceKey: "sticker:paysages-enchantes:vallee-de-la-licorne",
+      albumId: "album-paysages-enchantes",
+      title: "Vallée de la licorne",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/paysages-enchantes/vallee-de-la-licorne.png",
+      rarity: stickerRarities.common,
+      order: 3
+    },
+    {
+      id: "sticker-paysages-enchantes-005",
+      sourceKey: "sticker:paysages-enchantes:cascade-secrete",
+      albumId: "album-paysages-enchantes",
+      title: "Cascade secrète",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/paysages-enchantes/cascade-secrete.png",
+      rarity: stickerRarities.common,
+      order: 4
+    },
+    {
+      id: "sticker-paysages-enchantes-006",
+      sourceKey: "sticker:paysages-enchantes:etang-lumineux",
+      albumId: "album-paysages-enchantes",
+      title: "Étang lumineux",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/paysages-enchantes/etang-lumineux.png",
+      rarity: stickerRarities.common,
+      order: 5
+    },
+    {
+      id: "sticker-paysages-enchantes-007",
+      sourceKey: "sticker:paysages-enchantes:passage-du-royaume",
+      albumId: "album-paysages-enchantes",
+      title: "Passage du royaume",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "zones",
+      imageSrc: "./assets/stickers/paysages-enchantes/passage-du-royaume.png",
+      rarity: stickerRarities.common,
+      order: 6
+    },
+    {
+      id: "sticker-paysages-enchantes-008",
+      sourceKey: "sticker:paysages-enchantes:pont-des-reves",
+      albumId: "album-paysages-enchantes",
+      title: "Pont des rêves",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "heart",
+      imageSrc: "./assets/stickers/paysages-enchantes/pont-des-reves.png",
+      rarity: stickerRarities.common,
+      order: 7
+    },
+    {
+      id: "sticker-paysages-enchantes-009",
+      sourceKey: "sticker:paysages-enchantes:vallee-doree",
+      albumId: "album-paysages-enchantes",
+      title: "Vallée dorée",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/paysages-enchantes/vallee-doree.png",
+      rarity: stickerRarities.rare,
+      order: 8
+    },
+    {
+      id: "sticker-paysages-enchantes-010",
+      sourceKey: "sticker:paysages-enchantes:crique-des-etoiles",
+      albumId: "album-paysages-enchantes",
+      title: "Crique des étoiles",
+      access: collectionAccessTypes.free,
+      placeholderIcon: "spark",
+      imageSrc: "./assets/stickers/paysages-enchantes/crique-des-etoiles.png",
+      rarity: stickerRarities.veryRare,
+      order: 9
     }
   ];
 

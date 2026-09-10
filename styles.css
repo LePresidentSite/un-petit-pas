@@ -14798,8 +14798,8 @@ body[data-active-route="collection"] .topbar {
 }
 
 .collection-page-sticker-visual.locked .collection-sticker-image {
-  opacity: 0.5;
-  filter: grayscale(0.78) saturate(0.34);
+  opacity: 0.68;
+  filter: grayscale(0.58) saturate(0.52) contrast(0.96) drop-shadow(0 8px 16px rgba(7, 31, 56, 0.18));
 }
 
 .collection-page-sticker-card.locked .collection-page-sticker-copy strong {
@@ -15133,9 +15133,29 @@ body[data-active-route="collection"] .topbar {
 }
 
 .sticker-award-card .collection-sticker {
-  width: 86px;
-  min-height: 86px;
-  border-radius: 24px;
+  isolation: isolate;
+  width: 124px;
+  min-height: 124px;
+  overflow: visible;
+  border: 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(161, 204, 225, 0.76), rgba(77, 139, 181, 0.42) 52%, rgba(31, 92, 145, 0.18) 72%, transparent 100%);
+  box-shadow:
+    0 0 0 12px rgba(110, 164, 198, 0.1),
+    0 18px 34px rgba(27, 72, 111, 0.16),
+    0 0 44px rgba(122, 184, 219, 0.38);
+}
+
+.sticker-award-card .collection-sticker::before {
+  position: absolute;
+  inset: -0.8rem;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle, rgba(139, 190, 219, 0.22), rgba(54, 115, 170, 0.1) 46%, transparent 70%);
+  content: "";
+  filter: blur(2px);
 }
 
 .sticker-award-card .collection-sticker svg {
@@ -15144,8 +15164,11 @@ body[data-active-route="collection"] .topbar {
 }
 
 .sticker-award-card .collection-sticker-image {
-  width: 108%;
-  height: 108%;
+  position: relative;
+  z-index: 1;
+  width: 118%;
+  height: 118%;
+  object-fit: contain;
 }
 
 .sticker-award-card h2 {

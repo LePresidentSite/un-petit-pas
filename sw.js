@@ -1,15 +1,15 @@
 "use strict";
 
-const CACHE_VERSION = "un-petit-pas-v99";
+const CACHE_VERSION = "un-petit-pas-v101";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260908-zone-small-steps-v1",
+  "./styles.css?v=20260910-bravo-halo-v1",
   "./config.js",
   "./account.js?v=20260619-android-sync-v1",
-  "./data.js?v=20260908-zone-small-steps-v1",
+  "./data.js?v=20260910-nouvelles-collections-v1",
   "./db.js?v=20260908-zone-small-steps-v1",
-  "./app.js?v=20260908-zone-small-steps-v1",
+  "./app.js?v=20260910-nouvelles-collections-v1",
   "./assets/caroline-portrait-v2.jpg?v=20260611",
   "./assets/foret-about.jpg?v=20260611",
   "./assets/stickers/petits-bonheurs/etincelle-douce.png",
@@ -26,6 +26,16 @@ const APP_SHELL = [
   "./assets/stickers/maison-cocon/balai-courageux.png",
   "./assets/stickers/maison-cocon/petite-cle-du-cocon.png",
   "./assets/stickers/maison-cocon/petite-fenetre-au-soleil.png",
+  "./assets/stickers/paysages-enchantes/lune-forestiere.png",
+  "./assets/stickers/paysages-enchantes/chateau-des-nuages.png",
+  "./assets/stickers/paysages-enchantes/lac-lunaire.png",
+  "./assets/stickers/paysages-enchantes/vallee-de-la-licorne.png",
+  "./assets/stickers/paysages-enchantes/cascade-secrete.png",
+  "./assets/stickers/paysages-enchantes/etang-lumineux.png",
+  "./assets/stickers/paysages-enchantes/passage-du-royaume.png",
+  "./assets/stickers/paysages-enchantes/pont-des-reves.png",
+  "./assets/stickers/paysages-enchantes/vallee-doree.png",
+  "./assets/stickers/paysages-enchantes/crique-des-etoiles.png",
   "./assets/brand/logo-symbol.svg",
   "./assets/brand/logo-horizontal.svg",
   "./assets/brand/logo-horizontal-inverse.svg",
